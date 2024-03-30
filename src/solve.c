@@ -24,7 +24,7 @@ __thread static long FirstTime; /* set this to true for every new game to be sol
 __thread long Debug_flag;
 __thread long Verbose_flag;
 
-int solve_float(game *g, long *payoff_data, long den, lrs_mp_vector row_data, lrs_mp_vector col_data)
+int solve_float(game *g, const long *payoff_data, long den, lrs_mp_vector row_data, lrs_mp_vector col_data)
 {
 	lrs_dic *P1;	  /* structure for holding current dictionary and indices */
 	lrs_dat *Q1, *Q2; /* structure for holding static problem data            */
@@ -188,7 +188,7 @@ int solve_float(game *g, long *payoff_data, long den, lrs_mp_vector row_data, lr
 	return 0;
 }
 
-int solve_pointer_constant_sum(game *g, mpq_t **row_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data, int payoff_sum_num, int payoff_sum_den)
+int solve_pointer_constant_sum(game *g, const mpq_t **row_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data, int payoff_sum_num, int payoff_sum_den)
 {
 	lrs_dic *P1;	  /* structure for holding current dictionary and indices */
 	lrs_dat *Q1, *Q2; /* structure for holding static problem data            */
@@ -352,7 +352,7 @@ int solve_pointer_constant_sum(game *g, mpq_t **row_payoff_data, lrs_mp_vector r
 	return 0;
 }
 
-int solve_pointer(game *g, mpq_t **row_payoff_data, mpq_t **col_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data)
+int solve_pointer(game *g, const mpq_t **row_payoff_data, const mpq_t **col_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data)
 {
 	lrs_dic *P1;	  /* structure for holding current dictionary and indices */
 	lrs_dat *Q1, *Q2; /* structure for holding static problem data            */
@@ -1931,7 +1931,7 @@ void FillConstraintRows(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2, i
 }
 
 //----------------------------------------------------------------------------------------//
-void FillConstraintRowsPointer(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, mpq_t **col_payoff_data, int p1, int p2, int firstRow)
+void FillConstraintRowsPointer(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, const mpq_t **col_payoff_data, int p1, int p2, int firstRow)
 {
 #ifdef SURSKIT
 
@@ -2018,7 +2018,7 @@ void FillConstraintRowsPointer(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **ro
 }
 
 //----------------------------------------------------------------------------------------//
-void FillConstraintRowsPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, int p1, int p2, int firstRow, int payoff_sum_num, int payoff_sum_den)
+void FillConstraintRowsPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, int p1, int p2, int firstRow, int payoff_sum_num, int payoff_sum_den)
 {
 #ifdef SURSKIT
 
@@ -2113,7 +2113,7 @@ void FillConstraintRowsPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g,
 }
 
 //----------------------------------------------------------------------------------------//
-void FillConstraintRowsFloat(lrs_dic *P, lrs_dat *Q, const game *g, long *payoff_data, long den, int p1, int p2, int firstRow)
+void FillConstraintRowsFloat(lrs_dic *P, lrs_dat *Q, const game *g, const long *payoff_data, long den, int p1, int p2, int firstRow)
 {
 #ifdef SURSKIT
 
@@ -2259,7 +2259,7 @@ void BuildRep(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2)
 	FillFirstRow(P, Q, n);
 }
 
-void BuildRepPointer(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, mpq_t **col_payoff_data, int p1, int p2)
+void BuildRepPointer(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, const mpq_t **col_payoff_data, int p1, int p2)
 {
 	long m = Q->m; /* number of inequalities      */
 	long n = Q->n;
@@ -2280,7 +2280,7 @@ void BuildRepPointer(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_d
 	FillFirstRow(P, Q, n);
 }
 
-void BuildRepPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, int p1, int p2, int payoff_sum_num, int payoff_sum_den)
+void BuildRepPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, int p1, int p2, int payoff_sum_num, int payoff_sum_den)
 {
 	long m = Q->m; /* number of inequalities      */
 	long n = Q->n;
@@ -2301,7 +2301,7 @@ void BuildRepPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **r
 	FillFirstRow(P, Q, n);
 }
 
-void BuildRepFloat(lrs_dic *P, lrs_dat *Q, const game *g, long *payoff_data, long den, int p1, int p2)
+void BuildRepFloat(lrs_dic *P, lrs_dat *Q, const game *g, const long *payoff_data, long den, int p1, int p2)
 {
 	long m = Q->m; /* number of inequalities      */
 	long n = Q->n;

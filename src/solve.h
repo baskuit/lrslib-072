@@ -54,9 +54,9 @@ typedef struct
 
 int lrs_solve_nash(game *g);
 int solve(game *g, lrs_mp_vector row_data, lrs_mp_vector col_data);
-int solve_pointer(game *g, mpq_t** row_payoff_data, mpq_t** col_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data);
-int solve_pointer_constant_sum(game *g, mpq_t** row_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data, int payoff_sum_num, int payoff_sum_den);
-int solve_float (game *g, long* payoff_data, long den, lrs_mp_vector row_data, lrs_mp_vector col_data);
+int solve_pointer(game *g, const mpq_t** row_payoff_data, const mpq_t** col_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data);
+int solve_pointer_constant_sum(game *g, const mpq_t** row_payoff_data, lrs_mp_vector row_data, lrs_mp_vector col_data, int payoff_sum_num, int payoff_sum_den);
+int solve_float (game *g, const long* payoff_data, long den, lrs_mp_vector row_data, lrs_mp_vector col_data);
 
 long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig,
 				lrs_dat *Q2, long *numequilib, lrs_mp_vector output, long linindex[]);
@@ -76,9 +76,9 @@ long lrs_nashoutput_(lrs_dat *Q, lrs_mp_vector output, long player, lrs_mp_vecto
 int lrs_solve_nash_legacy(int argc, char *argv[]);
 
 void BuildRep(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2);
-void BuildRepPointer(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, mpq_t **col_payoff_data, int p1, int p2);
-void BuildRepPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, mpq_t **row_payoff_data, int p1, int p2, int payoff_sum_num, int payoff_sum_den);
-void BuildRepFloat(lrs_dic *P, lrs_dat *Q, const game *g, long *payoff_data, long den, int p1, int p2);
+void BuildRepPointer(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, const mpq_t **col_payoff_data, int p1, int p2);
+void BuildRepPointerConstantSum(lrs_dic *P, lrs_dat *Q, const game *g, const mpq_t **row_payoff_data, int p1, int p2, int payoff_sum_num, int payoff_sum_den);
+void BuildRepFloat(lrs_dic *P, lrs_dat *Q, const game *g, const long *payoff_data, long den, int p1, int p2);
 void FillFirstRow(lrs_dic *P, lrs_dat *Q, int n);
 void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n);
 void FillConstraintRows(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2, int firstRow);
