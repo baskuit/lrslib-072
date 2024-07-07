@@ -22,22 +22,22 @@
 #define ROW 0
 #define COL 1
 
-typedef struct {
+struct ratnum {
         long num;
         long den;
-} ratnum;
+};
 
-typedef struct {
+struct game {
   long nstrats[2];
   ratnum payoff[MAXSTRAT][MAXSTRAT][2];
   // For auxiliary information
         void *aux;
-} game;
+};
 
-typedef struct {
+struct gInfo {
         char name[100];
         int fwidth[MAXSTRAT][2]; // Column field widths (for output)
-} gInfo;
+};
 
 
 int lrs_solve_nash(game * g);

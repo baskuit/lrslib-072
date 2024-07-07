@@ -1,4 +1,4 @@
-typedef struct lrs_restart_dat   /* for restarting from a given cobasis         */
+struct lrs_restart_dat   /* for restarting from a given cobasis         */
 {
         long *facet;            /* cobasic indices for restart                  */
 
@@ -25,7 +25,7 @@ typedef struct lrs_restart_dat   /* for restarting from a given cobasis         
 	long size;		/* number of processes in mplrs MPI run */
 	long rank;		/* my ID. 
 				 * 0: master, 1: consumer, 2...size-1: workers*/
-} lrs_restart_dat;
+};
 
 lrs_restart_dat* lrs_alloc_restart();
 

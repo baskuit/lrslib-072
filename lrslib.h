@@ -213,7 +213,7 @@
 /*  V-rep: col 0 all zero, b-vector in col 1, A matrix in columns 1..n        */
 /******************************************************************************/
 
-typedef struct lrs_dic_struct	/* dynamic dictionary data */
+struct lrs_dic	/* dynamic dictionary data */
 {
 	lrs_mp_matrix A;
 	long m;			/* A has m+1 rows, row 0 is cost row            */
@@ -228,11 +228,12 @@ typedef struct lrs_dic_struct	/* dynamic dictionary data */
 	lrs_mp objden;		/* objective denominator value                  */
 	long *B, *Row;		/* basis, row location indices                  */
 	long *C, *Col;		/* cobasis, column location indices             */
-	struct lrs_dic_struct *prev, *next;
-} lrs_dic;
+	lrs_dic *prev;
+	lrs_dic *next;
+};
 
 
-typedef struct lrs_dat			/* global problem data   */
+struct lrs_dat			/* global problem data   */
 {
 	long *redineq;          /* holds indices of rows for redundancy check  */
         lrs_mp_matrix Ain;      /* used only in redund to hold input matrix    */
@@ -340,7 +341,7 @@ typedef struct lrs_dat			/* global problem data   */
 	/* Variables for cacheing dictionaries, db */
 	lrs_dic *Qhead, *Qtail, *olddic;
 
-}lrs_dat, lrs_dat_p;
+};
 
 
 /***************************/

@@ -8,11 +8,8 @@
 
 #include "lrsrestart.h"
 
-struct lrs_dic_struct;
-typedef struct lrs_dic_struct lrs_dic;
-
+struct lrs_dic;
 struct lrs_dat;
-typedef struct lrs_dat lrs_dat;
 
 extern FILE *lrs_cfp;			/* output file for checkpoint information       */
 extern FILE *lrs_ifp;			/* input file pointer       */

@@ -53,7 +53,7 @@ static long pivoting=FALSE;      /* =0 no overflow =1 restart overwrite =2 resta
 
 static jmp_buf buf1;
 
-static lrs_dat_p *lrs_global_list[MAX_LRS_GLOBALS + 1];
+static lrs_dat *lrs_global_list[MAX_LRS_GLOBALS + 1];
 
 static lrs_dic *new_lrs_dic (long m, long d, long m_A);
 
