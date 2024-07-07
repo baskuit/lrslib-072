@@ -132,16 +132,7 @@
  #define mptodouble(a)           mpz_get_d ( (a) )
  #define mpgetstr10(a,c)	 mpgetstr(a,10,c)
  #define mpgetstr(a,b,c)         mpz_get_str((a),(b),(c))
-#ifndef PLRS
  #define mpoutstr(a,b,c)         mpz_out_str((a),(b),(c))
-#else
- #define mpoutstr(a,b,c) \
-  {\
-    char *tmp = mpz_get_str(NULL,10,c);\
-    fprintf(lrs_ofp, "%s", tmp);\
-    free(tmp);\
-  }
-#endif
  #define mulint(a, b, c)         mpz_mul((c),(a),(b))
  #define mului(a, b, c)          mpz_mul_ui((a),(b),(c))
  #define one(a)                  (mpz_cmp_si((a),ONE) == 0 ? ONE : ZERO)
@@ -247,9 +238,6 @@ void lrs_clear_mp_matrix (lrs_mp_matrix p, long m, long n); /* clear m by n lrs_
 void atomp (const char s[], lrs_mp a);	/* convert string to lrs_mp integer               */
 long compare (lrs_mp a, lrs_mp b);	/* a ? b and returns -1,0,1 for <,=,>             */
 void linint (lrs_mp a, long ka, lrs_mp b, long kb);     /* compute a*ka+b*kb --> a        */
-#ifdef PLRS
-long plrs_readrat (lrs_mp Na, lrs_mp Da, const char * rat);	/* take a rational number and convert to lrs_mp   */
-#endif
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* mp rat to char  */
 char *cpmp(const char *name, lrs_mp Nt);             /* mp int to char  */
 void pmp (const char *name, lrs_mp a);	/* print the long precision integer a             */

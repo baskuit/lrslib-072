@@ -290,9 +290,6 @@ void gcd (lrs_mp u, lrs_mp v);	/* returns u=gcd(u,v) destroying v               
 void mptodouble (lrs_mp a, double *x);	/* convert lrs_mp to double                       */
 long mptoi (lrs_mp a);		/* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp); /* convert lrs_mp to string */
-#ifdef PLRS
-long plrs_readrat (lrs_mp Na, lrs_mp Da, const char * rat);	/* take a rational number and convert to lrs_mp   */
-#endif
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* mp rat to char  */
 char *cpmp(const char *name, lrs_mp Nt);             /* mp int to char  */
 void pmp (const char *name, lrs_mp a);	/* print the long precision integer a             */

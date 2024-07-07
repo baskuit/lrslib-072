@@ -1087,28 +1087,4 @@ lrs_default_digits_overflow ()
   lrs_overflow (1);
 }
 
-#ifdef PLRS
-
-/* read a rational or integer and convert to lrs_mp with base BASE */
-/* returns true if denominator is not one                      */
-/* returns 999 if premature end of file                        */
-long plrs_readrat (lrs_mp Na, lrs_mp Da, const char* rat)
-{
-        char in[MAXINPUT], num[MAXINPUT], den[MAXINPUT];
-        strcpy(in, rat);
-        atoaa (in, num, den);           /*convert rational to num/dem strings */
-        atomp (num, Na);
-        if (den[0] == '\0')
-        {
-                itomp (1L, Da);
-                return (FALSE);
-        }
-        atomp (den, Da);
-        return (TRUE);
-}
-
-#endif
-
-
-
 /* end of lrsmp.c */

@@ -725,11 +725,9 @@ long
 lrs_init (const char *name)       /* returns TRUE if successful, else FALSE */
 {
 
-#ifndef PLRS
 #ifndef LRS_QUIET
  if(overflow!=2)
   lrs_print_header(name);
-#endif
 #endif
 
   if (!lrs_mp_init (0, stdin, stdout))  /* initialize arithmetic */
@@ -746,10 +744,6 @@ lrs_init (const char *name)       /* returns TRUE if successful, else FALSE */
 void 
 lrs_close (const char *name)
 {
-
-#ifdef PLRS
-  return;
-#endif
 
 #ifdef LRS_QUIET
   fprintf (lrs_ofp, "\n");
@@ -827,9 +821,9 @@ lrs_alloc_dat (const char *name)
 /* initialize variables */
   Q->mplrs=FALSE;
   Q->messages=TRUE;
-#ifdef PLRS
-  Q->mplrs=TRUE;
-#endif
+// #ifdef PLRS
+  // Q->mplrs=TRUE;
+// #endif
 #ifdef LRS_QUIET
   Q->messages=FALSE;
 #endif
@@ -6126,50 +6120,25 @@ lrs_leaf(lrs_dic *P, lrs_dat *Q)
 /* prevent output flushes in mplrs */
 void lrs_open_outputblock(void)
 {
-#ifdef PLRS
-	open_outputblock();
-#endif
 }
 
 /* re-enable output flushes in mplrs */
 void lrs_close_outputblock(void)
 {
-#ifdef PLRS
-	close_outputblock();
-#endif
 }
 
 void lrs_post_output(const char *type, const char *data)
 {
-#ifdef PLRS
-     post_output(type,data);
-#endif
 }
 
 void lrs_return_unexplored(lrs_dic *P,lrs_dat *Q) /* send cobasis data for unexplored nodes */
 
 {
-
-#ifdef PLRS
-lrs_restart_dat R;
-int i;
-        if((Q->mindepth != 0) && (P->depth == Q->maxdepth))   /*2021.5.19 implement maxdepth in mplrs */
-          return;                                             /*don't send back to job queue!         */
-
-        for (i = 0; i < P->d; i++)
-              Q->temparray[i] = Q->inequality[P->C[i] - Q->lastdv];
-        R.facet=Q->temparray;
-        R.d=P->d;
-        R.depth=P->depth;
-        update_R(P,Q,&R);
-        post_R(&R);
-#else
     if(Q->verbose)
         {
         lrs_printcobasis(P,Q,ZERO);
         fprintf(lrs_ofp," *unexplored");
         }
-#endif
 }
 
 #ifdef MP
@@ -6201,11 +6170,7 @@ int try_restart=FALSE;
 
   if (lrs_global_list[0] == NULL)
   {
-#ifdef PLRS
-     post_output("warning","*lrs_overflow has null Q ");
-#else
      fprintf(stderr,"*lrs_overflow has null Q ");
-#endif
    lrs_exit(parm);
   }
 
@@ -6213,25 +6178,6 @@ int try_restart=FALSE;
 /* db's cunningly hidden locations */
   Q = lrs_global_list[lrs_global_count-1];     
   P = Q->Qhead;
-
-/* mplrs overflow handling */
-
-
-#if defined(PLRS)
-
-  if(Q->fel || Q->redund)
-     if(Q->Ain != NULL)
-       lrs_clear_mp_matrix(Q->Ain,Q->m,Q->n);
-
-  lrs_free_dic(P,Q);
-
-  if(Q->fel)
-      lrs_free_dat(Q);  /* in this case we free Q as it was alloc'ed in fel_run */
-
-  overflow=1;     
-  longjmp(buf1,1);              /* return to lrsv2_main */  
-
-#endif
 
 /* non mplrs overflow handling             */
 /* lrs, redund,fel restarted at the moment */

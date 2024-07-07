@@ -559,10 +559,8 @@ lrs_mp_init (long dec_digits, FILE * fpin, FILE * fpout)
 /* max number of decimal digits for the computation */
 /* long int version                                 */
 {
-#ifndef PLRS
   lrs_ifp = fpin;
   lrs_ofp = fpout;
-#endif
 
 #ifdef B128
 #ifndef CONS

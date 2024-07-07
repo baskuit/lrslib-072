@@ -159,9 +159,6 @@ void gcd (lrs_mp u, lrs_mp v);	/* returns u=gcd(u,v) destroying v               
 long mp_greater (lrs_mp a, lrs_mp b);	/* tests if a > b and returns (TRUE=POS)          */
 void itomp (long in, lrs_mp a);	/* convert integer i to lrs_mp                    */
 void linint (lrs_mp a, long ka, lrs_mp b, long kb);	/* compute a*ka+b*kb --> a                        */
-#ifdef PLRS
-long plrs_readrat (lrs_mp Na, lrs_mp Da, const char * rat);     /* take a rational number and convert to lrs_mp   */
-#endif
 
 void mptodouble (lrs_mp a, double *x);	/* convert lrs_mp to double                       */
 long mptoi (lrs_mp a);		/* convert lrs_mp to long integer */
