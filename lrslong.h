@@ -230,56 +230,6 @@ lrs_mp_matrix lrs_alloc_mp_matrix (long m, long n);	/* allocate lrs_mp_matrix fo
 void lrs_clear_mp_vector (lrs_mp_vector a, long n);
 void lrs_clear_mp_matrix (lrs_mp_matrix a, long m, long n);
 
-#ifndef MA
-#define suf(func) func
-#endif
-
-#ifdef MA
-#ifdef B128
-#define suf(func) func##_2
-#else
-#define suf(func) func##_1
-#endif
-#endif
-
-#define atoaa suf(atoaa)
-#define atomp suf(atomp)
-#define comprod suf(comprod)
-#define divrat suf(divrat)
-#define gcd suf(gcd)
-#define getfactorial suf(getfactorial)
-#define lcm suf(lcm)
-#define linrat suf(linrat)
-#define lrs_alloc_mp_matrix suf(lrs_alloc_mp_matrix)
-#define lrs_alloc_mp_t suf(lrs_alloc_mp_t)
-#define lrs_alloc_mp_vector suf(lrs_alloc_mp_vector)
-#define lrs_clear_mp_matrix suf(lrs_clear_mp_matrix)
-#define lrs_clear_mp_vector suf(lrs_clear_mp_vector)
-#define lrs_digits suf(lrs_digits)
-#define lrs_getdigits suf(lrs_getdigits)
-#define lrs_overflow suf(lrs_overflow)
-#define lrs_mp_init suf(lrs_mp_init)
-#define lrs_record_digits suf(lrs_record_digits)
-#define mptodouble suf(mptodouble)
-#define mptoi suf(mptoi)
-#define mpgetstr10 suf(mpgetstr10)
-#define mulrat suf(mulrat)
-#define myrandom suf(myrandom)
-#define notimpl suf(notimpl)
-#define pmp suf(pmp)
-#define prat suf(prat)
-#define cprat suf(cprat)
-#define cpmp suf(cpmp)
-#define rattodouble suf(rattodouble)
-#define readmp suf(readmp)
-#define readrat suf(readrat)
-#define plrs_readrat suf(plrs_readrat)
-#define reduce suf(reduce)
-#define reducearray suf(reducearray)
-#define reduceint suf(reduceint)
-#define stringcpy suf(stringcpy)
-#define xcalloc suf(xcalloc)
-
 /*********************************************************/
 /* Core library functions - depend on mp implementation  */
 /******************************************************* */

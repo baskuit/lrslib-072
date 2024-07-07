@@ -31,7 +31,6 @@
 /***********/
 /* defines */
 /***********/
-#define suf(func) func
 /*
    this is number of longwords. Increasing this won't cost you that much
    since only variables other than the A matrix are allocated this size.

@@ -75,43 +75,6 @@
 #define TWO 2L
 #define ZERO 0L
 
-#ifdef MA
-#define suf(func) func##_gmp
-#else
-#define suf(func) func
-#endif
-
-#define atoaa suf(atoaa)
-#define atomp suf(atomp)
-#define comprod suf(comprod)
-#define divrat suf(divrat)
-#define lcm suf(lcm)
-#define linint suf(linint)
-#define linrat suf(linrat)
-#define lrs_alloc_mp_matrix suf(lrs_alloc_mp_matrix)
-#define lrs_alloc_mp_vector suf(lrs_alloc_mp_vector)
-#define lrs_clear_mp_matrix suf(lrs_clear_mp_matrix)
-#define lrs_clear_mp_vector suf(lrs_clear_mp_vector)
-#define lrs_getdigits suf(lrs_getdigits)
-#define lrs_mp_init suf(lrs_mp_init)
-#define mulrat suf(mulrat)
-#define myrandom suf(myrandom)
-#define notimpl suf(notimpl)
-#define pmp suf(pmp)
-#define prat suf(prat)
-#define cprat suf(cprat)
-#define cpmp  suf(cpmp )
-#define rattodouble suf(rattodouble)
-#define readmp suf(readmp)
-#define readrat suf(readrat)
-#define plrs_readrat suf(plrs_readrat)
-#define reduce suf(reduce)
-#define reducearray suf(reducearray)
-#define reduceint suf(reduceint)
-#define storesign suf(storesign)
-#define stringcpy suf(stringcpy)
-#define xcalloc suf(xcalloc)
-
 /**********************************/
 /*         MACROS                 */
 /* dependent on mp implementation */
