@@ -54,8 +54,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
 long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, long player);
 /* returns TRUE and prints output if not the origin */
 
-int lrs_solve_nash_legacy(int argc, char *argv[]);
-
 void BuildRep(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2);
 void FillFirstRow(lrs_dic *P, lrs_dat *Q, int n);
 void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n);

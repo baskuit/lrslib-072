@@ -264,26 +264,6 @@ int getArgs(int argc, char **argv) {
   return TRUE;
 }
 
-//----------------------------------------------------------------------------------------//
-// Checks if an input file is legacy (contains letters)
-int isLegacy(const char *filename) {
-  FILE *fp;
-  int i, n, foundLetter = FALSE;
-  char buf[100];
-
-  if ((fp = fopen(filename, "r")) == NULL)
-    FILEERROR(filename);
-
-  n = fread(buf, sizeof(char), 100, fp);
-  for (i = 0; i < n; i++)
-    if (isalpha(buf[i])) {
-      foundLetter = TRUE;
-      break;
-    }
-  fclose(fp);
-  return foundLetter;
-}
-
 //========================================================================
 // Main()
 //========================================================================
@@ -297,23 +277,17 @@ int main(int argc, char **argv) {
                argv)) // Read options and input file names. When we get here:
     return 1;         // optind is a global integer supplied by getopt, and
                       // argv[optind] is the first non-option argument in argv
-  if (Standard_input_flag   // Assume standard input files if user set the flag,
-      || optind == argc - 1 // or if only one input file,
-      || !isLegacy(argv[optind])) // or if the first input file is not legacy
-  {
-    if (!openIO())
-      return 1;
-    while (optind < argc) { // Handle standard input file[s]
-      if (readGame(g, argv[optind++])) {
-        if (Print_game_flag)
-          printGame(g);
-        lrs_solve_nash(g);
-      }
+
+  if (!openIO())
+    return 1;
+  while (optind < argc) { // Handle standard input file[s]
+    if (readGame(g, argv[optind++])) {
+      if (Print_game_flag)
+        printGame(g);
+      lrs_solve_nash(g);
     }
-    closeIO();
-  } else {                            // Handle legacy input files
-    fprintf(stderr, "%s", LegacyMsg); // Print a message to user
-    lrs_solve_nash_legacy(argc, argv);
   }
+  closeIO();
+
   return 0;
 }

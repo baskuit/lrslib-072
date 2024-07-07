@@ -247,8 +247,6 @@ lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
 long lrs_estimate(lrs_dic *P, lrs_dat *Q); /* get estimates only and returns est
                                               number of cobases in subtree */
-long lrs_read_dat(lrs_dat *Q, int argc,
-                  char *argv[]); /* read header and set up lrs_dat */
 long lrs_read_dic(lrs_dic *P,
                   lrs_dat *Q); /* read input and set up problem and lrs_dic */
 long lrs_checkbound(
