@@ -191,7 +191,6 @@ struct lrs_dat /* global problem data   */
   long printslack;    /* TRUE if indices of slack inequal. printed    */
   long redund;        /* TRUE for computing nash equilibria           */
   long truncate;      /* TRUE: truncate tree when moving from opt vert*/
-  long verbose;       /* FALSE for minimalist output                  */
   long restart;       /* TRUE if restarting from some cobasis         */
   long strace;        /* turn on  debug at basis # strace             */
   long voronoi;       /* compute voronoi vertices by transformation   */

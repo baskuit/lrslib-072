@@ -28,7 +28,6 @@ char Helptext[] =
     "  Input files can be specified separately, or by using wildcards, as in "
     "'game*'\n"
     "  Options:\n"
-    "    -v, --verbose         Prints a trace of the solution process\n"
     "    -d, --debug           Dumps lots of information for debugging\n"
     "    -p, --printgame       Prints the payoff matrix for the game\n"
     "    -s, --standard        Promise that input files have standard "
@@ -200,7 +199,6 @@ int getArgs(int argc, char **argv) {
 
   while (1) {
     static struct option long_options[] = {
-        {"verbose", no_argument, 0, 'v'},
         {"debug", no_argument, 0, 'd'},
         {"printgame", no_argument, 0, 'p'},
         {"standard", no_argument, 0, 's'},
@@ -226,10 +224,6 @@ int getArgs(int argc, char **argv) {
     case ':':
       fprintf(stderr, "\nError: Missing argument to option '-%c'.\n", optopt);
       error = TRUE;
-      break;
-
-    case 'v':
-      Verbose_flag = TRUE;
       break;
 
     case 'd':

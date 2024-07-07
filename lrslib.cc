@@ -287,14 +287,10 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
 
       if (redineq[ineq] == 1) {
         c1++;
-        if (Q->verbose)
-          fprintf(lrs_ofp, "\n*pr ineq=%ld ", ineq);
       }
       if (redineq[ineq] == -1) {
         checkindex(P, Q,
                    -index); /* used to zero correct row of A no LP solved */
-        if (Q->verbose)
-          fprintf(lrs_ofp, "\n*sr ineq=%ld ", ineq);
       }
     }
   }
@@ -319,14 +315,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
       if (debug)
         fprintf(lrs_ofp, "\ncheck index=%ld, inequality=%ld, redineq=%ld",
                 index, ineq, redineq[ineq]);
-      if (Q->verbose && !Q->mplrs) {
-        if (redineq[ineq] == 1)
-          lrs_printrow("*re ", Q, Ain[ineq], Q->inputd);
-        else if (redineq[ineq] == -1)
-          lrs_printrow("*sr ", Q, Ain[ineq], Q->inputd);
-        else
-          lrs_printrow("*nr ", Q, Ain[ineq], Q->inputd);
-      }
     }
 
   } /* end for index ..... */
@@ -426,17 +414,17 @@ void redund_print(lrs_dic *P, lrs_dat *Q) {
 
   fprintf(lrs_ofp, "\nend");
 
-  if (Q->verbose || Q->redund)
+  if (Q->redund)
     fprintf(lrs_ofp, "\n*Input had %ld rows and %ld columns", m, Q->n);
 
   redineq[0] = m - nredund - nlinearity; /* number of redundant rows */
 
   if (m == nredund || redineq[0] == 0) {
-    if (Q->verbose || Q->redund)
+    if (Q->redund)
       fprintf(lrs_ofp, "\n*No redundant rows found\n");
   } else {
     j = 0;
-    if (Q->verbose || Q->redund) {
+    if (Q->redund) {
       fprintf(lrs_ofp, "\n* %ld redundant row(s) found\n", redineq[0]);
       for (i = 1; i <= m; i++)
         if (redineq[i] == 1 || redineq[i] == -1) {
@@ -527,26 +515,6 @@ void lrs_lpoutput(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output) {
 
   prat("\n*Obj=", P->objnum, P->objden);
   fprintf(lrs_ofp, "    pivots=%ld ", Q->count[3]);
-  if (Q->verbose) {
-    fprintf(lrs_ofp, "\n\n*Primal: ");
-    for (i = 1; i < Q->n; i++) {
-      fprintf(lrs_ofp, "x_%ld=", i);
-      prat("", output[i], output[0]);
-    }
-    if (Q->nlinearity > 0)
-      fprintf(lrs_ofp,
-              "\n\n*Linearities in input file - partial dual solution only");
-    fprintf(lrs_ofp, "\n\n*Dual: ");
-
-    for (i = 0; i < P->d; i++) {
-      fprintf(lrs_ofp, "y_%ld=", Q->inequality[P->C[i] - Q->lastdv]);
-      changesign(P->A[0][P->Col[i]]);
-      mulint(Q->Lcm[P->Col[i]], P->A[0][P->Col[i]], Temp1);
-      mulint(Q->Gcd[P->Col[i]], P->det, Temp2);
-      prat("", Temp1, Temp2);
-      changesign(P->A[0][P->Col[i]]);
-    }
-  }
   fprintf(lrs_ofp, "\n");
   lrs_clear_mp(Temp1);
   lrs_clear_mp(Temp2);
@@ -811,7 +779,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->printslack = FALSE;
   Q->truncate = FALSE; /* truncate tree when moving from opt vertex        */
   Q->extract = FALSE;
-  Q->verbose = FALSE;
   Q->voronoi = FALSE;
   Q->maximize = FALSE;   /*flag for LP maximization                          */
   Q->minimize = FALSE;   /*flag for LP minimization                          */
@@ -935,11 +902,6 @@ long lrs_read_dic(lrs_dic *P, lrs_dat *Q)
       itomp(ONE, Lcm[i]);
       itomp(ONE, Gcd[i]);
     }
-
-  if (Q->homogeneous && Q->verbose && overflow != 2) {
-    lrs_warning(Q, "warning",
-                "*Input is homogeneous, column 1 not treated as redundant");
-  }
 
   /* read in flags */
   while (fscanf(lrs_ifp, "%s", name) != EOF) {
@@ -1391,9 +1353,6 @@ long lrs_read_dic(lrs_dic *P, lrs_dat *Q)
       }
     }
 
-    if (strcmp(name, "verbose") == 0)
-      Q->verbose = TRUE;
-
     if (strcmp(name, "bound") == 0) {
       readrat(Q->boundn, Q->boundd);
       Q->bound = TRUE;
@@ -1552,23 +1511,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(scale);
-
-  if (Q->verbose && overflow != 2) {
-    if (Q->nlinearity > 0 && Q->nonnegative) {
-      fprintf(lrs_ofp, "\n*linearity and nonnegative options incompatible");
-      fprintf(lrs_ofp, " - all linearities are skipped");
-      fprintf(lrs_ofp, "\n*add nonnegative constraints explicitly and ");
-      fprintf(lrs_ofp, " remove nonnegative option");
-    }
-
-    if (Q->nlinearity && Q->voronoi)
-      fprintf(lrs_ofp,
-              "\n*linearity and Voronoi options set - results unpredictable");
-
-    if (Q->lponly && !Q->maximize && !Q->minimize)
-      fprintf(lrs_ofp,
-              "\n*LP has no objective function given - assuming all zero");
-  }
 
   if (Q->runs > 0) /* arrays for estimator */
   {
@@ -1770,15 +1712,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   } /* end if nredundcol > 0 */
 
-  if (Q->lponly || Q->nash) {
-    if (Q->verbose) {
-      fprintf(lrs_ofp, "\nNumber of pivots for starting dictionary: %ld",
-              Q->count[3]);
-      if (Q->lponly && Q->debug)
-        printA(D, Q);
-    }
-  }
-
   /*2017.12.22   If you want to do criss-cross now is the time ! */
 
   /* Do dual pivots to get primal feasibility */
@@ -1786,33 +1719,14 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     if (!Q->mplrs)
       fprintf(lrs_ofp, "\nend");
     lrs_warning(Q, "finalwarn", "\nNo feasible solution\n");
-    if (Q->nash && Q->verbose) {
-      fprintf(lrs_ofp, "\nNumber of pivots for feasible solution: %ld",
-              Q->count[3]);
-      fprintf(lrs_ofp, " - No feasible solution");
-    }
     return FALSE;
   }
-
-  if (Q->lponly || Q->nash)
-    if (Q->verbose) {
-      fprintf(lrs_ofp, "\nNumber of pivots for feasible solution: %ld",
-              Q->count[3]);
-      if (Q->lponly && Q->debug)
-        printA(D, Q);
-    }
 
   /* Now solve LP if objective function was given */
   if (Q->maximize || Q->minimize) {
     Q->unbounded = !lrs_solvelp(D, Q, Q->maximize);
     if (Q->lponly) {
 
-      if (Q->verbose) {
-        fprintf(lrs_ofp, "\nNumber of pivots for optimum solution: %ld",
-                Q->count[3]);
-        if (Q->debug)
-          printA(D, Q);
-      }
       lrs_clear_mp(Temp);
       lrs_clear_mp(scale);
       return TRUE;
@@ -1920,11 +1834,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
         Q->printcobasis = saveflag;
         if (cob_est <= Q->subtreesize) /* stop iterative estimation */
         {
-          if (Q->verbose && cob_est > 0) /* when zero we are at a leaf */
-          {
-            lrs_printcobasis(D, Q, ZERO);
-            fprintf(lrs_ofp, " cob_est= %ld *subtree", cob_est);
-          }
           backtrack = TRUE;
         }
 
@@ -4042,9 +3951,6 @@ long readfacets(lrs_dat *Q, long facet[])
     facet[j] = strtol(p, &e, 10);
     if (p == e)
       break;
-    /*2021.12.3
-            if(!Q->mplrs && Q->verbose && overflow != 2)
-    */
     if (!Q->mplrs && overflow != 2)
       fprintf(lrs_ofp, " %ld", facet[j]);
 
@@ -4220,16 +4126,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   if (Q->fel) /* complement for fel mode - don't ask! */
     for (j = 1; j < n; j++)
       output[j] = 1 - output[j];
-
-  if (Q->verbose) {
-    fprintf(lrs_ofp, "\n*output");
-    for (j = 0; j < n; j++)
-      fprintf(lrs_ofp, " %ld", output[j]);
-    fprintf(lrs_ofp, "\n*columns retained:");
-    for (j = 0; j < n; j++)
-      if (output[j])
-        fprintf(lrs_ofp, " %ld", j);
-  }
 
   if (Q->fel) /* fel mode remove redundancy */
   {
@@ -5463,18 +5359,10 @@ long lrs_checkbound(lrs_dic *P, lrs_dat *Q) {
     return FALSE;
 
   if (Q->maximize && comprod(Q->boundn, P->objden, P->objnum, Q->boundd) == 1) {
-    if (Q->verbose) {
-      prat(" \nObj value: ", P->objnum, P->objden);
-      fprintf(lrs_ofp, " Pruning ");
-    }
     return TRUE;
   }
   if (Q->minimize &&
       comprod(Q->boundn, P->objden, P->objnum, Q->boundd) == -1) {
-    if (Q->verbose) {
-      prat(" \nObj value: ", P->objnum, P->objden);
-      fprintf(lrs_ofp, " Pruning ");
-    }
     return TRUE;
   }
   return FALSE;
@@ -5505,10 +5393,6 @@ void lrs_return_unexplored(
     lrs_dic *P, lrs_dat *Q) /* send cobasis data for unexplored nodes */
 
 {
-  if (Q->verbose) {
-    lrs_printcobasis(P, Q, ZERO);
-    fprintf(lrs_ofp, " *unexplored");
-  }
 }
 
 #ifdef MP
@@ -5786,7 +5670,7 @@ long lrs_check_inequality(lrs_dic *P, lrs_dat *Q) {
     }
     if (!mp_greater(opt, total)) {
       count++;
-      if (Q->verbose || Q->debug) {
+      if (Q->debug) {
         fprintf(lrs_ofp, "\n%ld: ", i);
         for (j = 1; j <= d; j++)
           if (!zero(P->A[i][1]))

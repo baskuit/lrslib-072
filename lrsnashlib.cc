@@ -71,7 +71,6 @@ int lrs_solve_nash(game *g) {
   Q1->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
 
   Q1->debug = Debug_flag;
-  Q1->verbose = Verbose_flag;
 
   P1 = lrs_alloc_dic(Q1); /* allocate and initialize lrs_dic */
   if (P1 == NULL) {
@@ -90,7 +89,6 @@ int lrs_solve_nash(game *g) {
   }
 
   Q2->debug = Debug_flag;
-  Q2->verbose = Verbose_flag;
 
   Q2->nash = TRUE;
   Q2->n = g->nstrats[COL] + 2;
@@ -164,9 +162,7 @@ int lrs_solve_nash(game *g) {
     if (!prune && lrs_getsolution(P1, Q1, output1, col)) {
       oldnum = numequilib;
       nash2_main(P1, Q1, P2orig, Q2, &numequilib, output2, linindex);
-      if (numequilib > oldnum || Q1->verbose) {
-        if (Q1->verbose)
-          prat(" \np2's obj value: ", P1->objnum, P1->objden);
+      if (numequilib > oldnum) {
         lrs_nashoutput(Q1, output1, 1L);
         fprintf(lrs_ofp, "\n");
       }
@@ -259,12 +255,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   for (i = 1; i < nlinearity; i++)
     reorder(linearity, nlinearity);
 
-  if (Q2->verbose) {
-    fprintf(lrs_ofp, "\np2: linearities %ld", nlinearity);
-    for (i = 0; i < nlinearity; i++)
-      fprintf(lrs_ofp, " %ld", linearity[i]);
-  }
-
   Q2->nlinearity = nlinearity;
   Q2->polytope = FALSE;
 
@@ -320,8 +310,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
     prune = lrs_checkbound(P2, Q2);
     col = 0;
     if (!prune && lrs_getsolution(P2, Q2, output, col)) {
-      if (Q2->verbose)
-        prat(" \np1's obj value: ", P2->objnum, P2->objden);
       if (lrs_nashoutput(Q2, output, 2L))
         (*numequilib)++;
     }
@@ -485,24 +473,9 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     }
   } /* end if nredundcol > 0 */
 
-  if (Q->verbose) {
-    fprintf(lrs_ofp, "\nNumber of pivots for starting dictionary: %ld",
-            Q->count[3]);
-  }
-
   /* Do dual pivots to get primal feasibility */
   if (!primalfeasible(D, Q)) {
-    if (Q->verbose) {
-      fprintf(lrs_ofp, "\nNumber of pivots for feasible solution: %ld",
-              Q->count[3]);
-      fprintf(lrs_ofp, " - No feasible solution");
-    }
     return FALSE;
-  }
-
-  if (Q->verbose) {
-    fprintf(lrs_ofp, "\nNumber of pivots for feasible solution: %ld",
-            Q->count[3]);
   }
 
   /* Now solve LP if objective function was given */
@@ -630,7 +603,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
           /* this is not necessarily an error, eg. two identical rows/cols in
            * payoff matrix */
           if (!zero(A[Row[i]][0])) { /* error condition */
-            if (Q->debug || Q->verbose) {
+            if (Q->debug) {
               fprintf(lrs_ofp, "\n*Infeasible linearity i=%ld B[i]=%ld", i,
                       B[i]);
               if (Q->debug)
@@ -638,7 +611,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
             }
             return (FALSE);
           }
-          if (Q->debug || Q->verbose) {
+          if (Q->debug) {
             fprintf(lrs_ofp, "\n*Couldn't remove linearity i=%ld B[i]=%ld", i,
                     B[i]);
           }
@@ -687,7 +660,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
           } else {
             if (Q->debug)
               printA(P, Q);
-            if (Q->debug || Q->verbose)
+            if (Q->debug)
               fprintf(lrs_ofp, "\nInconsistent linearities");
             return FALSE;
           }
@@ -750,7 +723,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
     while (k < d && C[k] != linearity[i] + d)
       k++;
     if (k >= d) {
-      if (Q->debug || Q->verbose) {
+      if (Q->debug) {
         fprintf(lrs_ofp, "\nCould not remove cobasic index");
       }
       /* not neccesarily an error as eg., could be repeated row/col in payoff */
