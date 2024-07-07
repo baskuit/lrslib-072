@@ -163,7 +163,6 @@ struct lrs_dat /* global problem data   */
   long bound;         /* TRUE if upper/lower bound on objective given */
   long countonly;     /* TRUE if only count totals should be output   */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
-  long etrace;        /* turn off debug at basis # strace             */
   long extract;       /* remove linearities if any and extractcols    */
   long frequency;     /* frequency to print cobasis indices           */
   long geometric;     /* TRUE if incident vertex prints after each ray */
@@ -187,15 +186,12 @@ struct lrs_dat /* global problem data   */
   long long mindepth; /* do not backtrack above mindepth              */
   long fel;           /* TRUE if doing fourier elimination */
   long mplrs;         /* TRUE if compiled for mplrs                   */
-  long nash;          /* TRUE for computing nash equilibria           */
   long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */
   long printcobasis;  /* TRUE if all cobasis should be printed        */
   long printslack;    /* TRUE if indices of slack inequal. printed    */
   long redund;        /* TRUE for computing nash equilibria           */
   long truncate;      /* TRUE: truncate tree when moving from opt vert*/
-  long restart;       /* TRUE if restarting from some cobasis         */
-  long strace;        /* turn on  debug at basis # strace             */
   long voronoi;       /* compute voronoi vertices by transformation   */
   long long
       subtreesize;    /* in estimate mode, iterates if cob_est >= subtreesize */
@@ -249,8 +245,6 @@ lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
 long lrs_estimate(lrs_dic *P, lrs_dat *Q); /* get estimates only and returns est
                                               number of cobases in subtree */
-long lrs_read_dic(lrs_dic *P,
-                  lrs_dat *Q); /* read input and set up problem and lrs_dic */
 long lrs_checkbound(
     lrs_dic *P,
     lrs_dat *Q); /* TRUE if current objective value exceeds specified bound */

@@ -65,7 +65,6 @@ int lrs_solve_nash(game *g) {
     return 0;
   }
 
-  Q1->nash = TRUE;
   Q1->n = g->nstrats[ROW] + 2;
   Q1->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
 
@@ -85,7 +84,6 @@ int lrs_solve_nash(game *g) {
     return 0;
   }
 
-  Q2->nash = TRUE;
   Q2->n = g->nstrats[COL] + 2;
   Q2->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
 
@@ -492,11 +490,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     reorder1(C, Col, ZERO, d);
   }
 
-  if (Q->restart) {
-    if (!restartpivots(D, Q))
-      return FALSE;
-    D->lexflag = lexmin(D, Q, ZERO); /* see if lexmin basis */
-  }
   /* Check to see if necessary to resize */
   if (Q->inputd > D->d)
     *D_p = resize(D, Q);
