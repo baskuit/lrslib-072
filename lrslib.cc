@@ -145,10 +145,6 @@ long lrs_run(lrs_dic *P, lrs_dat *Q)
   /* prune is TRUE if tree should be pruned at current node */
   do {
 
-    // 2015.6.5   after maxcobases reached, generate subtrees that have not been
-    // enumerated 2018.1.19  fix printcobasis bug when maxcobases set 2019.5.8
-    // new givoutput flag to avoid printing restart cobases
-
     prune = lrs_checkbound(P, Q);
 
     if (!prune && Q->giveoutput) {
@@ -176,8 +172,6 @@ long lrs_run(lrs_dic *P, lrs_dat *Q)
 
   if (Q->lponly)
     lrs_lpoutput(P, Q, Q->output);
-  else
-    lrs_printtotals(P, Q); /* print final totals, including estimates       */
 
   Q->m = P->m;
   lrs_free_dic(P, Q); /* note Q is not free here and can be reused     */
@@ -737,7 +731,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->getvolume = FALSE;
   Q->homogeneous = TRUE;
   Q->polytope = FALSE;
-  Q->triangulation = FALSE;
   Q->hull = FALSE;
   Q->incidence = FALSE;
   Q->lponly = FALSE;
@@ -751,15 +744,12 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->fel = FALSE;
 
   Q->nonnegative = FALSE;
-  Q->printcobasis = FALSE;
   Q->printslack = FALSE;
   Q->truncate = FALSE; /* truncate tree when moving from opt vertex        */
-  Q->extract = FALSE;
   Q->voronoi = FALSE;
   Q->maximize = FALSE;   /*flag for LP maximization                          */
   Q->minimize = FALSE;   /*flag for LP minimization                          */
   Q->givenstart = FALSE; /* TRUE if a starting cobasis is given              */
-  Q->newstart = FALSE;
   Q->giveoutput = TRUE; /* set to false for first output after restart      */
   Q->verifyredund = FALSE;  /* set to true when mplrs verifies redund output  */
   Q->noredundcheck = FALSE; /* set to true when mplrs skips verifying output */
@@ -836,12 +826,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   inequality = Q->inequality;
 
   /**2020.6.17 with extract just select columns and quit */
-
-  if (Q->extract)
-    if (Q->hull || Q->nlinearity == 0) {
-      extractcols(D, Q);
-      return FALSE;
-    }
 
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(scale);
@@ -926,11 +910,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
    * matrix */
   /* should be followed by redund to get minimum representation */
 
-  if (Q->extract) {
-    linextractcols(D, Q);
-    return FALSE;
-  }
-
   nredundcol = Q->nredundcol;
   lastdv = Q->lastdv;
   d = D->d;
@@ -938,49 +917,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /********************************************************************/
   /* now we start printing the output file  unless no output requested */
   /********************************************************************/
-
-  if (Q->count[2] == 1 && (no_output == 0)) /* don't reprint after newstart */
-  {
-    int len = 0;
-    char *header;
-
-    header = (char *)malloc((100 + 20 * Q->n) * sizeof(char));
-
-    if (Q->voronoi)
-      len = sprintf(header,
-                    "*Voronoi Diagram: Voronoi vertices and rays are output");
-    else {
-      if (hull)
-        len = sprintf(header, "H-representation");
-      else
-        len = sprintf(header, "V-representation");
-    }
-
-    /* Print linearity space                 */
-    /* Don't print linearity if first column zero in hull computation */
-
-    if (hull && Q->homogeneous)
-      k = 1; /* 0 normally, 1 for homogeneous case     */
-    else
-      k = 0;
-
-    if (nredundcol > k) {
-      len = len + sprintf(header + len, "\nlinearity %ld ",
-                          nredundcol - k); /*adjust nredundcol for homog. */
-      for (i = 1; i <= nredundcol - k; i++)
-        len = len + sprintf(header + len, " %ld", i);
-    } /* end print of linearity space */
-
-    len = len + sprintf(header + len, "\nbegin");
-    len = len + sprintf(header + len, "\n***** %ld rational", Q->n);
-
-    if (Q->mplrs)
-      lrs_post_output("header", header);
-    else if (Q->messages)
-      fprintf(lrs_ofp, "\n%s", header);
-
-    free(header);
-  }
 
   /* end of if !no_output .......   */
 
@@ -1121,10 +1057,8 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
         // 2015.2.9 do iterative estimation backtracking when estimate is small
 
-        saveflag = Q->printcobasis;
-        Q->printcobasis = FALSE;
+        saveflag = false;
         cob_est = lrs_estimate(D, Q);
-        Q->printcobasis = saveflag;
         if (cob_est <= Q->subtreesize) /* stop iterative estimation */
         {
           backtrack = TRUE;
@@ -1132,7 +1066,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
       } else // either not estimating or we are backtracking
 
-        // 2018.1.19              if (!backtrack && !Q->printcobasis)
         if (!backtrack)
           if (!lrs_leaf(D, Q)) /* 2015.6.5 cobasis returned if not a leaf */
             lrs_return_unexplored(D, Q);
@@ -1234,17 +1167,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
     linint(Q->sumdet, 1, P->det, 1);
     updatevolume(P, Q);
   }
-  if (Q->triangulation) /* this will print out a triangulation */
-    lrs_printcobasis(P, Q, ZERO);
-
-  /*print cobasis if printcobasis=TRUE and count[2] a multiple of frequency */
-  /* or for lexmin basis, except origin for hull computation - ugly!        */
-
-  if (Q->printcobasis)
-    if ((lexflag && !hull) ||
-        ((Q->frequency > 0) &&
-         (count[2] == (count[2] / Q->frequency) * Q->frequency)))
-      lrs_printcobasis(P, Q, ZERO);
 
   if (hull)
     return FALSE; /* skip printing the origin */
@@ -1322,8 +1244,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
 
   if (redcol == n) {
     ++count[0];
-    if (Q->printcobasis)
-      lrs_printcobasis(P, Q, col);
   }
 
   i = 1;
@@ -1405,330 +1325,6 @@ void getnextoutput(lrs_dic *P, lrs_dat *Q, long i, long col, lrs_mp out)
 
 } /* end of getnextoutput */
 
-void lrs_printcobasis(lrs_dic *P, lrs_dat *Q, long col)
-/* col is output column being printed */
-{
-  char *ss, *sdet, *sin_det, *sz;
-  long i;
-  long rflag; /* used to find inequality number for ray column */
-  /* assign local variables to structures */
-  lrs_mp_matrix A = P->A;
-  lrs_mp Nvol, Dvol; /* hold rescaled det of current basis */
-  long *B = P->B;
-  long *C = P->C;
-  long *Col = P->Col;
-  long *Row = P->Row;
-  long *inequality = Q->inequality;
-  long *temparray = Q->temparray;
-  long *count = Q->count;
-  long hull = Q->hull;
-  long d = P->d;
-  long lastdv = Q->lastdv;
-  long m = P->m;
-  long firstime = TRUE;
-  long nincidence; /* count number of tight inequalities */
-  long len = 0;
-
-  lrs_alloc_mp(Nvol);
-  lrs_alloc_mp(Dvol);
-
-  /* convert lrs_mp to char, compute length of string ss and malloc*/
-
-  sdet = cpmp(" det=", P->det);
-
-  rescaledet(P, Q, Nvol, Dvol); /* scales determinant in case input rational */
-  sin_det = cprat("in_det=", Nvol, Dvol);
-
-  sz = cprat("z=", P->objnum, P->objden);
-
-  len = snprintf(NULL, 0, "%s%s%s", sdet, sin_det, sz);
-
-  ss = (char *)malloc(len + (d + m) * 20);
-
-  /* build the printcobasis string */
-
-  len = 0;
-  if (hull)
-    len = len + sprintf(ss + len, "F#%ld B#%ld h=%ld vertices/rays ", count[0],
-                        count[2], P->depth);
-  else if (Q->voronoi)
-    len = len + sprintf(ss + len, "V#%ld R#%ld B#%ld h=%ld data points ",
-                        count[1], count[0], count[2], P->depth);
-  else
-    len = len + sprintf(ss + len, "V#%ld R#%ld B#%ld h=%ld facets ", count[1],
-                        count[0], count[2], P->depth);
-
-  rflag = (-1);
-  for (i = 0; i < d; i++) {
-    temparray[i] = inequality[C[i] - lastdv];
-    if (Col[i] == col)
-      rflag = temparray[i]; /* look for ray index */
-  }
-  for (i = 0; i < d; i++)
-    reorder(temparray, d);
-  for (i = 0; i < d; i++) {
-    len = len + sprintf(ss + len, " %ld", temparray[i]);
-
-    if (!(col == ZERO) &&
-        (rflag == temparray[i])) /* missing cobasis element for ray */
-      len = len + sprintf(ss + len, "*");
-  }
-
-  /* get and print incidence information */
-  if (col == 0)
-    nincidence = d;
-  else
-    nincidence = d - 1;
-
-  for (i = lastdv + 1; i <= m; i++)
-    if (zero(A[Row[i]][0]))
-      if ((col == ZERO) || zero(A[Row[i]][col])) {
-        nincidence++;
-        if (Q->incidence) {
-          if (firstime) {
-            len = len + sprintf(ss + len, " :");
-            firstime = FALSE;
-          }
-          len = len + sprintf(ss + len, " %ld", inequality[B[i] - lastdv]);
-        }
-      }
-
-  len = len + sprintf(ss + len, " I#%ld", nincidence);
-
-  sprintf(ss + len, "%s %s %s ", sdet, sin_det, sz);
-
-  if (Q->mplrs)
-    lrs_post_output("cobasis", ss);
-  else
-    fprintf(lrs_ofp, "\n%s", ss);
-
-  free(ss);
-  free(sdet);
-  free(sin_det);
-  free(sz);
-  lrs_clear_mp(Nvol);
-  lrs_clear_mp(Dvol);
-
-} /* end of lrs_printcobasis */
-
-/*********************/
-/* print final totals */
-/*********************/
-void lrs_printtotals(lrs_dic *P, lrs_dat *Q) {
-  static int first_time = 1;
-  /* print warnings */
-
-  if (first_time) {
-    first_time = 0;
-
-    if (!Q->mplrs)
-      fprintf(lrs_ofp, "\nend");
-
-    if (Q->dualdeg) {
-      lrs_warning(Q, "finalwarn",
-                  "*Warning: Starting dictionary is dual degenerate");
-      lrs_warning(Q, "finalwarn",
-                  "*Complete enumeration may not have been produced");
-      if (Q->maximize)
-        lrs_warning(Q, "finalwarn",
-                    "*Recommendation: Add dualperturb option before maximize "
-                    "in input file\n");
-      else
-        lrs_warning(Q, "finalwarn",
-                    "*Recommendation: Add dualperturb option before minimize "
-                    "in input file\n");
-    }
-
-    if (Q->unbounded) {
-      lrs_warning(Q, "finalwarn",
-                  "*Warning: Starting dictionary contains rays");
-      lrs_warning(Q, "finalwarn",
-                  "*Complete enumeration may not have been produced");
-      if (Q->maximize)
-        lrs_warning(Q, "finalwarn",
-                    "*Recommendation: Change or remove maximize option or add "
-                    "bounds\n");
-      else
-        lrs_warning(Q, "finalwarn",
-                    "*Recommendation: Change or remove minimize option or add "
-                    "bounds\n");
-    }
-
-    if (Q->truncate)
-      lrs_warning(Q, "finalwarn", "*Tree truncated at each new vertex");
-  }
-
-  if (!Q->hull) {
-    if (Q->allbases)
-      lrs_warning(Q, "finalwarn",
-                  "*Note! Duplicate vertices/rays may be present");
-    else if (Q->count[0] > 1 && !Q->homogeneous)
-      lrs_warning(Q, "finalwarn", "*Note! Duplicate rays may be present");
-  }
-
-  if (Q->mplrs) {
-    char *vol;
-    if (Q->hull && Q->getvolume) {
-      rescalevolume(P, Q, Q->Nvolume, Q->Dvolume);
-      vol = cprat("", Q->Nvolume, Q->Dvolume);
-      lrs_post_output("volume", vol);
-      free(vol);
-    }
-    return;
-  }
-
-  if (!Q->messages)
-    return;
-
-  long i;
-  double x;
-  /* local assignments */
-  double *cest = Q->cest;
-  long *count = Q->count;
-  long *inequality = Q->inequality;
-  long *linearity = Q->linearity;
-  long *temparray = Q->temparray;
-
-  long *C = P->C;
-
-  long hull = Q->hull;
-  long homogeneous = Q->homogeneous;
-  long nlinearity = Q->nlinearity;
-  long nredundcol = Q->nredundcol;
-  long d, lastdv;
-  d = P->d;
-  lastdv = Q->lastdv;
-  if (Q->hull) /* count[1] stores the number of linearities */
-    Q->count[1] = Q->nredundcol - Q->homogeneous;
-
-  /* warnings for lrs only */
-  if (Q->maxdepth < MAXD)
-    fprintf(lrs_ofp, "\n*Tree truncated at depth %lld", Q->maxdepth);
-  if (Q->maxcobases > 0L)
-    fprintf(lrs_ofp, "\n*maxcobases = %ld", Q->maxcobases - Q->startcount[2]);
-  if (Q->maxoutput > 0L)
-    fprintf(lrs_ofp, "\n*Maximum number of output lines = %ld", Q->maxoutput);
-
-  /* next block with volume rescaling must come before estimates are printed */
-
-  if (Q->getvolume && Q->runs == 0) {
-
-    rescalevolume(P, Q, Q->Nvolume, Q->Dvolume);
-
-    if (Q->polytope)
-      prat("\n*Volume=", Q->Nvolume, Q->Dvolume);
-    else
-      prat("\n*Pseudovolume=", Q->Nvolume, Q->Dvolume);
-  }
-
-  if (hull) /* output things that are specific to hull computation */
-  {
-    fprintf(lrs_ofp, "\n*Totals: facets=%ld bases=%ld", count[0], count[2]);
-
-    if (count[1] > 0) {
-      fprintf(lrs_ofp, " linearities=%ld", count[1]);
-      fprintf(lrs_ofp, " facets+linearities=%ld", count[1] + count[0]);
-    }
-    printf(" max_facet_depth=%ld", count[8]);
-    if (lrs_ofp != stdout) {
-      printf("\n*Totals: facets=%ld bases=%ld", count[0], count[2]);
-
-      if (count[1] > 0) {
-        printf(" linearities=%ld", count[1]);
-        printf(" facets+linearities=%ld", count[1] + count[0]);
-      }
-      printf(" max_facet_depth=%ld", count[8]);
-    }
-
-    if (Q->runs > 0) {
-      fprintf(lrs_ofp, "\n*Estimates: facets=%.0f bases=%.0f",
-              count[0] + cest[0], count[2] + cest[2]);
-      if (Q->getvolume) {
-        rescalevolume(P, Q, Q->Nvolume, Q->Dvolume);
-        rattodouble(Q->Nvolume, Q->Dvolume, &x);
-        for (i = 2; i < d; i++)
-          cest[3] = cest[3] / i; /*adjust for dimension */
-        if (cest[3] == 0)
-          prat(" volume=", Q->Nvolume, Q->Dvolume);
-        else
-          fprintf(lrs_ofp, " volume=%g", cest[3] + x);
-      }
-
-      fprintf(lrs_ofp, "\n*Total number of tree nodes evaluated: %ld",
-              Q->totalnodes);
-#ifndef TIMES
-      fprintf(lrs_ofp, "\n*Estimated total running time=%.1f secs ",
-              (count[2] + cest[2]) / Q->totalnodes * get_time());
-#endif
-    }
-
-  } else /* output things specific to vertex/ray computation */
-  {
-    fprintf(lrs_ofp, "\n*Totals: vertices=%ld rays=%ld bases=%ld", count[1],
-            count[0], count[2]);
-
-    fprintf(lrs_ofp, " integer_vertices=%ld  max_vertex_depth=%ld", count[4],
-            count[8]);
-
-    if (nredundcol > 0)
-      fprintf(lrs_ofp, " linearities=%ld", nredundcol);
-    if (count[0] + nredundcol > 0) {
-      fprintf(lrs_ofp, " vertices+rays");
-      if (nredundcol > 0)
-        fprintf(lrs_ofp, "+linearities");
-      fprintf(lrs_ofp, "=%ld", nredundcol + count[0] + count[1]);
-    }
-
-    if (lrs_ofp != stdout) {
-      printf("\n*Totals: vertices=%ld rays=%ld bases=%ld", count[1], count[0],
-             count[2]);
-
-      printf(" integer_vertices=%ld max_vertex_depth=%ld", count[4], count[8]);
-
-      if (nredundcol > 0)
-        printf(" linearities=%ld", nredundcol);
-      if (count[0] + nredundcol > 0) {
-        printf(" vertices+rays");
-        if (nredundcol > 0)
-          printf("+linearities");
-        printf("=%ld", nredundcol + count[0] + count[1]);
-      }
-    } /* end lrs_ofp != stdout */
-
-    if (Q->runs > 0) {
-      fprintf(lrs_ofp, "\n*Estimates: vertices=%.0f rays=%.0f",
-              count[1] + cest[1], count[0] + cest[0]);
-      fprintf(lrs_ofp, " bases=%.0f integer_vertices=%.0f ", count[2] + cest[2],
-              count[4] + cest[4]);
-
-      if (Q->getvolume) {
-        rattodouble(Q->Nvolume, Q->Dvolume, &x);
-        for (i = 2; i <= d - homogeneous; i++)
-          cest[3] = cest[3] / i; /*adjust for dimension */
-        fprintf(lrs_ofp, " pseudovolume=%g", cest[3] + x);
-      }
-      fprintf(lrs_ofp, "\n*Total number of tree nodes evaluated: %ld",
-              Q->totalnodes);
-#ifndef TIMES
-      fprintf(lrs_ofp, "\n*Estimated total running time=%.1f secs ",
-              (count[2] + cest[2]) / Q->totalnodes * get_time());
-#endif
-    }
-
-  } /* end of output for vertices/rays */
-
-  fprintf(
-      lrs_ofp,
-      "\n*Dictionary Cache: max size= %ld misses= %ld/%ld   Tree Depth= %ld",
-      dict_count, cache_misses, cache_tries, Q->deepest);
-  if (lrs_ofp != stdout)
-    printf(
-        "\n*Dictionary Cache: max size= %ld misses= %ld/%ld   Tree Depth= %ld",
-        dict_count, cache_misses, cache_tries, Q->deepest);
-
-  return;
-
-} /* end of lrs_printtotals */
 /************************/
 /*  Estimation function */
 /************************/
@@ -2128,8 +1724,6 @@ long lrs_solvelp(lrs_dic *P, lrs_dat *Q, long maximize)
 
   if (j < d && i == 0) /* selectpivot gives information on unbounded solution */
   {
-    if (Q->lponly && Q->messages)
-      fprintf(lrs_ofp, "\n*Unbounded solution");
     return FALSE;
   }
   return TRUE;
@@ -2169,8 +1763,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
       i++;                       /* find leaving basis index i */
     if (j < nlinearity && i > m) /* cannot pivot linearity to cobasis */
     {
-      if (Q->messages)
-        fprintf(lrs_ofp, "\nCannot find linearity in the basis");
       return FALSE;
     }
     if (i <= m) { /* try to do a pivot */
@@ -2184,13 +1776,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
         update(P, Q, &i, &k);
       } else if (j < nlinearity) { /* cannot pivot linearity to cobasis */
         if (zero(A[Row[i]][0])) {
-          if (Q->messages && overflow != 2) {
-            sprintf(mess,
-                    "*Input linearity in row %ld is redundant--converted to "
-                    "inequality",
-                    order[j]);
-            lrs_warning(Q, "warning", mess);
-          }
           linearity[j] = 0l;
           Q->redineq[j] = 1; /* check for redundancy if running redund */
         } else {
@@ -2249,8 +1834,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
     i = Q->lastdv + 1;
     while (i <= m && !negative(A[Row[i]][0]))
       i++;
-    if (i <= m)
-      fprintf(lrs_ofp, "\n*Infeasible startingcobasis - will be modified");
   }
   return TRUE;
 } /*  end of getabasis */
@@ -2981,255 +2564,6 @@ void lrs_getinput(lrs_dic *P, lrs_dat *Q, long *num, long *den, long m, long d)
   lrs_set_obj(P, Q, num, den, MAXIMIZE);
 }
 
-long readlinearity(lrs_dat *Q) /* read in and check linearity list */
-{
-  long i, j;
-  long nlinearity;
-  if (fscanf(lrs_ifp, "%ld", &nlinearity) == EOF) {
-    lrs_warning(Q, "warning", "\nLinearity option invalid, no indices ");
-    return (FALSE);
-  }
-  if (nlinearity < 1) {
-    lrs_warning(Q, "warning",
-                "\nLinearity option invalid, indices must be positive");
-    return (FALSE);
-  }
-
-  Q->linearity = (long int *)CALLOC((nlinearity + 1), sizeof(long));
-
-  for (i = 0; i < nlinearity; i++) {
-    if (fscanf(lrs_ifp, "%ld", &j) == EOF) {
-      lrs_warning(Q, "warning", "\nLinearity option invalid, missing indices");
-      return (FALSE);
-    }
-    Q->linearity[i] = j;
-  }
-  for (i = 1; i < nlinearity; i++) /*sort in order */
-    reorder(Q->linearity, nlinearity);
-
-  Q->nlinearity = nlinearity;
-  Q->polytope = FALSE;
-  return TRUE;
-} /* end readlinearity */
-
-long readredund(lrs_dat *Q) /* read in and check linearity list */
-{
-  long i, j, k;
-  char *mess;
-  int len = 0;
-
-  if (fscanf(lrs_ifp, "%ld", &k) == EOF) {
-    lrs_warning(Q, "warning", "\nredund_list option invalid: no indices ");
-    return (FALSE);
-  }
-  if (k < 0) {
-    lrs_warning(Q, "warning",
-                "\nredund_list option invalid, first index must be >= 0");
-    return (FALSE);
-  }
-
-  for (i = 1; i <= Q->m;
-       i++) /*reset any previous redund option except =2 values */
-    if (Q->redineq[i] != 2)
-      Q->redineq[i] = 0;
-  Q->redineq[0] = 1;
-
-  for (i = 0; i < k; i++) {
-    if (fscanf(lrs_ifp, "%ld", &j) == EOF) {
-      lrs_warning(Q, "warning",
-                  "\nredund_list option invalid: missing indices");
-      fflush(lrs_ofp);
-      return (FALSE);
-    }
-
-    if (j < 0 || j > Q->m) {
-      fprintf(lrs_ofp,
-              "\nredund_list option invalid: indices not between 1 and %ld",
-              Q->m);
-      return (FALSE);
-    }
-    Q->redineq[j] = 1;
-  }
-
-  if (Q->messages && overflow != 2) {
-    mess = (char *)malloc(20 * Q->m * sizeof(char));
-    len = sprintf(mess, "redund_list %ld ", k);
-    for (i = 1; i <= Q->m; i++)
-      if (Q->redineq[i] == 1)
-        len = len + sprintf(mess + len, " %ld", i);
-    lrs_warning(Q, "warning", mess);
-    free(mess);
-  }
-  return TRUE;
-} /* end readredund */
-
-long readfacets(lrs_dat *Q, long facet[])
-/* read and check facet list for obvious errors during start/restart */
-/* this must be done after linearity option is processed!!           */
-{
-  long i, j;
-  char str[1000000], *p, *e;
-
-  /* assign local variables to structures */
-  long m, d;
-  long *linearity = Q->linearity;
-  m = Q->m;
-  d = Q->inputd;
-
-  /* modified 2018.6.7 to fix bug restarting with less than full dimension input
-   */
-  /* number of restart indices is not known at this point */
-
-  j = Q->nlinearity; /* note we place these after the linearity indices */
-
-  if (fgets(str, 1000000, lrs_ifp) == NULL)
-    return FALSE; /* pick up indices from the input line */
-  for (p = str;; p = e) {
-    facet[j] = strtol(p, &e, 10);
-    if (p == e)
-      break;
-    if (!Q->mplrs && overflow != 2)
-      fprintf(lrs_ofp, " %ld", facet[j]);
-
-    /* 2010.4.26 nonnegative option needs larger range of indices */
-    if (Q->nonnegative)
-      if (facet[j] < 1 || facet[j] > m + d) {
-        fprintf(lrs_ofp,
-                "\n Start/Restart cobasic indices must be in range 1 .. %ld ",
-                m + d);
-        return FALSE;
-      }
-
-    if (!Q->nonnegative)
-      if (facet[j] < 1 || facet[j] > m) {
-        fprintf(lrs_ofp,
-                "\n Start/Restart cobasic indices must be in range 1 .. %ld ",
-                m);
-        return FALSE;
-      }
-
-    for (i = 0; i < Q->nlinearity; i++)
-      if (linearity[i] == facet[j]) {
-        fprintf(
-            lrs_ofp,
-            "\n Start/Restart cobasic indices should not include linearities");
-        return FALSE;
-      }
-    /*     bug fix 2011.8.1  reported by Steven Wu*/
-    for (i = Q->nlinearity; i < j; i++)
-      /*     end bug fix 2011.8.1 */
-
-      if (facet[i] == facet[j]) {
-        fprintf(lrs_ofp, "\n  Start/Restart cobasic indices must be distinct");
-        return FALSE;
-      }
-    j++;
-  }
-  return TRUE;
-} /* end of readfacets */
-
-long readvars(lrs_dat *Q, char *name) {
-  /* read in and check ordered list of vars for extract/project        */
-  /* extract mode: *vars is an ordered list of variables to be kept    */
-  /* fel mode:     *vars is an ordered list of variables to be removed */
-
-  long i, j, len;
-  long nvars, nremove;
-  long k = 0;
-
-  long *vars;
-  char *mess;
-  long *var; /* binary representation of vars */
-
-  long n = Q->n;
-  Q->vars = (long int *)CALLOC((n + 3), sizeof(long));
-  var = (long int *)CALLOC((n + 3), sizeof(long));
-
-  vars = Q->vars;
-  for (i = 0; i <= n + 2; i++) {
-    vars[i] = 0;
-    var[i] = 0;
-  }
-
-  if (fscanf(lrs_ifp, "%ld", &nvars) == EOF) {
-    fprintf(lrs_ofp, "\n*%s: missing indices\n", name);
-    free(var);
-    return FALSE;
-  }
-
-  if (nvars > n - 1) {
-    nvars = n - 1;
-    fprintf(lrs_ofp, "\n*%s: too many indices, first %ld taken", name, n - 1);
-  }
-
-  for (i = 0; i < nvars; i++) {
-    if (fscanf(lrs_ifp, "%ld", &j) == EOF) {
-      fprintf(lrs_ofp, "\n*%s: missing indices\n", name);
-      free(var);
-      return FALSE;
-    }
-    if (j > 0 && j < n) {
-      if (var[j] == 1)
-        fprintf(lrs_ofp, "\n*%s: duplicate index %ld skipped", name, j);
-      else {
-        vars[k++] = j;
-        var[j] = 1;
-      }
-    } else {
-      fprintf(lrs_ofp, "\n*%s: index %ld out of range 1 to %ld\n", name, j,
-              n - 1);
-      free(var);
-      return FALSE;
-    }
-  }
-
-  i = 0;
-  while (i < n && vars[i] != 0)
-    i++;
-  nvars = i;
-
-  vars[n + 1] = nvars;
-
-  if (Q->messages && overflow != 2) {
-    mess = (char *)malloc(20 * Q->n * sizeof(char));
-    len = sprintf(mess, "*%s %ld  ", name, nvars);
-    for (i = 0; i < nvars; i++)
-      len = len + sprintf(mess + len, "%ld ", vars[i]);
-    lrs_warning(Q, "warning", mess);
-    free(mess);
-  }
-
-  if (strcmp(name, "project") == 0) /* convert to project vars to remove vars */
-  {
-    for (i = 0; i < nvars; i++)
-      vars[i] = 0;
-    nremove = 0;
-    for (i = 1; i < n; i++)
-      if (!var[i])
-        vars[nremove++] = i;
-    vars[n + 1] = nremove;
-    vars[n] =
-        1; /* used to control column selection rule =1 min cols in new matrix */
-  } /* convert project vars */
-
-  free(var);
-
-  if (Q->fel)
-    return TRUE;
-
-  /* if nlinearity>0 fill up list with remaining decision variables */
-
-  if (!Q->hull && Q->nlinearity > 0)
-    for (i = 1; i < n; i++) {
-      j = 0;
-      while (j < nvars && vars[j] != i)
-        j++;
-      if (j == nvars)
-        vars[nvars++] = i;
-    }
-  return TRUE;
-} /* readvars */
-
 long extractcols(lrs_dic *P, lrs_dat *Q) {
   /* 2020.6.17*/
   /* extract option just pulls out the columns - extract mode */
@@ -3302,11 +2636,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
 
   A = P->A;
   m = Q->m;
-
-  if (Q->hull)
-    fprintf(lrs_ofp, "\nV-representation");
-  else
-    fprintf(lrs_ofp, "\nH-representation");
 
   if (Q->nlinearity > 0) {
     fprintf(lrs_ofp, "\nlinearity %ld", Q->nlinearity);
@@ -4266,28 +3595,6 @@ void lrs_set_obj_mp(lrs_dic *P, lrs_dat *Q, lrs_mp_vector num,
   lrs_set_row_mp(P, Q, 0L, num, den, GE);
 }
 
-long lrs_solve_lp(lrs_dic *P, lrs_dat *Q)
-/* user callable function to solve lp only */
-{
-  lrs_mp_matrix Lin; /* holds input linearities if any are found             */
-  long col;
-
-  Q->lponly = TRUE;
-
-  if (!lrs_getfirstbasis(&P, Q, &Lin, FALSE))
-    return FALSE;
-
-  /* There may have been column redundancy                */
-  /* If so the linearity space is obtained and redundant  */
-  /* columns are removed. User can access linearity space */
-  /* from lrs_mp_matrix Lin dimensions nredundcol x d+1   */
-
-  for (col = 0; col < Q->nredundcol; col++) /* print linearity space */
-    lrs_printoutput(Q, Lin[col]); /* Array Lin[][] holds the coeffs.     */
-
-  return TRUE;
-} /* end of lrs_solve_lp */
-
 long dan_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
 /* select pivot indices using dantzig simplex method             */
 /* largest coefficient with lexicographic rule to avoid cycling  */
@@ -4559,8 +3866,7 @@ void lrsv2_overflow(int parm) {
   } else
     strcpy(tmpfilename, infilename);
 
-  if (!pivoting || Q->redund || Q->getvolume || Q->fel ||
-      Q->extract) /* we make restart from original input   */
+  if (!pivoting || Q->redund || Q->getvolume || Q->fel) /* we make restart from original input   */
   {
     overflow = 1L;
     lrs_cache_to_file(tmpfilename, " ");

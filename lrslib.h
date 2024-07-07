@@ -163,7 +163,6 @@ struct lrs_dat /* global problem data   */
   long bound;         /* TRUE if upper/lower bound on objective given */
   long countonly;     /* TRUE if only count totals should be output   */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
-  long extract;       /* remove linearities if any and extractcols    */
   long frequency;     /* frequency to print cobasis indices           */
   long geometric;     /* TRUE if incident vertex prints after each ray */
   long getvolume;     /* do volume calculation                        */
@@ -188,15 +187,12 @@ struct lrs_dat /* global problem data   */
   long mplrs;         /* TRUE if compiled for mplrs                   */
   long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */
-  long printcobasis;  /* TRUE if all cobasis should be printed        */
   long printslack;    /* TRUE if indices of slack inequal. printed    */
   long redund;        /* TRUE for computing nash equilibria           */
   long truncate;      /* TRUE: truncate tree when moving from opt vert*/
   long voronoi;       /* compute voronoi vertices by transformation   */
   long long
       subtreesize;    /* in estimate mode, iterates if cob_est >= subtreesize */
-  long triangulation; /* TRUE: the cobases printed triangulate the polytope */
-  long newstart;      /* TRUE: lrs is restarted with new arithmetic         */
 
   /* Variables for saving/restoring cobasis,  db */
 
@@ -270,9 +266,6 @@ long lrs_init(const char *name); /* initialize lrslib and arithmetic package for
 void lrs_lpoutput(
     lrs_dic *P, lrs_dat *Q,
     lrs_mp_vector output); /* print LP primal and dual solutions */
-void lrs_printcobasis(
-    lrs_dic *P, lrs_dat *Q,
-    long col); /* print cobasis for column col(verted or ray)  */
 void lrs_print_header(const char *name);
 void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output); /* print output array */
 void lrs_printrow(const char *name, lrs_dat *Q, lrs_mp_vector output,
@@ -281,7 +274,6 @@ void lrs_printsol(
     lrs_dic *P, lrs_dat *Q, long col,
     long comment); /* print out solution from col, comment=
                       0=normal,-1=geometric ray,1..inputd=linearity */
-void lrs_printtotals(lrs_dic *P, lrs_dat *Q); /* print final totals for lrs */
 long lrs_set_digits(
     long dec_digits); /* set lrsmp digits to equiv. of decimal dec_digits */
 long lrs_solvelp(
@@ -346,11 +338,6 @@ void printA(lrs_dic *P,
             lrs_dat *Q); /* raw print of dictionary, bases for debugging   */
 void pimat(lrs_dic *P, long r, long s, lrs_mp Nt,
            const char *name); /* print the row r col s of A              */
-long readfacets(lrs_dat *Q, long facet[]); /* read and check facet list */
-long readlinearity(lrs_dat *Q); /* read and check linearity list            */
-long readvars(lrs_dat *Q,
-              char *name); /* read and check var list for extract or project */
-long readredund(lrs_dat *Q); /* read and check redundancy list */
 void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
                 lrs_mp Vden); /* rescale determinant to get its volume */
 void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
@@ -404,8 +391,6 @@ void reorder1(
 /***************************/
 /* lp_solve like functions */
 /***************************/
-long lrs_solve_lp(lrs_dic *P,
-                  lrs_dat *Q); /* solve lp only for given dictionary */
 void lrs_set_row(
     lrs_dic *P, lrs_dat *Q, long row, long num[], long den[],
     long ineq); /* load row i of dictionary from num[]/den[] ineq=GE       */
