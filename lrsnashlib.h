@@ -62,8 +62,6 @@ void FillConstraintRows(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2,
 void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
                            int n);
 void printGame(game *g);
-void setFwidth(game *g, int len);
-void resetNashSolver(); /* Call this function for every new game to be solved */
 void initFwidth(game *g);
 void updateFwidth(game *g, int col, int pos, char *str);
 

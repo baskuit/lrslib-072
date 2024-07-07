@@ -940,12 +940,6 @@ void printGame(game *g) {
 }
 
 // Functions to set field widths for pretty printing of payoff matrices
-void setFwidth(game *g, int len) {
-  int pos, t;
-  for (t = 0; t < g->nstrats[COL]; t++)
-    for (pos = 0; pos < 2; pos++)
-      ((gInfo *)g->aux)->fwidth[t][pos] = len;
-}
 
 void initFwidth(game *g) {
   int pos, t;
@@ -960,5 +954,4 @@ void updateFwidth(game *g, int col, int pos, char *str) {
     ((gInfo *)g->aux)->fwidth[col][pos] = len;
 }
 
-void resetNashSolver() { FirstTime = TRUE; }
 /******************** end of lrsnashlib.c ***************************/
