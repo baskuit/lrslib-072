@@ -183,8 +183,6 @@ struct lrs_dat /* global problem data   */
   long messages; /* TRUE for normal lrs output, FALSE for PLRS and LRS_QUIET */
   long minimize; /* flag for LP minimization                     */
   long long mindepth; /* do not backtrack above mindepth              */
-  long fel;           /* TRUE if doing fourier elimination */
-  long mplrs;         /* TRUE if compiled for mplrs                   */
   long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */
   long printslack;    /* TRUE if indices of slack inequal. printed    */
@@ -232,9 +230,6 @@ void lrs_exit(int i);
 /* functions  for external use */
 /*******************************/
 
-long lrs_run(lrs_dic *P, lrs_dat *Q);    /* main reverse search function */
-long redund_run(lrs_dic *P, lrs_dat *Q); /* main redund loop */
-void redund_print(lrs_dic *P, lrs_dat *Q);
 lrs_dat *
 lrs_alloc_dat(const char *name); /* allocate for lrs_dat structure "name" */
 lrs_dic *
@@ -244,15 +239,11 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q); /* get estimates only and returns est
 long lrs_checkbound(
     lrs_dic *P,
     lrs_dat *Q); /* TRUE if current objective value exceeds specified bound */
-long lrs_check_inequality(
-    lrs_dic *P, lrs_dat *Q); /* max/min option used for V-rep testing */
 long lrs_getfirstbasis(
     lrs_dic **P_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     long no_output); /* gets first basis, FALSE if none,P may get changed if
                         lin. space Lin found  no_output is TRUE supresses output
                         headers P may get changed if lin. space Lin found    */
-void lrs_getinput(lrs_dic *P, lrs_dat *Q, long *num, long *den, long m,
-                  long d); /* reads input matrix b A in lrs/cdd format */
 long lrs_getnextbasis(lrs_dic **dict_p, lrs_dat *Q,
                       long prune); /* gets next lrs tree basis, FALSE if none
                                       backtrack if prune is TRUE */
@@ -268,14 +259,6 @@ void lrs_lpoutput(
     lrs_mp_vector output); /* print LP primal and dual solutions */
 void lrs_print_header(const char *name);
 void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output); /* print output array */
-void lrs_printrow(const char *name, lrs_dat *Q, lrs_mp_vector output,
-                  long rowd); /*print row of A matrix in output[0..rowd]      */
-void lrs_printsol(
-    lrs_dic *P, lrs_dat *Q, long col,
-    long comment); /* print out solution from col, comment=
-                      0=normal,-1=geometric ray,1..inputd=linearity */
-long lrs_set_digits(
-    long dec_digits); /* set lrsmp digits to equiv. of decimal dec_digits */
 long lrs_solvelp(
     lrs_dic *P, lrs_dat *Q,
     long maximize); /* solve primal feas LP:TRUE bounded else FALSE */

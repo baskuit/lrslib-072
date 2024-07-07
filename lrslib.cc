@@ -16,8 +16,6 @@
  */
 
 /*2022.1.22  lrs now has 3 modes controlled by these routines:
- lrs_run      default, V->H or H->V conversion
- redund_run   redundancy removal, redund or redund_list options
  fel_run      Fourier-Motzkin elimination, project or elimiminate options
 */
 
@@ -91,331 +89,6 @@ static void timecheck(int);
 /* functions  for external use */
 /*******************************/
 
-/******************************************************************/
-/* lrs_run is the main reverse search part of lrs                 */
-/* should be called by lrsv2_main which does setup and close also */
-/******************************************************************/
-long lrs_run(lrs_dic *P, lrs_dat *Q)
-
-{
-
-  lrs_mp_matrix Lin; /* holds input linearities if any are found             */
-  long col;          /* output column index for dictionary                   */
-  long startcol = 0;
-  long prune = FALSE; /* if TRUE, getnextbasis will prune tree and backtrack  */
-
-  /*********************************************************************************/
-  /* Step 1: Find a starting cobasis from default of specified order */
-  /*         P is created to hold  active dictionary data and may be cached */
-  /*         Lin is created if necessary to hold linearity space */
-  /*         Print linearity space if any, and retrieve output from first dict.
-   */
-  /*********************************************************************************/
-
-  if (lrs_getfirstbasis(&P, Q, &Lin, FALSE) == 0) {
-    lrs_free_dic(P, Q); /* note Q is not free here and can be reused     */
-    return 1;
-  }
-
-  /* Pivot to a starting dictionary                      */
-  /* There may have been column redundancy               */
-  /* If so the linearity space is obtained and redundant */
-  /* columns are removed. User can access linearity space */
-  /* from lrs_mp_matrix Lin dimensions nredundcol x d+1  */
-
-  if (Q->homogeneous && Q->hull)
-    startcol++; /* col zero not treated as redundant   */
-
-  for (col = startcol; col < Q->nredundcol; col++) /* print linearity space */
-    lrs_printoutput(Q, Lin[col]); /* Array Lin[][] holds the coeffs.     */
-
-  if (Q->nredundcol > 0)
-    lrs_clear_mp_matrix(Lin, Q->nredundcol, Q->n);
-
-  /*********************************************************************************/
-  /* Step 3: Terminate if lponly option set, otherwise initiate a reverse */
-  /*         search from the starting dictionary. Get output for each new dict.
-   */
-  /*********************************************************************************/
-
-  /* We initiate reverse search from this dictionary       */
-  /* getting new dictionaries until the search is complete */
-  /* User can access each output line from output which is */
-  /* vertex/ray/facet from the lrs_mp_vector output         */
-  /* prune is TRUE if tree should be pruned at current node */
-  do {
-
-    prune = lrs_checkbound(P, Q);
-
-    if (!prune && Q->giveoutput) {
-      lrs_open_outputblock(); /* keeps output together when using mplrs */
-
-      for (col = 0; col <= P->d; col++) /* print output if any */
-        if (lrs_getsolution(P, Q, Q->output, col))
-          lrs_printoutput(Q, Q->output);
-      pivoting = TRUE;
-      lrs_close_outputblock();
-    } else
-      Q->giveoutput = TRUE; /* first output supressed for restart */
-
-    /*2020.3.9  bounds on objective function check corrected */
-
-    if ((Q->maxcobases > 0) && (Q->count[2] >= Q->maxcobases)) {
-      prune = TRUE;
-      if (!lrs_leaf(P, Q)) /* do not return cobases of a leaf */
-        lrs_return_unexplored(P, Q);
-    }
-
-    save_basis(P, Q);
-
-  } while (!Q->lponly && lrs_getnextbasis(&P, Q, prune)); // do ...
-
-  if (Q->lponly)
-    lrs_lpoutput(P, Q, Q->output);
-
-  Q->m = P->m;
-  lrs_free_dic(P, Q); /* note Q is not free here and can be reused     */
-
-  return 0;
-}
-/*********************************************/
-/* end of model test program for lrs library */
-/*********************************************/
-
-/*******************************************************/
-/* redund_run is main loop for redundancy removal      */
-/*******************************************************/
-long redund_run(lrs_dic *P, lrs_dat *Q)
-
-{
-  lrs_mp_matrix Ain; /* holds a copy of the input matrix to output at the end */
-
-  long ineq; /* input inequality number of current index             */
-  long *redineq;
-
-  lrs_mp_matrix Lin; /* holds input linearities if any are found             */
-
-  long i, j, d, m;
-  long nlinearity; /* number of linearities in input file                  */
-  long lastdv;
-  long index; /* basic index for redundancy test */
-  long c1 = 0;
-  long min, nin;
-
-  /*********************************************************************************/
-
-  /* if non-negative flag is set, non-negative constraints are not input */
-  /* explicitly, and are not checked for redundancy                      */
-
-  m = P->m_A; /* number of rows of A matrix */
-  d = P->d;
-  redineq = Q->redineq;
-  min = Q->m;
-  nin = Q->n;
-  Q->Ain = lrs_alloc_mp_matrix(
-      Q->m, Q->n); /* make a copy of A matrix for output later            */
-  Ain = Q->Ain;
-
-  for (i = 1; i <= m; i++) {
-    for (j = 0; j <= d; j++)
-      copy(Ain[i][j], P->A[i][j]);
-  }
-
-  /*********************************************************************************/
-  /* Step 1: Find a starting cobasis from default of specified order */
-  /*         Lin is created if necessary to hold linearity space */
-  /*********************************************************************************/
-
-  if (!lrs_getfirstbasis(&P, Q, &Lin, TRUE))
-    return 1;
-  /* Pivot to a starting dictionary                      */
-  /* There may have been column redundancy               */
-  /* If so the linearity space is obtained and redundant */
-  /* columns are removed. User can access linearity space */
-  /* from lrs_mp_matrix Lin dimensions nredundcol x d+1  */
-
-  if (Q->nredundcol > 0)
-    lrs_clear_mp_matrix(Lin, Q->nredundcol, Q->n);
-
-  /*********************************************************************************/
-  /* Step 2: Test rows i where redineq[i]=1 for redundancy */
-  /*********************************************************************************/
-
-  /* note some of these may have been changed in getting initial dictionary */
-  m = P->m_A;
-  d = P->d;
-  nlinearity = Q->nlinearity;
-  lastdv = Q->lastdv;
-
-  /* linearities are not considered for redundancy */
-
-  for (i = 0; i < nlinearity; i++)
-    redineq[Q->linearity[i]] = 2L;
-
-  /* Q->verifyredund always false in lrs, set by mplrs to check duplicated
-   * redundancy removal */
-  /* Q->noredundcheck overides this to skip verification */
-
-  if (Q->noredundcheck && Q->verifyredund)
-    goto done;
-
-  /* mplrs sets redineq[i]==-1 for guaranteed redundant inequalities */
-  /* these rows must be zeroed out before testing the others         */
-
-  if (Q->verifyredund) /* this is never run by lrs, final step of mplrs redund
-                        */
-  {
-    for (index = lastdv + Q->redineq[0]; index <= m + d; index++) {
-      ineq = Q->inequality[index - lastdv]; /* the input inequality number corr.
-                                               to this index */
-
-      if (redineq[ineq] == 1) {
-        c1++;
-      }
-      if (redineq[ineq] == -1) {
-        checkindex(P, Q,
-                   -index); /* used to zero correct row of A no LP solved */
-      }
-    }
-  }
-
-  /* rows 0..lastdv are cost, decision variables, or linearities  */
-  /* other rows need to be tested                                */
-
-  if (Q->redineq[0] == 0) /* 2020.9.11 patch, this was set to 1 in readredund
-                             but got reset somewhere */
-    Q->redineq[0] = 1;
-
-  for (index = lastdv + Q->redineq[0]; index <= m + d; index++) {
-    ineq = Q->inequality[index - lastdv]; /* the input inequality number corr.
-                                             to this index */
-    Q->redineq[0] = ineq; /* used for restarting after arithmetic overflow    */
-
-    if (redineq[ineq] == 1) {
-      redineq[ineq] = checkindex(P, Q, index);
-    }
-
-  } /* end for index ..... */
-
-done:
-
-  if ((Q->mplrs && !Q->verifyredund)) {
-    lrs_clear_mp_matrix(Q->Ain, min, nin);
-    Q->m = P->m;
-    lrs_free_dic(P, Q); /* note Q is not free here and can be reused     */
-    return 0;
-  }
-
-  if (Q->fel && Q->hull)
-    lrs_clear_mp_matrix(Q->Ain, min, nin);
-  else
-    redund_print(P, Q);
-
-  if (Q->mplrs && !Q->noredundcheck)
-    fprintf(lrs_ofp, "* %ld row(s) needed verifying\n", c1);
-
-  if (!Q->fel)
-    lrs_clear_mp_matrix(Q->Ain, min, nin);
-
-  lrs_free_dic(P, Q);
-  return 0;
-}
-/***********redund_run************************/
-
-void redund_print(lrs_dic *P, lrs_dat *Q) {
-  long i, j, m;
-  long nlinearity; /* number of linearities in input file                  */
-  long nredund;    /* number of redundant rows in input file               */
-  long *redineq = Q->redineq;
-  lrs_mp_matrix Ain = Q->Ain;
-
-  m = P->m_A; /* number of rows of A matrix */
-  nlinearity = Q->nlinearity;
-
-  /* restore as mplrs loses this */
-  for (i = 0; i < nlinearity; i++)
-    redineq[Q->linearity[i]] = 2;
-
-  /*
-    fprintf(lrs_ofp,"\nQ->red");
-    for (i = 1; i <= m; i++)
-    fprintf(lrs_ofp," %ld",Q->redineq[i]);
-  */
-
-  if (!Q->hull)
-    fprintf(lrs_ofp, "\nH-representation");
-  else
-    fprintf(lrs_ofp, "\nV-representation");
-
-  /* linearities will be printed first in output */
-
-  if (nlinearity > 0) {
-    fprintf(lrs_ofp, "\nlinearity %ld", nlinearity);
-    for (i = 1; i <= nlinearity; i++)
-      fprintf(lrs_ofp, " %ld", i);
-  }
-
-  nredund = 0; /* count number of non-redundant inequalities */
-
-  for (i = 1; i <= m; i++)
-    if (redineq[i] == 0)
-      nredund++;
-
-  fprintf(lrs_ofp, "\nbegin");
-  fprintf(lrs_ofp, "\n%ld %ld rational", nlinearity + nredund, Q->n);
-
-  /* print the linearities first */
-
-  for (i = 0; i < nlinearity; i++)
-    lrs_printrow("", Q, Ain[Q->linearity[i]], Q->inputd);
-
-  for (i = 1; i <= m; i++) {
-    if (redineq[i] == 0)
-      lrs_printrow("", Q, Ain[i], Q->inputd);
-
-    /* remove redundant rows */
-    /*
-        if( redineq[i] != 1 && redineq[i] != -1)
-         {
-          row++;
-          for(j=0; j<= Q->inputd;j++)
-             copy(P->A[row][j],Ain[i][j]);
-         }
-    */
-  }
-
-  fprintf(lrs_ofp, "\nend");
-
-  if (Q->redund)
-    fprintf(lrs_ofp, "\n*Input had %ld rows and %ld columns", m, Q->n);
-
-  redineq[0] = m - nredund - nlinearity; /* number of redundant rows */
-
-  if (m == nredund || redineq[0] == 0) {
-    if (Q->redund)
-      fprintf(lrs_ofp, "\n*No redundant rows found\n");
-  } else {
-    j = 0;
-    if (Q->redund) {
-      fprintf(lrs_ofp, "\n* %ld redundant row(s) found\n", redineq[0]);
-      for (i = 1; i <= m; i++)
-        if (redineq[i] == 1 || redineq[i] == -1) {
-          j++;
-          if (j > 20) {
-            j = 1;
-            fprintf(lrs_ofp, "\n %ld", i);
-          } else
-            fprintf(lrs_ofp, " %ld", i);
-        }
-    }
-    if (Q->noredundcheck)
-      fprintf(lrs_ofp, "\n*Warning: not verified - input should be full "
-                       "dimensional and duplicate free");
-  }
-  fprintf(lrs_ofp, "\n");
-  return;
-} /* end of redund_print */
-
 /*******************/
 /* lrs_printoutput */
 /*  one line only   */
@@ -459,10 +132,7 @@ void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output) {
     }
   }
 
-  if (Q->mplrs)
-    lrs_post_output("vertex", sss);
-  else
-    fprintf(lrs_ofp, "\n%s", sss);
+  fprintf(lrs_ofp, "\n%s", sss);
 
   free(ss);
   free(sss);
@@ -494,37 +164,6 @@ void lrs_lpoutput(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output) {
 /***********************/
 /* end of lrs_lpoutput */
 /***********************/
-void lrs_printrow(const char *name, lrs_dat *Q, lrs_mp_vector output, long rowd)
-/* print a row of A matrix in output in "original" form  */
-/* rowd+1 is the dimension of output vector                */
-/* if input is H-rep. output[0] contains the RHS      */
-/* if input is V-rep. vertices are scaled by 1/output[1] */
-{
-  long i;
-  fprintf(lrs_ofp, "\n%s", name);
-  if (!Q->hull) /* input was inequalities, print directly */
-
-  {
-    for (i = 0; i <= rowd; i++)
-      pmp("", output[i]);
-    return;
-  }
-
-  /* input was vertex/ray */
-
-  if (zero(output[1])) /*non-vertex */
-  {
-    for (i = 1; i <= rowd; i++)
-      pmp("", output[i]);
-  } else { /* vertex */
-    fprintf(lrs_ofp, " 1 ");
-    for (i = 2; i <= rowd; i++)
-      prat("", output[i], output[1]);
-  }
-
-  return;
-
-} /* end of lrs_printrow */
 
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 /* check if column indexed by col in this dictionary */
@@ -694,11 +333,7 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   strcpy(Q->name, name);
 
   /* initialize variables */
-  Q->mplrs = FALSE;
   Q->messages = TRUE;
-// #ifdef PLRS
-// Q->mplrs=TRUE;
-// #endif
 #ifdef LRS_QUIET
   Q->messages = FALSE;
 #endif
@@ -741,7 +376,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
       0L; /* after maxcobases have been found unexplored subtrees reported */
 
   Q->redund = FALSE;
-  Q->fel = FALSE;
 
   Q->nonnegative = FALSE;
   Q->printslack = FALSE;
@@ -966,8 +600,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   /* Do dual pivots to get primal feasibility */
   if (!primalfeasible(D, Q)) {
-    if (!Q->mplrs)
-      fprintf(lrs_ofp, "\nend");
+    fprintf(lrs_ofp, "\nend");
     lrs_warning(Q, "finalwarn", "\nNo feasible solution\n");
     return FALSE;
   }
@@ -2537,33 +2170,6 @@ long lreadrat(long *Num, long *Den)
   return (TRUE);
 }
 
-void lrs_getinput(lrs_dic *P, lrs_dat *Q, long *num, long *den, long m, long d)
-/* code for reading data matrix in lrs/cdd format */
-{
-  long j, row;
-
-  printf("\nEnter each row: b_i  a_ij j=1..%ld", d);
-  for (row = 1; row <= m; row++) {
-    printf("\nEnter row %ld: ", row);
-    for (j = 0; j <= d; j++) {
-      lreadrat(&num[j], &den[j]);
-      lprat(" ", num[j], den[j]);
-    }
-
-    lrs_set_row(P, Q, row, num, den, GE);
-  }
-
-  printf("\nEnter objective row c_j j=1..%ld: ", d);
-  num[0] = 0;
-  den[0] = 1;
-  for (j = 1; j <= d; j++) {
-    lreadrat(&num[j], &den[j]);
-    lprat(" ", num[j], den[j]);
-  }
-
-  lrs_set_obj(P, Q, num, den, MAXIMIZE);
-}
-
 long extractcols(lrs_dic *P, lrs_dat *Q) {
   /* 2020.6.17*/
   /* extract option just pulls out the columns - extract mode */
@@ -2583,10 +2189,7 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   output = Q->temparray;
   m = P->m;
   n = Q->n;
-  if (Q->fel)
-    ncols = n - remain[n + 1] - 1;
-  else
-    ncols = remain[n + 1];
+  ncols = remain[n + 1];
 
   for (j = 0; j < n; j++)
     output[j] = 0;
@@ -2594,45 +2197,10 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   for (j = 0; j < n; j++)
     output[remain[j]] = 1;
 
-  if (Q->fel) /* complement for fel mode - don't ask! */
-    for (j = 1; j < n; j++)
-      output[j] = 1 - output[j];
-
-  if (Q->fel) /* fel mode remove redundancy */
-  {
-    for (i = 1; i <= m; i++) /* zero out removed cols */
-      for (j = 0; j < n; j++)
-        if (!output[j])
-          itomp(ZERO, P->A[Row[i]][Col[j]]);
-
-    P1 = lrs_getdic(Q);
-    Q->Qhead = P;
-    Q->Qtail = P;
-
-    copy_dict(Q, P1, P);
-    Q->Qhead = P1;
-    Q->Qtail = P1;
-    Q->olddic = P; /*in case of overflow */
-    A = P1->A;
-
-    redund_run(P1, Q);
-    redineq = Q->redineq;
-    rows = 0;
-    for (i = 1; i <= P->m_A; i++)
-      if (redineq[i] == 0 || redineq[i] == 2)
-        rows++;
-
-    Q->Qhead = P;
-    Q->Qtail = P;
-
-  } /* end   if(Q->fel)...             */
-  else /* initialization for extract mode */
-  {
-    redineq = Q->redineq;
-    rows = m;
-    for (i = 1; i <= m; i++)
-      redineq[i] = 0;
-  }
+  redineq = Q->redineq;
+  rows = m;
+  for (i = 1; i <= m; i++)
+    redineq[i] = 0;
 
   A = P->A;
   m = Q->m;
@@ -2848,10 +2416,7 @@ void copy_dict(lrs_dat *global, lrs_dic *dest, lrs_dic *src) {
   long r, s;
 
   if (dest == src) {
-    if (global->mplrs)
-      lrs_post_output("warning", "*copy_dict has dest=src -ignoring copy");
-    else
-      fprintf(stderr, "*copy_dict has dest=src -ignoring copy");
+    fprintf(stderr, "*copy_dict has dest=src -ignoring copy");
     return;
   }
 
@@ -3003,20 +2568,12 @@ void lrs_free_dic(lrs_dic *P, lrs_dat *Q) {
   lrs_dic *P1;
 
   if (Q == NULL) {
-    if (Q->mplrs)
-      lrs_post_output("warning",
-                      "*lrs_free_dic trying to free null Q : skipped");
-    else
-      fprintf(stderr, "*lrs_free_dic trying to free null Q : skipped");
+    fprintf(stderr, "*lrs_free_dic trying to free null Q : skipped");
     return;
   }
 
   if (P == NULL) {
-    if (Q->mplrs)
-      lrs_post_output("warning",
-                      "*lrs_free_dic trying to free null P : skipped");
-    else
-      fprintf(stderr, "*lrs_free_dic trying to free null P : skipped");
+    fprintf(stderr, "*lrs_free_dic trying to free null P : skipped");
     return;
   }
   /* repeat until cache is empty */
@@ -3085,11 +2642,7 @@ void lrs_free_dat(lrs_dat *Q) {
   int i = 0;
 
   if (Q == NULL) {
-    if (Q->mplrs)
-      lrs_post_output("warning",
-                      "*lrs_free_dat trying to free null Q : skipped");
-    else
-      fprintf(stderr, "*lrs_free_dat trying to free null Q : skipped");
+    fprintf(stderr, "*lrs_free_dat trying to free null Q : skipped");
     return;
   }
 
@@ -3738,21 +3291,6 @@ long phaseone(lrs_dic *P, lrs_dat *Q)
   return (TRUE);
 }
 
-long lrs_set_digits(long dec_digits) {
-  /* convert user specified decimal digits to mp digits */
-
-  if (dec_digits > 0)
-    lrs_digits = DEC2DIG(dec_digits);
-  if (lrs_digits > MAX_DIGITS) {
-    fprintf(lrs_ofp,
-            "\nDigits must be at most %ld\nChange MAX_DIGITS and recompile",
-            DIG2DEC(MAX_DIGITS));
-    fflush(stdout);
-    return (FALSE);
-  }
-  return (TRUE);
-}
-
 long lrs_checkbound(lrs_dic *P, lrs_dat *Q) {
   /* check bound on objective and return TRUE if exceeded */
 
@@ -3827,7 +3365,7 @@ void lrsv2_overflow(int parm) {
 
 #ifdef MA
   if (strcmp(Q->fname, "lrs") == 0 || strcmp(Q->fname, "lrsmp") == 0 ||
-      Q->redund || Q->fel)
+      Q->redund)
     try_restart = TRUE;
 #endif
 
@@ -3866,7 +3404,7 @@ void lrsv2_overflow(int parm) {
   } else
     strcpy(tmpfilename, infilename);
 
-  if (!pivoting || Q->redund || Q->getvolume || Q->fel) /* we make restart from original input   */
+  if (!pivoting || Q->redund || Q->getvolume) /* we make restart from original input   */
   {
     overflow = 1L;
     lrs_cache_to_file(tmpfilename, " ");
@@ -3893,16 +3431,13 @@ void lrsv2_overflow(int parm) {
     free(part);
   }
 
-  if (Q->fel || Q->redund)
+  if (Q->redund)
     if (Q->Ain != NULL)
       lrs_clear_mp_matrix(Q->Ain, Q->m, Q->n);
 
   Q->m = P->m;
 
   lrs_free_dic(P, Q); /* note Q is not freed here and is needed again  */
-
-  if (Q->fel && !Q->hull)
-    lrs_free_dat(Q); /* in this case we free Q as it was alloc'ed in fel_run */
 
   if (lrs_ofp != NULL && lrs_ofp != stdout) {
     fclose(lrs_ofp);
@@ -4009,73 +3544,8 @@ long lrs_cache_to_file(char *name, const char *restart) {
 
 void lrs_warning(lrs_dat *Q, char *type, char *ss) {
   if (Q->messages) {
-    if (Q->mplrs)
-      lrs_post_output(type, ss);
-    else {
-      fprintf(lrs_ofp, "\n%s", ss);
-      if (lrs_ofp != stdout)
-        fprintf(stderr, "\n%s", ss);
-    }
+    fprintf(lrs_ofp, "\n%s", ss);
+    if (lrs_ofp != stdout)
+      fprintf(stderr, "\n%s", ss);
   }
-}
-
-/*********************************************************************************/
-/*2022.1.18  For V-rep with lponly just find optimizing input rows */
-/*********************************************************************************/
-long lrs_check_inequality(lrs_dic *P, lrs_dat *Q) {
-  lrs_mp_matrix A = P->A;
-  lrs_mp tmp, opt, total;
-  long m, d, i, j, count;
-
-  lrs_alloc_mp(tmp);
-  lrs_alloc_mp(total);
-  lrs_alloc_mp(opt);
-
-  fprintf(lrs_ofp, "\n");
-
-  m = P->m;
-  d = P->d;
-  itomp(0, opt);
-
-  if (Q->nonnegative) /* skip basic rows - don't exist! */
-    m = m - d;
-
-  for (i = 1; i <= m; i++) {
-    itomp(0, total);
-    for (j = 1; j <= d; j++) {
-      mulint(A[0][j], A[i][j], tmp);
-      linint(total, 1, tmp, 1);
-    }
-    if (i == 1)
-      copy(opt, total);
-    else if (mp_greater(total, opt))
-      copy(opt, total);
-  }
-  fprintf(lrs_ofp, "\n*optimum rows:");
-  count = 0;
-  for (i = 1; i <= m; i++) /* once more to print optima */
-  {
-    itomp(0, total);
-    for (j = 1; j <= d; j++) {
-      mulint(A[0][j], A[i][j], tmp);
-      linint(total, 1, tmp, 1);
-    }
-    if (!mp_greater(opt, total)) {
-      count++;
-      fprintf(lrs_ofp, " %ld", i);
-    }
-  }
-
-  if (Q->minimize) /* lrs only maximizes */
-  {
-    changesign(opt);
-    prat("\n*min value:", opt, P->det);
-  } else
-    pmp("\n*max value:", opt);
-  fprintf(lrs_ofp, " obtained by %ld rows", count);
-  fprintf(lrs_ofp, "\n");
-  lrs_clear_mp(tmp);
-  lrs_clear_mp(opt);
-
-  return 0;
 }
