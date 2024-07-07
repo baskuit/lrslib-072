@@ -168,15 +168,15 @@ mplrsflint:	mplrs.c mplrs.h lrslib.c lrslib.h lrsgmp.c lrsgmp.h lrsdriver.c lrsd
 
 lrsgmp:		lrs.c lrslib.c lrslib.h lrsgmp.c lrsgmp.h lrsdriver.h lrsdriver.c 
 		$(CC)  ${CFLAGS}  -DGMP -I${INCLUDEDIR} -o lrsgmp lrs.c lrslib.c lrsgmp.c lrsdriver.c -L${LIBDIR}  -lgmp
-		ln -s -f lrsgmp redundgmp
+		# ln -s -f lrsgmp redundgmp
 
 single:		lrs.c lrslong.c lrslong.h lrslib.c lrslib.h lrsgmp.c lrsgmp.h lrsdriver.h lrsdriver.c
 		$(CC)  ${CFLAGS}  -DSAFE  -DLRSLONG -o lrs1 lrs.c lrslib.c lrslong.c lrsdriver.c
 		$(CC)  ${CFLAGS} ${BITS} -DSAFE  -DLRSLONG -o lrs2 lrs.c lrslib.c lrslong.c lrsdriver.c
 		$(CC)  ${CFLAGS} -DMP -o lrsmp lrs.c lrslib.c lrsdriver.c lrsmp.c
 
-		ln -s -f lrs1 redund1
-		ln -s -f lrs2 redund2
+		# ln -s -f lrs1 redund1
+		# ln -s -f lrs2 redund2
 
 allmp:		lrs.c lrslib.c lrslib.h lrsmp.c lrsmp.h lrsdriver.h lrsdriver.c
 		$(CC) -Wall -O3 -DMP  -o lrsmp lrs.c lrslib.c lrsdriver.c lrsmp.c
