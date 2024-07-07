@@ -227,7 +227,7 @@ char *mpgetstr10(char *out, lrs_mp a)
   if (out != NULL)
     buf = out;
   else
-    buf = malloc(sizeof(char)*(len+1));
+    buf = static_cast<char*>(malloc(sizeof(char)*(len+1)));
   sprintf(buf, "%lld", *a);
   return buf;
 #else
@@ -237,7 +237,7 @@ char *mpgetstr10(char *out, lrs_mp a)
   if (out != NULL)
     buf = out;
   else
-    buf = calloc(43, sizeof(char));
+    buf = static_cast<char*>(calloc(43, sizeof(char)));
   if (*a>=LLONG_MIN && *a<=LLONG_MAX)
   {
     sprintf(buf, "%lld", (long long)*a);

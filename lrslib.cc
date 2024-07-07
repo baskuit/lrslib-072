@@ -81,10 +81,10 @@ char *basename(char *path);
 /* signals handling            */
 /*******************************/
 #ifndef SIGNALS
-static void checkpoint ();
-static void die_gracefully ();
+static void checkpoint (int);
+static void die_gracefully (int);
 static void setup_signals (void);
-static void timecheck ();
+static void timecheck (int);
 #endif
 
 /*******************************/
@@ -5673,7 +5673,7 @@ setup_signals ()
 }
 
 static void
-timecheck ()
+timecheck (int)
 {
   lrs_dump_state ();
   errcheck ("signal", signal (SIGALRM, timecheck));
@@ -5681,14 +5681,14 @@ timecheck ()
 }
 
 static void
-checkpoint ()
+checkpoint (int)
 {
   lrs_dump_state ();
   errcheck ("signal", signal (SIGUSR1, checkpoint));
 }
 
 static void
-die_gracefully ()
+die_gracefully (int)
 {
   lrs_dump_state ();
 
@@ -7181,7 +7181,7 @@ void copy_linearity(lrs_dat *Q, lrs_dat *iQ)
   if (nlinearity > 0)
     {
       if(Q->linearity==NULL)
-         Q->linearity = CALLOC ((nlinearity +1), sizeof (long));
+         Q->linearity = static_cast<long*>(CALLOC ((nlinearity +1), sizeof (long)));
       for(i=0; i < nlinearity; i++)
 	Q->linearity[i] = iQ->linearity[i];
       Q->nlinearity = nlinearity;
@@ -7293,7 +7293,7 @@ long lrs_project_var(lrs_dic **iP, lrs_dat **iQ, long col, long verbose)
   P=(*iP);
   Q=(*iQ);
    
-  tgroups = CALLOC ((Q->m+4), sizeof (long));
+  tgroups = static_cast<long*>(CALLOC ((Q->m+4), sizeof (long)));
   if (tgroups == NULL)
     fel_abort("ERROR>Can't allocate memory.");
   /* compute groupings tgroups[0] =  # of rows with '0' in column 'col'           */

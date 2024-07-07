@@ -97,7 +97,7 @@ int lrs_solve_nash(game * g)
 
   output2 = lrs_alloc_mp_vector(Q1->n + Q1->m); /* output holds one line of output from dictionary     */
 
-  linindex = calloc((P2orig->m + P2orig->d + 2), sizeof(long)); /* for next time */
+  linindex = static_cast<long*>(calloc((P2orig->m + P2orig->d + 2), sizeof(long))); /* for next time */
 
   fprintf(lrs_ofp, "\n");
 //  fprintf (lrs_ofp, "***** %ld %ld rational\n", Q1->n, Q2->n);
@@ -842,7 +842,7 @@ int lrs_solve_nash_legacy (int argc, char *argv[])
 
   if (Q2->nlinearity > 0)
       free(Q2->linearity);               /* we will start again */
-  Q2->linearity  = CALLOC ((Q2->m + 2), sizeof (long));
+  Q2->linearity  = static_cast<long*>(CALLOC ((Q2->m + 2), sizeof (long)));
 
   P2orig = lrs_alloc_dic (Q2);	     /* allocate and initialize lrs_dic                     */
   if (P2orig == NULL)
@@ -853,7 +853,7 @@ int lrs_solve_nash_legacy (int argc, char *argv[])
 
   output2 = lrs_alloc_mp_vector (Q1->n + Q1->m);     /* output holds one line of output from dictionary     */
 
-  linindex = calloc ((P2orig->m + P2orig->d + 2), sizeof (long)); /* for next time*/
+  linindex = static_cast<long*>(calloc ((P2orig->m + P2orig->d + 2), sizeof (long))); /* for next time*/
 
   fprintf (lrs_ofp, "\n***** %ld %ld rational\n", Q1->n, Q2->n);
 
