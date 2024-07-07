@@ -235,7 +235,6 @@ void lrs_exit(int i);
 /* functions  for external use */
 /*******************************/
 
-long lrsv2_main(int argc, char *argv[],lrs_dic **P,lrs_dat **Q, long overf,long stage,char *tmp,lrs_restart_dat *R); /* called from lrsX_main where X is arithmetic type */
 long lrs_run ( lrs_dic *P, lrs_dat * Q); /* main reverse search function */
 long redund_run ( lrs_dic *P, lrs_dat * Q); /* main redund loop */
 void  redund_print(lrs_dic *P,lrs_dat *Q);
@@ -254,8 +253,6 @@ long lrs_getray (lrs_dic * P, lrs_dat * Q, long col, long comment, lrs_mp_vector
 long lrs_getvertex (lrs_dic * P, lrs_dat * Q, lrs_mp_vector output);
 void lrs_close (const char *name);	/* close lrs lib program "name"                 */
 long lrs_init (const char *name);	/* initialize lrslib and arithmetic package for prog "name" */
-lrs_dic *lrs_setup(int argc, char *argv[], lrs_dat **Q, lrs_restart_dat *R); /* intialize P,P_orig,Q and read data */
-lrs_dic *lrs_reset(lrs_dic *P_orig, lrs_dat *Q, lrs_restart_dat *R); /* restore P form P_orig reset Q using R */
 void lrs_lpoutput(lrs_dic * P,lrs_dat * Q, lrs_mp_vector output); /* print LP primal and dual solutions */
 void lrs_printcobasis (lrs_dic * P, lrs_dat * Q, long col); /* print cobasis for column col(verted or ray)  */
 void lrs_print_header(const char *name);
@@ -264,7 +261,6 @@ void lrs_printrow (const char *name, lrs_dat * Q, lrs_mp_vector output, long row
 void lrs_printsol (lrs_dic * P, lrs_dat * Q, long col, long comment);	/* print out solution from col, comment= 0=normal,-1=geometric ray,1..inputd=linearity */
 void lrs_printtotals (lrs_dic * P, lrs_dat * Q);/* print final totals for lrs                   */
 long lrs_set_digits (long dec_digits );  /* set lrsmp digits to equiv. of decimal dec_digits */
-void lrs_setup_R (lrs_dic * P, lrs_dat * Q, lrs_restart_dat * R);
 long lrs_solvelp (lrs_dic * P, lrs_dat * Q, long maximize);/* solve primal feas LP:TRUE bounded else FALSE */
 void lrs_warning(lrs_dat *Q, char* type, char* ss);  /* warnings sent to printer or mplrs */
 
@@ -315,7 +311,6 @@ long readredund (lrs_dat * Q);	                /* read and check redundancy list
 void rescaledet (lrs_dic * P, lrs_dat * Q, lrs_mp Vnum, lrs_mp Vden);	/* rescale determinant to get its volume */
 void rescalevolume (lrs_dic * P, lrs_dat * Q, lrs_mp Vnum, lrs_mp Vden);	/* adjust volume for dimension          */
 long lrs_leaf(lrs_dic *P, lrs_dat *Q);                    /* true if current dictionary is leaf of reverse search tree  */
-void update_R(lrs_dic *P, lrs_dat *Q, lrs_restart_dat *R);
 
 /***************************************************/
 /* Routines for redundancy checking                */
@@ -360,7 +355,6 @@ void lrs_set_obj_mp(lrs_dic *P, lrs_dat *Q, lrs_mp_vector num, lrs_mp_vector den
 
 void copydicA(lrs_dic *P1, lrs_dic *P, long skip_row, long skip_col);
 void copy_linearity(lrs_dat *Q, lrs_dat *iQ);
-long fel_run(lrs_dic *iP, lrs_dat *iQ, lrs_restart_dat *R);
 void felprint(lrs_dic *P2, lrs_dat *Q2);
 void fel_abort(char str[]);
 void linear_dep(lrs_dic *P, lrs_dat *Q, long *Dep);
@@ -371,7 +365,6 @@ long compute_redundancy(long *redineq, lrs_dic *P, lrs_dat *Q);
 void put_linearities_first(lrs_dat *Q, lrs_dic *P);
 lrs_dat *makedat(long n);
 lrs_dic *makecopy(lrs_dat *Q2,lrs_dic *P, lrs_dat *Q);
-void redundmask(lrs_dat *Q, lrs_restart_dat *R);
 
 /**************************************************************************/
 

@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lrsrestart.h"
-
 struct lrs_dic;
 struct lrs_dat;
 
