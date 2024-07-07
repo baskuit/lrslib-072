@@ -358,18 +358,6 @@ void lrslong_overflow(int i);
 void lrs_exit(int i);
 #endif
 
-/****************/
-/*      PLRS    */
-/****************/
-/* following provided by mplrs.c */
-void post_output(const char *, const char *);
-void post_R(lrs_restart_dat *R);
-void open_outputblock(void);
-void close_outputblock(void);
-void mplrs_cleanstop(int checkpoint);
-void mplrs_emergencystop(const char *);
-
-
 /*******************************/
 /* functions  for external use */
 /*******************************/
