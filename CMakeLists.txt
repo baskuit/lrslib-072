@@ -3,40 +3,26 @@ project(lrsnash CXX)
 
 find_library(GMP_LIBRARY gmp)
 
-set(GMP_SOURCES
+set(SOURCES
+    lrsnash.cc
     lrsnashlib.cc
     lrslib.cc
-    lrsgmp.cc
     lrsdriver.cc
 )
 
-set(MP_SOURCES
-    lrsnashlib.cc
-    lrslib.cc
-    lrsmp.cc
-    lrsdriver.cc
-)
-
-set(LONG_SOURCES
-    lrsnashlib.cc
-    lrslib.cc
-    lrslong.cc
-    lrsdriver.cc
-)
-
-add_executable(lrsnashgmp lrsnash.cc ${GMP_SOURCES})
-target_link_libraries(lrsnashgmp PRIVATE ${GMP_LIBRARY})
-target_compile_definitions(lrsnashgmp PRIVATE GMP MA)
+add_executable(lrsnashgmp lrsgmp.cc ${SOURCES})
+target_compile_definitions(lrsnashgmp PRIVATE GMP)
 target_compile_options(lrsnashgmp PRIVATE -Wno-write-strings)
+target_link_libraries(lrsnashgmp PRIVATE ${GMP_LIBRARY})
 
-add_executable(lrsnash lrsnash.cc ${MP_SOURCES})
-target_compile_definitions(lrsnash PRIVATE MA MP)
+add_executable(lrsnash lrsmp.cc ${SOURCES})
+target_compile_definitions(lrsnash PRIVATE MP LRS_QUIET)
 target_compile_options(lrsnash PRIVATE -Wno-write-strings)
 
-add_executable(lrsnash1 lrsnash.cc ${LONG_SOURCES})
-target_compile_definitions(lrsnash1 PRIVATE MA LRSLONG SAFE)
+add_executable(lrsnash1 lrslong.cc ${SOURCES})
+target_compile_definitions(lrsnash1 PRIVATE LRSLONG SAFE)
 target_compile_options(lrsnash1 PRIVATE -Wno-write-strings)
 
-add_executable(lrsnash2 lrsnash.cc ${LONG_SOURCES})
-target_compile_definitions(lrsnash2 PRIVATE MA LRSLONG SAFE B128)
+add_executable(lrsnash2 lrslong.cc ${SOURCES})
+target_compile_definitions(lrsnash2 PRIVATE LRSLONG SAFE B128)
 target_compile_options(lrsnash2 PRIVATE -Wno-write-strings)
