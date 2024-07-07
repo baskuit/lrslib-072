@@ -6,8 +6,8 @@
 # add -DSIGNALS if your compiler does *not* support <signal.h> <unistd.h>
 
 #try uncommenting next line if cc is the default C compiler
-CC = gcc      # or gcc7
-
+CC = g++      # or gcc7
+CPPFLAGS = -Wno-write-strings -fpermissive
 default: lrs lrsgmp lrsnash checkpred inedel 
 
 #choose line below instead if __int128 not supported
@@ -197,15 +197,23 @@ demo:	lpdemo1.c lrslib.c lrsdriver.c lrslib.h lrsgmp.c lrsgmp.h
 lrsnash:	lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrsgmp.c lrsgmp.h lrsdriver.h lrsdriver.c
 		$(CC) -O3   -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash lrsnash.c lrsnashlib.c lrslib.c lrsgmp.c lrsdriver.c  -lgmp -DGMP
 
-alllrsnash:	lrsnash.c nashdemo.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrsgmp.c lrsgmp.h lrslong.h lrsdriver.h lrsdriver.c
-		$(CC) -O3   -I${INCLUDEDIR} -L${LIBDIR} -o lrsnashgmp lrsnash.c lrsnashlib.c lrslib.c lrsgmp.c lrsdriver.c  -lgmp -DGMP
-		$(CC) -O3   -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash1 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE
-		$(CC) -O3   -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash2 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE ${BITS}
-		$(CC) -O3   -I${INCLUDEDIR} -L${LIBDIR} -o nashdemo nashdemo.c lrsnashlib.c lrslib.c lrsgmp.c lrsdriver.c -lgmp -DGMP
-		$(CC) -O3 -DMP -o setupnash setupnash.c lrslib.c lrsdriver.c lrsmp.c
-		$(CC) -O3 -DMP -o setupnash2 setupnash2.c lrslib.c lrsdriver.c lrsmp.c
-		$(CC) -O3  -I${INCLUDEDIR} -L${LIBDIR} -o 2nash 2nash.c
-		cp lrsnashgmp lrsnash
+mp: lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrslong.h lrsdriver.h lrsdriver.c lrsmp.c lrsmp.h
+		$(CC) ${CPPFLAGS} -O3 -DMP -DLRS_QUIET   -o lrsnash lrsnash.c lrsnashlib.c lrslib.c lrsdriver.c lrsmp.c -static
+
+gmp: lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrsgmp.c lrsgmp.h lrsdriver.h lrsdriver.c
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnashgmp lrsnash.c lrsnashlib.c lrslib.c lrsgmp.c lrsdriver.c  -lgmp -DGMP
+
+1: lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrslong.h lrsdriver.h lrsdriver.c
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash1 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE
+
+2: lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrslong.h lrsdriver.h lrsdriver.c
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash2 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE ${BITS}
+
+simple: lrsnash.c lrsnashlib.c lrslib.c lrsnashlib.h lrslib.h lrsgmp.c lrsgmp.h lrslong.h lrsdriver.h lrsdriver.c lrsmp.c lrsmp.h
+		$(CC) ${CPPFLAGS} -O3 -DMP -DLRS_QUIET   -o lrsnash lrsnash.c lrsnashlib.c lrslib.c lrsdriver.c lrsmp.c -static
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnashgmp lrsnash.c lrsnashlib.c lrslib.c lrsgmp.c lrsdriver.c  -lgmp -DGMP
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash1 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE
+		$(CC) ${CPPFLAGS} -O3 ${CPPFLAGS}  -I${INCLUDEDIR} -L${LIBDIR} -o lrsnash2 lrsnash.c lrsnashlib.c lrslib.c lrslong.c lrsdriver.c -DLRSLONG -DSAFE ${BITS}
 
 ######################################################################
 # From here on the author is David Bremner <bremner@unb.ca> to whom you should turn for help             
