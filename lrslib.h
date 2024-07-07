@@ -44,7 +44,11 @@
 #ifndef SIGNALS
 #include <signal.h>
 #include <unistd.h>
-#define errcheck(s,e) if ((long)(e)==-1L){  perror(s);exit(1);}
+#define errcheck(s, e)                                                         \
+  if ((long)(e) == -1L) {                                                      \
+    perror(s);                                                                 \
+    exit(1);                                                                   \
+  }
 #endif
 
 /*********************/
@@ -90,7 +94,7 @@
 
 struct lrs_dic /* dynamic dictionary data */
 {
-	lrs_mp_matrix A;
+  lrs_mp_matrix A;
   long m;        /* A has m+1 rows, row 0 is cost row            */
   long m_A;      /* =m or m-d if nonnegative flag set            */
   long d;        /* A has d+1 columns, col 0 is b-vector         */
@@ -103,8 +107,8 @@ struct lrs_dic /* dynamic dictionary data */
   lrs_mp objden; /* objective denominator value                  */
   long *B, *Row; /* basis, row location indices                  */
   long *C, *Col; /* cobasis, column location indices             */
-	lrs_dic *prev;
-	lrs_dic *next;
+  lrs_dic *prev;
+  lrs_dic *next;
 };
 
 struct lrs_dat /* global problem data   */
@@ -123,8 +127,8 @@ struct lrs_dat /* global problem data   */
   long unbounded;   /* lp unbounded */
   char fname[4096]; /* program name: lrs redund fel nash            */
 
-	/* initially holds order used to find starting  */
-	/* basis, default: m,m-1,...,2,1                */
+  /* initially holds order used to find starting  */
+  /* basis, default: m,m-1,...,2,1                */
   long *facet;         /* cobasic indices for restart if needed        */
   long *redundcol;     /* holds columns which are redundant            */
   long *inequality;    /* indices of inequalities corr. to cobasic ind */
@@ -136,14 +140,14 @@ struct lrs_dat /* global problem data   */
   long *isave, *jsave; /* arrays for estimator, malloc'ed at start     */
   long inputd;         /* input dimension: n-1 for H-rep, n for V-rep  */
 
-  long m;      /* number of rows in input file                 */
-  long n;      /* number of columns in input file              */
-  long lastdv; /* index of last dec. variable after preproc    */
-	/* given by inputd-nredundcol                   */
+  long m;         /* number of rows in input file                 */
+  long n;         /* number of columns in input file              */
+  long lastdv;    /* index of last dec. variable after preproc    */
+                  /* given by inputd-nredundcol                   */
   long count[10]; /* count[0]=rays(facets)[1]=vertices(linearities)*/
-		                /*  [2]=cobases [3]=pivots [4]=integer vertices  */
-		                /*  [5-7]=mplrs R [8]=max vertex/facet depth     */
-	long startcount[5];
+                  /*  [2]=cobases [3]=pivots [4]=integer vertices  */
+                  /*  [5-7]=mplrs R [8]=max vertex/facet depth     */
+  long startcount[5];
 
   long deepest;    /* max depth ever reached in search             */
   long nredundcol; /* number of redundant columns                  */
@@ -154,11 +158,10 @@ struct lrs_dat /* global problem data   */
   double cest[10]; /* ests: 0=rays,1=vert,2=bases,3=vol,4=int vert */
   long nextineq;   /* start checking redundancy from this row:def=1*/
 
-	/**** flags  **********                         */
-  long allbases;  /* TRUE if all bases should be printed          */
-  long bound;     /* TRUE if upper/lower bound on objective given */
-  long countonly; /* TRUE if only count totals should be output   */
-	long debug;
+  /**** flags  **********                         */
+  long allbases;      /* TRUE if all bases should be printed          */
+  long bound;         /* TRUE if upper/lower bound on objective given */
+  long countonly;     /* TRUE if only count totals should be output   */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
   long etrace;        /* turn off debug at basis # strace             */
   long extract;       /* remove linearities if any and extractcols    */
@@ -199,22 +202,22 @@ struct lrs_dat /* global problem data   */
   long triangulation; /* TRUE: the cobases printed triangulate the polytope */
   long newstart;      /* TRUE: lrs is restarted with new arithmetic         */
 
-	/* Variables for saving/restoring cobasis,  db */
+  /* Variables for saving/restoring cobasis,  db */
 
   long id;    /* numbered sequentially */
   char *name; /* passed by user */
 
   long saved_count[5]; /* Saves Q->count[*] */
-	long *saved_C;
-	lrs_mp saved_det;
-	lrs_mp saved_sumdet;
-	long saved_depth;
-	long saved_d;
+  long *saved_C;
+  lrs_mp saved_det;
+  lrs_mp saved_sumdet;
+  long saved_depth;
+  long saved_d;
 
   long saved_flag; /* There is something in the saved cobasis */
 
-	/* Variables for cacheing dictionaries, db */
-	lrs_dic *Qhead, *Qtail, *olddic;
+  /* Variables for cacheing dictionaries, db */
+  lrs_dic *Qhead, *Qtail, *olddic;
 };
 
 /***************************/
@@ -348,9 +351,9 @@ void print_basis(FILE *fp, lrs_dat *Q);
 void printA(lrs_dic *P,
             lrs_dat *Q); /* raw print of dictionary, bases for debugging   */
 void pimat(lrs_dic *P, long r, long s, lrs_mp Nt,
-           const char *name);              /* print the row r col s of A              */
+           const char *name); /* print the row r col s of A              */
 long readfacets(lrs_dat *Q, long facet[]); /* read and check facet list */
-long readlinearity(lrs_dat *Q);            /* read and check linearity list            */
+long readlinearity(lrs_dat *Q); /* read and check linearity list            */
 long readvars(lrs_dat *Q,
               char *name); /* read and check var list for extract or project */
 long readredund(lrs_dat *Q); /* read and check redundancy list */

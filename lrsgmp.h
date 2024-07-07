@@ -129,7 +129,7 @@
 #define one(a) (fmpz_cmp_si((a), ONE) == 0 ? ONE : ZERO)
 #define negative(a) (fmpz_sgn(a) < 0 ? ONE : ZERO)
 #define normalize(a) (void)0
-#define positive (a) (fmpz_sgn(a) > 0 ? ONE : ZERO)
+#define positive (a)(fmpz_sgn(a) > 0 ? ONE : ZERO)
 #define sign(a) (fmpz_sgn(a) < 0 ? NEG : POS)
 #define subint(a, b, c) fmpz_sub((c), (a), (b))
 #define zero(a) (fmpz_sgn(a) == 0 ? ONE : ZERO)
@@ -205,7 +205,7 @@ void lrs_clear_mp_matrix(lrs_mp_matrix p, long m,
 /* Core library functions - depend on mp implementation  */
 /******************************************************* */
 void atomp(const char s[], lrs_mp a); /* convert string to lrs_mp integer */
-long compare(lrs_mp a, lrs_mp b);     /* a ? b and returns -1,0,1 for <,=,>     */
+long compare(lrs_mp a, lrs_mp b); /* a ? b and returns -1,0,1 for <,=,>     */
 void linint(lrs_mp a, long ka, lrs_mp b, long kb); /* compute a*ka+b*kb --> a */
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* mp rat to char  */
 char *cpmp(const char *name, lrs_mp Nt);             /* mp int to char  */
@@ -238,7 +238,7 @@ long myrandom(long num,
               long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
 void rattodouble(lrs_mp a, lrs_mp b,
-                 double *x);          /* convert lrs_mp rational to double          */
+                 double *x); /* convert lrs_mp rational to double          */
 void reduceint(lrs_mp Na, lrs_mp Da); /* divide Na by Da and return it */
 void reducearray(lrs_mp_vector p,
                  long n); /* find gcd of p[0]..p[n-1] and divide through by */

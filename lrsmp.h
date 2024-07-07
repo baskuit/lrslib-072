@@ -154,7 +154,7 @@ long compare(lrs_mp a, lrs_mp b); /* a ? b and returns -1,0,1 for <,=,> */
 void copy(lrs_mp a, lrs_mp b);    /* assigns a=b    */
 void divint(lrs_mp a, lrs_mp b,
             lrs_mp c); /* c=a/b, a contains remainder on return          */
-void gcd(lrs_mp u, lrs_mp v);        /* returns u=gcd(u,v) destroying v        */
+void gcd(lrs_mp u, lrs_mp v); /* returns u=gcd(u,v) destroying v        */
 long mp_greater(lrs_mp a, lrs_mp b); /* tests if a > b and returns (TRUE=POS) */
 void itomp(long in, lrs_mp a);       /* convert integer i to lrs_mp       */
 void linint(lrs_mp a, long ka, lrs_mp b, long kb); /* compute a*ka+b*kb --> a */
@@ -198,7 +198,7 @@ long myrandom(long num,
               long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
 void rattodouble(lrs_mp a, lrs_mp b,
-                 double *x);          /* convert lrs_mp rational to double          */
+                 double *x); /* convert lrs_mp rational to double          */
 void reduceint(lrs_mp Na, lrs_mp Da); /* divide Na by Da and return it */
 void reducearray(lrs_mp_vector p,
                  long n); /* find gcd of p[0]..p[n-1] and divide through by */

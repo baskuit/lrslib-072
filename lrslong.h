@@ -329,7 +329,7 @@ void lrs_clear_mp_matrix(lrs_mp_matrix a, long m, long n);
 
 void atomp(const char s[], lrs_mp a); /* convert string to lrs_mp integer */
 long compare(lrs_mp a, lrs_mp b);     /* a ? b and returns -1,0,1 for <,=,> */
-void gcd(lrs_mp u, lrs_mp v);         /* returns u=gcd(u,v) destroying v         */
+void gcd(lrs_mp u, lrs_mp v); /* returns u=gcd(u,v) destroying v         */
 void mptodouble(lrs_mp a, double *x); /* convert lrs_mp to double */
 long mptoi(lrs_mp a);                 /* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp);     /* convert lrs_mp to string */
@@ -365,7 +365,7 @@ long myrandom(long num,
               long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
 void rattodouble(lrs_mp a, lrs_mp b,
-                 double *x);          /* convert lrs_mp rational to double          */
+                 double *x); /* convert lrs_mp rational to double          */
 void reduceint(lrs_mp Na, lrs_mp Da); /* divide Na by Da and return it */
 void reducearray(lrs_mp_vector p,
                  long n); /* find gcd of p[0]..p[n-1] and divide through by */

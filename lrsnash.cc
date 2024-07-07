@@ -28,7 +28,6 @@ char Helptext[] =
     "  Input files can be specified separately, or by using wildcards, as in "
     "'game*'\n"
     "  Options:\n"
-    "    -d, --debug           Dumps lots of information for debugging\n"
     "    -p, --printgame       Prints the payoff matrix for the game\n"
     "    -s, --standard        Promise that input files have standard "
     "structure\n"
@@ -199,7 +198,6 @@ int getArgs(int argc, char **argv) {
 
   while (1) {
     static struct option long_options[] = {
-        {"debug", no_argument, 0, 'd'},
         {"printgame", no_argument, 0, 'p'},
         {"standard", no_argument, 0, 's'},
         {"outfile", required_argument, 0, 'o'},

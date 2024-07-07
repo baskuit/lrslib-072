@@ -205,7 +205,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
   long i, j, d, m;
   long nlinearity; /* number of linearities in input file                  */
   long lastdv;
-  long debug;
   long index; /* basic index for redundancy test */
   long c1 = 0;
   long min, nin;
@@ -218,7 +217,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
   m = P->m_A; /* number of rows of A matrix */
   d = P->d;
   redineq = Q->redineq;
-  debug = Q->debug;
   min = Q->m;
   nin = Q->n;
   Q->Ain = lrs_alloc_mp_matrix(
@@ -228,9 +226,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
   for (i = 1; i <= m; i++) {
     for (j = 0; j <= d; j++)
       copy(Ain[i][j], P->A[i][j]);
-
-    if (debug)
-      lrs_printrow("*", Q, Ain[i], d);
   }
 
   /*********************************************************************************/
@@ -263,10 +258,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
 
   for (i = 0; i < nlinearity; i++)
     redineq[Q->linearity[i]] = 2L;
-
-  if (Q->debug)
-    fprintf(lrs_ofp, "\nnoredundcheck=%ld verifyredund=%ld", Q->noredundcheck,
-            Q->verifyredund);
 
   /* Q->verifyredund always false in lrs, set by mplrs to check duplicated
    * redundancy removal */
@@ -302,8 +293,6 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
                              but got reset somewhere */
     Q->redineq[0] = 1;
 
-  if (debug)
-    fprintf(lrs_ofp, "\nlastdv=%ld, redineq[0]=%ld", lastdv, redineq[0]);
   for (index = lastdv + Q->redineq[0]; index <= m + d; index++) {
     ineq = Q->inequality[index - lastdv]; /* the input inequality number corr.
                                              to this index */
@@ -311,21 +300,11 @@ long redund_run(lrs_dic *P, lrs_dat *Q)
 
     if (redineq[ineq] == 1) {
       redineq[ineq] = checkindex(P, Q, index);
-
-      if (debug)
-        fprintf(lrs_ofp, "\ncheck index=%ld, inequality=%ld, redineq=%ld",
-                index, ineq, redineq[ineq]);
     }
 
   } /* end for index ..... */
 
 done:
-
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n*redineq:");
-    for (i = 1; i <= m; i++)
-      fprintf(lrs_ofp, " %ld", Q->redineq[i]);
-  }
 
   if ((Q->mplrs && !Q->verifyredund)) {
     lrs_clear_mp_matrix(Q->Ain, min, nin);
@@ -753,7 +732,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->allbases = FALSE;
   Q->bound = FALSE;     /* upper/lower bound on objective function given */
   Q->countonly = FALSE; /* produce the usual output */
-  Q->debug = FALSE;
   Q->frequency = 0L;
   Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
   Q->geometric = FALSE;
@@ -929,17 +907,6 @@ long lrs_read_dic(lrs_dic *P, lrs_dat *Q)
 #endif
     }
 
-    if (strcmp(name, "debug") == 0) {
-      Q->etrace = 0;
-      if (fscanf(lrs_ifp, "%ld %ld", &Q->strace, &Q->etrace) == EOF)
-        Q->strace = 0;
-      if (!Q->mplrs)
-        fprintf(lrs_ofp, "\n*%s from B#%ld to B#%ld", name, Q->strace,
-                Q->etrace);
-      Q->debug = TRUE;
-      if (Q->strace <= 1)
-        Q->debug = TRUE;
-    }
     if (strcmp(name, "startingcobasis") == 0) {
       if (Q->nonnegative)
         lrs_warning(
@@ -1099,8 +1066,6 @@ long lrs_read_dic(lrs_dic *P, lrs_dat *Q)
         if (!Q->maximize)
           changesign(A[0][j]);
 
-      if (Q->debug)
-        printA(P, Q);
     } /* end of LP setup */
     if (strcmp(name, "volume") == 0) {
       if (overflow != 2)
@@ -1428,10 +1393,6 @@ long lrs_read_dic(lrs_dic *P, lrs_dat *Q)
   if (Q->incidence)
     Q->printcobasis = TRUE;
 
-  if (Q->debug) {
-    printA(P, Q);
-    fprintf(lrs_ofp, "\nexiting lrs_read_dic");
-  }
   fflush(lrs_ofp);
   fflush(stdout);
 
@@ -1538,18 +1499,11 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     if (j == k)
       inequality[k++] = i;
   }
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n*Starting cobasis uses input row order");
-    for (i = 0; i < m; i++)
-      fprintf(lrs_ofp, " %ld", inequality[i]);
-  }
   /* for voronoi convert to h-description using the transform */
   /* a_0 .. a_d-1 -> (a_0^2 + ... a_d-1 ^2)-2a_0x_0-...-2a_d-1x_d-1 + x_d >= 0
    */
   /* note constant term is stored in column d, and column d-1 is all ones */
   /* the other coefficients are multiplied by -2 and shifted one to the right */
-  if (Q->debug)
-    printA(D, Q);
   if (Q->voronoi) {
     Q->hull = FALSE;
     hull = FALSE;
@@ -1571,8 +1525,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
       copy(A[i][d], scale);
       mulint(scale, A[i][d], A[i][d]);
     } /* end of for (i=1;..) */
-    if (Q->debug)
-      printA(D, Q);
   } /* end of if(voronoi)     */
   if (!Q->maximize && !Q->minimize)
     for (j = 0; j <= d; j++)
@@ -1606,10 +1558,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     return FALSE;
   }
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\nafter getabasis");
-    printA(D, Q);
-  }
   nredundcol = Q->nredundcol;
   lastdv = Q->lastdv;
   d = D->d;
@@ -1618,8 +1566,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* now we start printing the output file  unless no output requested */
   /********************************************************************/
 
-  if (Q->count[2] == 1 &&
-      (no_output == 0 || Q->debug)) /* don't reprint after newstart */
+  if (Q->count[2] == 1 && (no_output == 0)) /* don't reprint after newstart */
   {
     int len = 0;
     char *header;
@@ -1684,12 +1631,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   }
   /* end if linearity */
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\ninequality array initialization:");
-    for (i = 1; i <= m - nlinearity; i++)
-      fprintf(lrs_ofp, " %ld", inequality[i]);
-  }
-
   if (nredundcol > 0) {
     const unsigned int Qn = Q->n;
     *Lin = lrs_alloc_mp_matrix(nredundcol, Qn);
@@ -1753,8 +1694,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */
-  if (Q->debug)
-    printA(D, Q);
 
   while (C[0] <= m) {
     i = C[0];
@@ -1766,23 +1705,10 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     reorder1(C, Col, ZERO, d);
   }
 
-  if (Q->debug) {
-    fprintf(lrs_ofp,
-            "\n*Inequality numbers for indices %ld .. %ld : ", lastdv + 1,
-            m + d);
-    for (i = 1; i <= m - nlinearity; i++)
-      fprintf(lrs_ofp, " %ld ", inequality[i]);
-    printA(D, Q);
-  }
-
   if (Q->restart) {
-    if (Q->debug)
-      fprintf(lrs_ofp, "\nPivoting to restart co-basis");
     if (!restartpivots(D, Q))
       return FALSE;
     D->lexflag = lexmin(D, Q, ZERO); /* see if lexmin basis */
-    if (Q->debug)
-      printA(D, Q);
   }
 
   /* Check to see if necessary to resize */
@@ -1860,20 +1786,12 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
       backtrack = FALSE;
 
       if (check_cache(D_p, Q, &i, &j)) {
-        if (Q->debug)
-          fprintf(lrs_ofp, "\n Cached Dict. restored to depth %ld\n", D->depth);
       } else {
         D->depth--;
         selectpivot(D, Q, &i, &j);
         pivot(D, Q, i, j);
         update(D, Q, &i, &j); /*Update B,C,i,j */
       }
-
-      if (Q->debug) {
-        fprintf(lrs_ofp, "\n Backtrack Pivot: indices i=%ld j=%ld depth=%ld", i,
-                j, D->depth);
-        printA(D, Q);
-      };
 
       j++; /* go to next column */
     } /* end of if backtrack  */
@@ -1907,10 +1825,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
       Q->count[2]++;
       Q->totalnodes++;
 
-      if (Q->strace == Q->count[2])
-        Q->debug = TRUE;
-      if (Q->etrace == Q->count[2])
-        Q->debug = FALSE;
       return TRUE; /*return new dictionary */
     }
 
@@ -1948,9 +1862,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
     if (P->depth > Q->count[8])
       Q->count[8] = P->depth;
   }
-
-  if (Q->debug)
-    printA(P, Q);
 
   if (Q->getvolume) {
     linint(Q->sumdet, 1, P->det, 1);
@@ -2041,13 +1952,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
   long *B = P->B;
   long *Row = P->Row;
   long lastdv = Q->lastdv;
-
-  if (Q->debug) {
-    printA(P, Q);
-    for (i = 0; i < Q->nredundcol; i++)
-      fprintf(lrs_ofp, " %ld", redundcol[i]);
-    fflush(lrs_ofp);
-  }
 
   if (redcol == n) {
     ++count[0];
@@ -2342,11 +2246,6 @@ void lrs_printtotals(lrs_dic *P, lrs_dat *Q) {
 
   if (Q->getvolume && Q->runs == 0) {
 
-    if (Q->debug) {
-      fprintf(lrs_ofp, "\n*Sum of det(B)=");
-      pmp("", Q->sumdet);
-    }
-
     rescalevolume(P, Q, Q->Nvolume, Q->Dvolume);
 
     if (Q->polytope)
@@ -2460,24 +2359,6 @@ void lrs_printtotals(lrs_dic *P, lrs_dat *Q) {
         "\n*Dictionary Cache: max size= %ld misses= %ld/%ld   Tree Depth= %ld",
         dict_count, cache_misses, cache_tries, Q->deepest);
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n*Input size m=%ld rows n=%ld columns", P->m, Q->n);
-
-    if (hull)
-      fprintf(lrs_ofp, " working dimension=%ld", d - 1 + homogeneous);
-    else
-      fprintf(lrs_ofp, " working dimension=%ld", d);
-
-    fprintf(lrs_ofp, "\n*Starting cobasis defined by input rows");
-    for (i = 0; i < nlinearity; i++)
-      temparray[i] = linearity[i];
-    for (i = nlinearity; i < lastdv; i++)
-      temparray[i] = inequality[C[i - nlinearity] - lastdv];
-    for (i = 0; i < lastdv; i++)
-      reorder(temparray, lastdv);
-    for (i = 0; i < lastdv; i++)
-      fprintf(lrs_ofp, " %ld", temparray[i]);
-  }
   return;
 
 } /* end of lrs_printtotals */
@@ -2548,12 +2429,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
 
       prod = prod * nchild;
       nbases = nbases + prod;
-      if (Q->debug) {
-        fprintf(lrs_ofp, "   degree= %ld ", nchild);
-        fprintf(lrs_ofp, "\nPossible reverse pivots: i,j=");
-        for (k = 0; k < nchild; k++)
-          fprintf(lrs_ofp, "%ld,%ld ", isave[k], jsave[k]);
-      }
 
       if (nchild > 0) /*reverse pivot found choose random child */
       {
@@ -2561,8 +2436,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
         Q->seed = myrandom(Q->seed, 977L);
         i = isave[k];
         j = jsave[k];
-        if (Q->debug)
-          fprintf(lrs_ofp, "  selected pivot k=%ld seed=%ld ", k, Q->seed);
         estdepth++;
         Q->totalnodes++; /* calculate total number of nodes evaluated */
         pivot(P, Q, i, j);
@@ -2610,10 +2483,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
       pivot(P, Q, i, j);
       update(P, Q, &i, &j); /*Update B,C,i,j */
       /*fprintf(lrs_ofp,"\n0  +++"); */
-      if (Q->debug) {
-        fprintf(lrs_ofp, "\n Backtrack Pivot: indices i,j %ld %ld ", i, j);
-        printA(P, Q);
-      }
       j++;
     }
 
@@ -2655,13 +2524,7 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
 
   enter = C[s];
   col = Col[s];
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n+reverse: col index %ld C %ld Col %ld ", s, enter, col);
-    fflush(lrs_ofp);
-  }
   if (!negative(A[0][col])) {
-    if (Q->debug)
-      fprintf(lrs_ofp, " Pos/Zero Cost Coeff");
     Q->minratio[P->m] = 0; /* 2011.7.14 */
     return (FALSE);
   }
@@ -2669,8 +2532,6 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
   *r = lrs_ratio(P, Q, col);
   if (*r == 0) /* we have a ray */
   {
-    if (Q->debug)
-      fprintf(lrs_ofp, " Pivot col non-negative:  ray found");
     Q->minratio[P->m] = 0; /* 2011.7.14 */
     return (FALSE);
   }
@@ -2688,21 +2549,12 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
           negative(A[row][j])) /*or else sign test fails trivially */
         if ((!negative(A[0][j]) && !positive(A[row][j])) ||
             comprod(A[0][j], A[row][col], A[0][col], A[row][j]) ==
-                -1) { /*+ve cost found */
-          if (Q->debug) {
-            fprintf(lrs_ofp, "\nPositive cost found: index %ld C %ld Col %ld",
-                    i, C[i], j);
-            fflush(lrs_ofp);
-          }
+                -1) {            /*+ve cost found */
           Q->minratio[P->m] = 0; /* 2011.7.14 */
 
           return (FALSE);
         }
     }
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n+end of reverse : indices r %ld s %ld \n", *r, s);
-    fflush(stdout);
-  }
   return (TRUE);
 } /* end of reverse */
 
@@ -2773,11 +2625,6 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
   s = Col[cob];
 
   /* Ars=A[r][s]    */
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n pivot  B[%ld]=%ld  C[%ld]=%ld ", bas, B[bas], cob,
-            C[cob]);
-    fflush(stdout);
-  }
   copy(Ars, A[r][s]);
   storesign(P->det, sign(Ars)); /*adjust determinant to new sign */
 
@@ -2814,11 +2661,6 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
   copy(P->det, Ars);
   storesign(P->det, POS); /* always keep positive determinant */
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, " depth=%ld ", P->depth);
-    pmp("det=", P->det);
-    fflush(stdout);
-  }
   /* set the new rescaled objective function value */
 
   mulint(P->det, Q->Lcm[0], P->objden);
@@ -2917,9 +2759,6 @@ long lrs_solvelp(lrs_dic *P, lrs_dat *Q, long maximize)
       update(P, Q, &i, &j); /*Update B,C,i,j */
     }
 
-  if (Q->debug)
-    printA(P, Q);
-
   if (j < d && i == 0) /* selectpivot gives information on unbounded solution */
   {
     if (Q->lponly && Q->messages)
@@ -2957,19 +2796,12 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
   d = P->d;
   nlinearity = Q->nlinearity;
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\ngetabasis from inequalities given in order");
-    for (i = 0l; i < m; i++)
-      fprintf(lrs_ofp, " %ld", order[i]);
-  }
   for (j = 0l; j < m; j++) {
     i = 0l;
     while (i <= m && B[i] != d + order[j])
       i++;                       /* find leaving basis index i */
     if (j < nlinearity && i > m) /* cannot pivot linearity to cobasis */
     {
-      if (Q->debug)
-        printA(P, Q);
       if (Q->messages)
         fprintf(lrs_ofp, "\nCannot find linearity in the basis");
       return FALSE;
@@ -2995,8 +2827,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
           linearity[j] = 0l;
           Q->redineq[j] = 1; /* check for redundancy if running redund */
         } else {
-          if (Q->debug)
-            printA(P, Q);
           lrs_warning(Q, "warning", "*No feasible solution");
           return FALSE;
         }
@@ -3030,14 +2860,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
   /* now we know how many decision variables remain in problem */
   Q->nredundcol = nredundcol;
   Q->lastdv = d - nredundcol;
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\nend of first phase of getabasis: ");
-    fprintf(lrs_ofp, "lastdv=%ld nredundcol=%ld", Q->lastdv, Q->nredundcol);
-    fprintf(lrs_ofp, "\nredundant cobases:");
-    for (i = 0; i < nredundcol; i++)
-      fprintf(lrs_ofp, " %ld", redundcol[i]);
-    printA(P, Q);
-  }
 
   /* Remove linearities from cobasis for rest of computation */
   /* This is done in order so indexing is not screwed up */
@@ -3054,8 +2876,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
       return FALSE;
     d = P->d;
   }
-  if (Q->debug && nlinearity > 0)
-    printA(P, Q);
 
   /* Check feasability */
   if (Q->givenstart) {
@@ -3082,9 +2902,6 @@ long removecobasicindex(lrs_dic *P, lrs_dat *Q, long k)
   m = P->m;
   d = P->d;
 
-  if (Q->debug)
-    fprintf(lrs_ofp, "\nremoving cobasic index k=%ld C[k]=%ld Col[k]=%ld", k,
-            C[k], Col[k]);
   cindex = C[k];  /* cobasic index to remove              */
   deloc = Col[k]; /* matrix column location to remove     */
 
@@ -3112,8 +2929,6 @@ long removecobasicindex(lrs_dic *P, lrs_dat *Q, long k)
   }
 
   P->d--;
-  if (Q->debug)
-    printA(P, Q);
   return TRUE;
 } /* end of removecobasicindex */
 
@@ -3160,12 +2975,6 @@ lrs_dic *resize(lrs_dic *P, lrs_dat *Q)
     P1->C[j] = P->C[j];
   }
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\nDictionary resized from d=%ld to d=%ld", Q->inputd,
-            P->d);
-    printA(P1, Q);
-  }
-
   lrs_free_dic(P, Q);
 
   /* Reassign cache pointers */
@@ -3201,8 +3010,6 @@ long restartpivots(lrs_dic *P, lrs_dat *Q)
 
   Cobasic = (long *)CALLOC((unsigned)m + d + 2, sizeof(long));
 
-  if (Q->debug)
-    fprintf(lrs_ofp, "\nCobasic flags in restartpivots");
   /* set Cobasic flags */
   for (i = 0; i < m + d + 1; i++)
     Cobasic[i] = 0;
@@ -3212,8 +3019,6 @@ long restartpivots(lrs_dic *P, lrs_dat *Q)
     while (facet[i + nlinearity] != inequality[j])
       j++;
     Cobasic[j + lastdv] = 1;
-    if (Q->debug)
-      fprintf(lrs_ofp, " %ld %ld;", facet[i + nlinearity], j + lastdv);
   }
 
   /* Note that the order of doing the pivots is important, as */
@@ -3294,11 +3099,6 @@ long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
         minratio[P->m] = 0; /*2011.7.14 degenerate pivot flag */
     }
   } /* end of for loop */
-  if (Q->debug) {
-    fprintf(lrs_ofp, "  Min ratios: ");
-    for (i = 0; i < degencount; i++)
-      fprintf(lrs_ofp, " %ld ", B[minratio[i]]);
-  }
   if (degencount == 0)
     return (degencount); /* non-negative pivot column */
 
@@ -3361,12 +3161,6 @@ long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
       start = nstart;
     } /* end of else perform ratio test statement */
     basicindex++; /* increment column of basis inverse to check next */
-    if (Q->debug) {
-      fprintf(lrs_ofp, " ratiocol=%ld degencount=%ld ", ratiocol, degencount);
-      fprintf(lrs_ofp, "  Min ratios: ");
-      for (i = start; i < start + degencount; i++)
-        fprintf(lrs_ofp, " %ld ", B[minratio[i]]);
-    }
   } /*end of while loop */
   lrs_clear_mp(Nmin);
   lrs_clear_mp(Dmin);
@@ -3404,10 +3198,6 @@ long lexmin(lrs_dic *P, lrs_dat *Q, long col)
           }
         } /* end of if B[i] ... */
       }
-  }
-  if ((col != ZERO) && Q->debug) {
-    fprintf(lrs_ofp, "\n lexmin ray in col=%ld ", col);
-    printA(P, Q);
   }
   return (TRUE);
 } /* end of lexmin */
@@ -3454,8 +3244,6 @@ void update(lrs_dic *P, lrs_dat *Q, long *i, long *j)
     ; /*Find basis index */
   for (*j = 0; C[*j] != leave; (*j)++)
     ; /*Find co-basis index */
-  if (Q->debug)
-    printA(P, Q);
 } /* end of update */
 
 long lrs_degenerate(lrs_dic *P, lrs_dat *Q)
@@ -3590,11 +3378,6 @@ void updatevolume(lrs_dic *P,
   copy(tN, Q->Nvolume);
   copy(tD, Q->Dvolume);
   linrat(tN, tD, ONE, Vnum, Vden, ONE, Q->Nvolume, Q->Dvolume);
-  if (Q->debug) {
-    prat("\n*Volume=", Q->Nvolume, Q->Dvolume);
-    pmp(" Vnum=", Vnum);
-    pmp(" Vden=", Vden);
-  }
   lrs_clear_mp(tN);
   lrs_clear_mp(tD);
   lrs_clear_mp(Vnum);
@@ -3653,8 +3436,6 @@ long checkredund(lrs_dic *P, lrs_dat *Q)
 
   /* 2020.6.8 check for strict redundancy and return -1 if so */
 
-  if (Q->debug && !Q->mplrs && !Q->fel)
-    pmp("\n*obj =", P->A[0][0]);
   if (negative(P->A[0][0]))
     return -1;
   else
@@ -3674,7 +3455,6 @@ long checkcobasic(lrs_dic *P, lrs_dat *Q, long index)
   long *B, *C, *Row, *Col;
   long d = P->d;
   long m = P->m;
-  long debug = Q->debug;
   long i = 0;
   long j = 0;
   long s;
@@ -3692,9 +3472,6 @@ long checkcobasic(lrs_dic *P, lrs_dat *Q, long index)
 
   /* index is cobasic */
 
-  if (debug)
-    fprintf(lrs_ofp, "\nindex=%ld cobasic", index);
-
   s = Col[j];
   i = Q->lastdv + 1;
 
@@ -3702,12 +3479,8 @@ long checkcobasic(lrs_dic *P, lrs_dat *Q, long index)
     i++;
 
   if (i > m) {
-    if (debug)
-      fprintf(lrs_ofp, " is non-redundant");
     return TRUE;
   }
-  if (debug)
-    fprintf(lrs_ofp, " is degenerate B[i]=%ld", B[i]);
 
   pivot(P, Q, i, j);
   update(P, Q, &i, &j); /*Update B,C,i,j */
@@ -3738,9 +3511,6 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
     zeroonly = 1;
     index = -index;
   }
-
-  if (Q->debug)
-    printA(P, Q);
 
   /* each slack index must be checked for redundancy */
   /* if in cobasis, it is pivoted out if degenerate */
@@ -4208,9 +3978,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
 
   fprintf(lrs_ofp, "\n");
 
-  if (Q->debug)
-    printA(P, Q);
-
   return 0;
 } /* extractcols */
 
@@ -4292,9 +4059,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
   for (j = 0; j < d - nlinearity; j++)
     fprintf(lrs_ofp, " %ld", C[j] - Q->hull);
   fprintf(lrs_ofp, "\n");
-
-  if (Q->debug)
-    printA(P, Q);
 
   return 0;
 } /* linextractcols  */
@@ -4441,9 +4205,6 @@ void copy_dict(lrs_dat *global, lrs_dic *dest, lrs_dic *src) {
   copy(dest->det, src->det);
   copy(dest->objnum, src->objnum);
   copy(dest->objden, src->objden);
-
-  if (global->debug)
-    fprintf(lrs_ofp, "\nSaving dict at depth %ld\n", src->depth);
 
   memcpy(dest->B, src->B, (m + 1) * sizeof(long));
   memcpy(dest->C, src->C, (d + 1) * sizeof(long));
@@ -5264,11 +5025,6 @@ long ran_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
     perm[j] = perm[i];
     perm[i] = t; // Swap i and j
   }
-  if (Q->debug) {
-    printf("\n perm: ");
-    for (i = 0; i < d; i++)
-      printf(" %ld", perm[i]);
-  }
 
   /*find first positive cost coef according to perm */
   while (k < d && !positive(A[0][Col[perm[k]]]))
@@ -5392,8 +5148,7 @@ void lrs_post_output(const char *type, const char *data) {}
 void lrs_return_unexplored(
     lrs_dic *P, lrs_dat *Q) /* send cobasis data for unexplored nodes */
 
-{
-}
+{}
 
 #ifdef MP
 void lrs_overflow(int parm) { lrs_exit(parm); }
@@ -5646,18 +5401,11 @@ long lrs_check_inequality(lrs_dic *P, lrs_dat *Q) {
     for (j = 1; j <= d; j++) {
       mulint(A[0][j], A[i][j], tmp);
       linint(total, 1, tmp, 1);
-      if (Q->debug)
-        pmp(" ", A[i][j]);
     }
     if (i == 1)
       copy(opt, total);
     else if (mp_greater(total, opt))
       copy(opt, total);
-    if (Q->debug) {
-      pmp("total", total);
-      pmp("opt", opt);
-      fprintf(lrs_ofp, "\n");
-    }
   }
   fprintf(lrs_ofp, "\n*optimum rows:");
   count = 0;
@@ -5670,15 +5418,7 @@ long lrs_check_inequality(lrs_dic *P, lrs_dat *Q) {
     }
     if (!mp_greater(opt, total)) {
       count++;
-      if (Q->debug) {
-        fprintf(lrs_ofp, "\n%ld: ", i);
-        for (j = 1; j <= d; j++)
-          if (!zero(P->A[i][1]))
-            prat("", A[i][j], A[i][1]);
-          else
-            pmp("", A[i][j]);
-      } else
-        fprintf(lrs_ofp, " %ld", i);
+      fprintf(lrs_ofp, " %ld", i);
     }
   }
 

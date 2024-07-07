@@ -19,7 +19,6 @@
 // this must be last
 #include "lrsnashlib.h"
 
-
 #include <stdio.h>
 #include <string.h>
 
@@ -70,8 +69,6 @@ int lrs_solve_nash(game *g) {
   Q1->n = g->nstrats[ROW] + 2;
   Q1->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
 
-  Q1->debug = Debug_flag;
-
   P1 = lrs_alloc_dic(Q1); /* allocate and initialize lrs_dic */
   if (P1 == NULL) {
     return 0;
@@ -87,8 +84,6 @@ int lrs_solve_nash(game *g) {
   if (Q2 == NULL) {
     return 0;
   }
-
-  Q2->debug = Debug_flag;
 
   Q2->nash = TRUE;
   Q2->n = g->nstrats[COL] + 2;
@@ -382,11 +377,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     if (j == k)
       inequality[k++] = i;
   }
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\n*Starting cobasis uses input row order");
-    for (i = 0; i < m; i++)
-      fprintf(lrs_ofp, " %ld", inequality[i]);
-  }
 
   if (!Q->maximize && !Q->minimize)
     for (j = 0; j <= d; j++)
@@ -402,10 +392,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     return FALSE;
   }
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\nafter getabasis2");
-    printA(D, Q);
-  }
   nredundcol = Q->nredundcol;
   lastdv = Q->lastdv;
   d = D->d;
@@ -413,7 +399,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   /********************************************************************/
   /* now we start printing the output file  unless no output requested */
   /********************************************************************/
-  if (!no_output || Q->debug) {
+  if (!no_output) {
     fprintf(lrs_ofp, "\nV-representation");
 
     /* Print linearity space                 */
@@ -450,11 +436,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
       inequality[i] = inequality[k++];
     }
   } /* end if linearity */
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\ninequality array initialization:");
-    for (i = 1; i <= m - nlinearity; i++)
-      fprintf(lrs_ofp, " %ld", inequality[i]);
-  }
   if (nredundcol > 0) {
     const unsigned int Qn = Q->n;
     *Lin = lrs_alloc_mp_matrix(nredundcol, Qn);
@@ -501,8 +482,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */
-  if (Q->debug)
-    printA(D, Q);
   while (C[0] <= m) {
     i = C[0];
     // j = inequality[B[i] - lastdv];
@@ -513,23 +492,10 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     reorder1(C, Col, ZERO, d);
   }
 
-  if (Q->debug) {
-    fprintf(lrs_ofp,
-            "\n*Inequality numbers for indices %ld .. %ld : ", lastdv + 1,
-            m + d);
-    for (i = 1; i <= m - nlinearity; i++)
-      fprintf(lrs_ofp, " %ld ", inequality[i]);
-    printA(D, Q);
-  }
-
   if (Q->restart) {
-    if (Q->debug)
-      fprintf(lrs_ofp, "\nPivoting to restart co-basis");
     if (!restartpivots(D, Q))
       return FALSE;
     D->lexflag = lexmin(D, Q, ZERO); /* see if lexmin basis */
-    if (Q->debug)
-      printA(D, Q);
   }
   /* Check to see if necessary to resize */
   if (Q->inputd > D->d)
@@ -578,12 +544,8 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
   if (!FirstTime) {
     for (i = 1; i <= m + d; i++)
       linindex[i] = FALSE;
-    if (Q->debug)
-      fprintf(lrs_ofp, "\nlindex =");
     for (i = 0; i < nlinearity; i++) {
       linindex[d + linearity[i]] = TRUE;
-      if (Q->debug)
-        fprintf(lrs_ofp, "  %ld", d + linearity[i]);
     }
 
     for (i = 1; i <= m; i++) {
@@ -603,17 +565,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
           /* this is not necessarily an error, eg. two identical rows/cols in
            * payoff matrix */
           if (!zero(A[Row[i]][0])) { /* error condition */
-            if (Q->debug) {
-              fprintf(lrs_ofp, "\n*Infeasible linearity i=%ld B[i]=%ld", i,
-                      B[i]);
-              if (Q->debug)
-                printA(P, Q);
-            }
             return (FALSE);
-          }
-          if (Q->debug) {
-            fprintf(lrs_ofp, "\n*Couldn't remove linearity i=%ld B[i]=%ld", i,
-                    B[i]);
           }
         }
 
@@ -624,18 +576,11 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
 
     /* standard lrs processing is done on only the first call to getabasis2 */
 
-    if (Q->debug) {
-      fprintf(lrs_ofp, "\ngetabasis from inequalities given in order");
-      for (i = 0; i < m; i++)
-        fprintf(lrs_ofp, " %ld", order[i]);
-    }
     for (j = 0; j < m; j++) {
       i = 0;
       while (i <= m && B[i] != d + order[j])
         i++;                         /* find leaving basis index i */
       if (j < nlinearity && i > m) { /* cannot pivot linearity to cobasis */
-        if (Q->debug)
-          printA(P, Q);
 #ifndef LRS_QUIET
         fprintf(lrs_ofp, "\nCannot find linearity in the basis");
 #endif
@@ -658,10 +603,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
 #endif
             linearity[j] = 0;
           } else {
-            if (Q->debug)
-              printA(P, Q);
-            if (Q->debug)
-              fprintf(lrs_ofp, "\nInconsistent linearities");
             return FALSE;
           }
         } /* end if j < nlinearity */
@@ -702,15 +643,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
 
   /* we continue from here after loading dictionary */
 
-  if (Q->debug) {
-    fprintf(lrs_ofp, "\nend of first phase of getabasis2: ");
-    fprintf(lrs_ofp, "lastdv=%ld nredundcol=%ld", Q->lastdv, Q->nredundcol);
-    fprintf(lrs_ofp, "\nredundant cobases:");
-    for (i = 0; i < nredundcol; i++)
-      fprintf(lrs_ofp, " %ld", redundcol[i]);
-    printA(P, Q);
-  }
-
   /* here we save dictionary for use next time, *before* we resize */
 
   copy_dict(Q, P2orig, P);
@@ -723,17 +655,12 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
     while (k < d && C[k] != linearity[i] + d)
       k++;
     if (k >= d) {
-      if (Q->debug) {
-        fprintf(lrs_ofp, "\nCould not remove cobasic index");
-      }
       /* not neccesarily an error as eg., could be repeated row/col in payoff */
     } else {
       removecobasicindex(P, Q, k);
       d = P->d;
     }
   }
-  if (Q->debug && nlinearity > 0)
-    printA(P, Q);
   /* set index value for first slack variable */
 
   /* Check feasability */

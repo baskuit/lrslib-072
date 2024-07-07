@@ -18,9 +18,8 @@
    Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 // must be last or include errors
 #include "lrsmp.h"
@@ -255,11 +254,10 @@ void divint(lrs_mp a, lrs_mp b,
       /* Step D5 - write final value of qh.  Saves calculating array indices */
       /* to do it here instead of before D6 */
 
-	  c[la - lb - j + 1] = qh;
-	  c[la - lb - j + 1] = qh;
-
+      c[la - lb - j + 1] = qh;
       c[la - lb - j + 1] = qh;
 
+      c[la - lb - j + 1] = qh;
     }
     /**********************************************************************/
     /* Step D8 - unnormalize a and b to get correct remainder and divisor */
