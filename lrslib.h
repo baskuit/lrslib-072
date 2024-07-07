@@ -349,22 +349,5 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num, lrs_mp_
 void lrs_set_obj(lrs_dic *P, lrs_dat *Q, long num[], long den[], long max); /* set up objective function with coeffs num[]/den[] max=MAXIMIZE or MINIMIZE  */
 void lrs_set_obj_mp(lrs_dic *P, lrs_dat *Q, lrs_mp_vector num, lrs_mp_vector den, long max);/* same as lrs_set_obj but num/den has lrs_mp type */
 
-/***************************/
-/* functions for fel       */
-/***************************/
-
-void copydicA(lrs_dic *P1, lrs_dic *P, long skip_row, long skip_col);
-void copy_linearity(lrs_dat *Q, lrs_dat *iQ);
-void felprint(lrs_dic *P2, lrs_dat *Q2);
-void fel_abort(char str[]);
-void linear_dep(lrs_dic *P, lrs_dat *Q, long *Dep);
-void lrs_compute_groups(lrs_dat *Q, lrs_dic *P, long col, long *groups);
-long lrs_next_col(lrs_dat *Q, lrs_dic *P, long *remove);
-long lrs_project_var(lrs_dic **iP, lrs_dat **iQ, long col, long stat);
-long compute_redundancy(long *redineq, lrs_dic *P, lrs_dat *Q);
-void put_linearities_first(lrs_dat *Q, lrs_dic *P);
-lrs_dat *makedat(long n);
-lrs_dic *makecopy(lrs_dat *Q2,lrs_dic *P, lrs_dat *Q);
-
 /**************************************************************************/
 
