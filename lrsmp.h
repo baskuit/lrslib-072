@@ -104,11 +104,6 @@
 
 #include <stdlib.h>
 
-#ifdef SIGNALS
-#include <signal.h>
-#include <unistd.h>
-#endif
-
 #define CALLOC(n, s) xcalloc(n, s, __LINE__, __FILE__)
 
 extern long lrs_digits;        /* max permitted no. of digits   */
@@ -217,8 +212,6 @@ void stringcpy(char *s, char *t); /* copy t to s pointer version */
 
 void *xcalloc(long n, long s, long l, const char *f);
 
-void lrs_default_digits_overflow();
-void digits_overflow();
 void lrs_exit(int i);
 void lrs_overflow(int i);
 

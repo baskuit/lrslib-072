@@ -24,12 +24,13 @@
 /* need to add a test for non-degenerate pivot step in reverse I guess?? */
 /* Copyright: David Avis 2005,2022 avis@cs.mcgill.ca         */
 
+#include <assert.h>
+#include <exception>
 #include <libgen.h>
 #include <limits.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
-#include <exception>
 
 #include "lrslib.h"
 
@@ -59,9 +60,6 @@ static lrs_dic *new_lrs_dic(long m, long d, long m_A);
 
 static void cache_dict(lrs_dic **D_p, lrs_dat *global, long i, long j);
 static long check_cache(lrs_dic **D_p, lrs_dat *global, long *i_p, long *j_p);
-static void save_basis(lrs_dic *D, lrs_dat *Q);
-
-static void lrs_dump_state();
 
 static void pushQ(lrs_dat *global, long m, long d, long m_A);
 
@@ -75,16 +73,6 @@ static double get_time(void);
 #endif
 
 char *basename(char *path);
-
-/*******************************/
-/* signals handling            */
-/*******************************/
-#ifndef SIGNALS
-static void checkpoint(int);
-static void die_gracefully(int);
-static void setup_signals(void);
-static void timecheck(int);
-#endif
 
 /*******************************/
 /* functions  for external use */
@@ -256,9 +244,6 @@ long lrs_init(const char *name) /* returns TRUE if successful, else FALSE */
 
   lrs_global_count = 0;
   lrs_checkpoint_seconds = 0;
-#ifndef SIGNALS
-  setup_signals();
-#endif
   return TRUE;
 }
 
@@ -385,7 +370,7 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->maximize = FALSE;   /*flag for LP maximization                          */
   Q->minimize = FALSE;   /*flag for LP minimization                          */
   Q->givenstart = FALSE; /* TRUE if a starting cobasis is given              */
-  Q->giveoutput = TRUE; /* set to false for first output after restart      */
+  Q->giveoutput = TRUE;  /* set to false for first output after restart      */
   Q->verifyredund = FALSE;  /* set to true when mplrs verifies redund output  */
   Q->noredundcheck = FALSE; /* set to true when mplrs skips verifying output */
   Q->nextineq = 15; /* start redundancy testing from this row           */
@@ -701,7 +686,8 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
         if (!backtrack)
           if (!lrs_leaf(D, Q)) /* 2015.6.5 cobasis returned if not a leaf */
-            {}
+          {
+          }
 
       backtrack = TRUE;
 
@@ -2409,10 +2395,7 @@ void copy_dict(lrs_dat *global, lrs_dic *dest, lrs_dic *src) {
   long d = src->d;
   long r, s;
 
-  if (dest == src) {
-    fprintf(stderr, "*copy_dict has dest=src -ignoring copy");
-    return;
-  }
+  assert(dest != src);
 
   for (r = 0; r <= m_A; r++)
     for (s = 0; s <= d; s++)
@@ -2446,12 +2429,6 @@ void copy_dict(lrs_dat *global, lrs_dic *dest, lrs_dic *src) {
  * It may create a new record, or it may just move the head pointer
  * forward so that know that the old record has been overwritten.
  */
-#if 0
-#define TRACE(s)                                                               \
-  fprintf(stderr, "\n%s %p %p\n", s, global->Qhead, global->Qtail);
-#else
-#define TRACE(s)
-#endif
 
 static void pushQ(lrs_dat *global, long m, long d, long m_A) {
 
@@ -2475,14 +2452,10 @@ static void pushQ(lrs_dat *global, long m, long d, long m_A) {
         dict_count++;
         global->Qtail = p;
 
-        TRACE("Added new record to Q");
-
       } else {
         /* virtual memory exhausted. bummer */
         global->Qhead = global->Qhead->next;
         global->Qtail = global->Qtail->next;
-
-        TRACE("VM exhausted");
       }
     } else {
       /*
@@ -2491,13 +2464,11 @@ static void pushQ(lrs_dat *global, long m, long d, long m_A) {
        */
       global->Qhead = global->Qhead->next;
       global->Qtail = global->Qtail->next;
-      TRACE("User  limit");
     }
   }
 
   else {
     global->Qtail = global->Qtail->next;
-    TRACE("Reusing");
   }
 }
 
@@ -2605,32 +2576,6 @@ void lrs_free_dic(lrs_dic *P, lrs_dat *Q) {
   Q->Qtail = NULL;
 }
 
-void lrs_free_dic2(lrs_dic *P, lrs_dat *Q) {
-  /* do the same steps as for allocation, but backwards */
-  /* same as lrs_free_dic except no cache for P */
-  /* I moved these here because I'm not certain the cached dictionaries
-     need to be the same size. Well, it doesn't cost anything to be safe. db */
-
-  long d = P->d_orig;
-  long m_A = P->m_A;
-
-  lrs_clear_mp_matrix(P->A, m_A, d);
-
-  /* "it is a ghastly error to free something not assigned my malloc" KR167 */
-  /* so don't try: free (P->det);                                           */
-
-  lrs_clear_mp(P->det);
-  lrs_clear_mp(P->objnum);
-  lrs_clear_mp(P->objden);
-
-  free(P->Row);
-  free(P->Col);
-  free(P->C);
-  free(P->B);
-
-  free(P);
-}
-
 void lrs_free_dat(lrs_dat *Q) {
 
   int i = 0;
@@ -2688,7 +2633,6 @@ static long check_cache(lrs_dic **D_p, lrs_dat *global, long *i_p, long *j_p) {
   cache_tries++;
 
   if (global->Qtail == global->Qhead) {
-    TRACE("cache miss");
     /* Q has only one element */
     cache_misses++;
     return 0;
@@ -2701,7 +2645,6 @@ static long check_cache(lrs_dic **D_p, lrs_dat *global, long *i_p, long *j_p) {
     *i_p = global->Qtail->i;
     *j_p = global->Qtail->j;
 
-    TRACE("restoring dict");
     return 1;
   }
 }
@@ -2817,78 +2760,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   return p;
 } /* end of lrs_alloc_dic */
 
-/*
-   this routine makes a copy of the information needed to restart,
-   so that we can guarantee that if a signal is received, we
-   can guarantee that nobody is messing with it.
-   This as opposed to adding all kinds of critical regions in
-   the main line code.
-
-   It is also used to make sure that in case of overflow, we
-   have a valid cobasis to restart from.
- */
-static void save_basis(lrs_dic *P, lrs_dat *Q) {
-  int i;
-  /* assign local variables to structures */
-  long *C = P->C;
-  long d;
-
-#ifndef SIGNALS
-  sigset_t oset, blockset;
-  sigemptyset(&blockset);
-  sigaddset(&blockset, SIGTERM);
-  sigaddset(&blockset, SIGHUP);
-  sigaddset(&blockset, SIGUSR1);
-
-  errcheck("sigprocmask", sigprocmask(SIG_BLOCK, &blockset, &oset));
-#endif
-  d = P->d;
-
-  Q->saved_flag = 1;
-
-  for (i = 0; i < 5; i++)
-    Q->saved_count[i] = Q->count[i];
-
-  for (i = 0; i < d + 1; i++)
-    Q->saved_C[i] = C[i];
-
-  copy(Q->saved_det, P->det);
-
-  Q->saved_d = P->d;
-  Q->saved_depth = P->depth;
-
-#ifndef SIGNALS
-  errcheck("sigprocmask", sigprocmask(SIG_SETMASK, &oset, 0));
-#endif
-}
-
-/* digits overflow is a call from lrs_mp package */
-
-void digits_overflow() {
-  fprintf(lrs_ofp, "\noverflow at digits=%ld", DIG2DEC(lrs_digits));
-  fprintf(lrs_ofp, "\nrerun with option: digits n, where n > %ld\n",
-          DIG2DEC(lrs_digits));
-  lrs_dump_state();
-
-  notimpl("");
-}
-
-static void lrs_dump_state() {
-  long i;
-
-  fprintf(lrs_ofp, "\n\nlrs_lib: checkpointing:\n");
-
-#ifdef MP
-  fprintf(stderr, "lrs_lib: Current digits at %ld out of %ld\n",
-          DIG2DEC(lrs_record_digits), DIG2DEC(lrs_digits));
-#endif
-
-  for (i = 0; i < lrs_global_count; i++) {
-    print_basis(lrs_ofp, lrs_global_list[i]);
-  }
-  fprintf(lrs_ofp, "lrs_lib: checkpoint finished\n");
-}
-
 /* print out the saved copy of the basis */
 void print_basis(FILE *fp, lrs_dat *global) {
   int i;
@@ -2933,42 +2804,6 @@ void print_basis(FILE *fp, lrs_dat *global) {
 
   fflush(fp);
 }
-
-#ifndef SIGNALS
-
-/*
-   If given a signal
-   USR1            print current cobasis and continue
-   TERM            print current cobasis and terminate
-   INT (ctrl-C) ditto
-   HUP                     ditto
- */
-static void setup_signals() {
-  errcheck("signal", signal(SIGTERM, die_gracefully));
-  errcheck("signal", signal(SIGALRM, timecheck));
-  errcheck("signal", signal(SIGHUP, die_gracefully));
-  errcheck("signal", signal(SIGINT, die_gracefully));
-  errcheck("signal", signal(SIGUSR1, checkpoint));
-}
-
-static void timecheck(int) {
-  lrs_dump_state();
-  errcheck("signal", signal(SIGALRM, timecheck));
-  alarm(lrs_checkpoint_seconds);
-}
-
-static void checkpoint(int) {
-  lrs_dump_state();
-  errcheck("signal", signal(SIGUSR1, checkpoint));
-}
-
-static void die_gracefully(int) {
-  lrs_dump_state();
-
-  exit(1);
-}
-
-#endif
 
 #ifndef TIMES
 /*
@@ -3110,35 +2945,6 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
   lrs_clear_mp(Temp);
   lrs_clear_mp(mpone);
 } /* end of lrs_set_row_mp */
-
-void lrs_set_obj(lrs_dic *P, lrs_dat *Q, long num[], long den[], long max) {
-  long i;
-
-  if (max == MAXIMIZE)
-    Q->maximize = TRUE;
-  else {
-    Q->minimize = TRUE;
-    for (i = 0; i <= P->d; i++)
-      num[i] = -num[i];
-  }
-
-  lrs_set_row(P, Q, 0L, num, den, GE);
-}
-
-void lrs_set_obj_mp(lrs_dic *P, lrs_dat *Q, lrs_mp_vector num,
-                    lrs_mp_vector den, long max) {
-  long i;
-
-  if (max == MAXIMIZE)
-    Q->maximize = TRUE;
-  else {
-    Q->minimize = TRUE;
-    for (i = 0; i <= P->d; i++)
-      changesign(num[i]);
-  }
-
-  lrs_set_row_mp(P, Q, 0L, num, den, GE);
-}
 
 long dan_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
 /* select pivot indices using dantzig simplex method             */
@@ -3321,98 +3127,10 @@ void lrs_close_outputblock(void) {}
 void lrs_post_output(const char *type, const char *data) {}
 
 /* replace by user overflow routine if not using lrsv2_main() */
-void lrs_overflow(int parm) {
-  lrs_exit(parm); /* should not happen */
-}
+void lrs_overflow(int parm) { lrs_exit(parm); /* should not happen */ }
 
 void lrs_exit(int i) {
   // fflush(stdout);
   // exit(i);
   throw std::exception();
-}
-
-void lrs_free_all_memory(lrs_dic *P, lrs_dat *Q) {
-
-  if (Q->runs > 0) {
-    free(Q->isave);
-    free(Q->jsave);
-  }
-  if (P != NULL) /* may not have allocated P yet */
-  {
-    long savem = P->m;  /* need this to clear Q*/
-    lrs_free_dic(P, Q); /* deallocate lrs_dic */
-    Q->m = savem;
-  }
-  lrs_free_dat(Q); /* deallocate lrs_dat */
-#ifdef LRSLONG
-  free(infile); /* we cached input file for possible restart */
-#endif
-  return;
-}
-
-long lrs_stdin_to_file(char *filename) {
-  FILE *fptr1, *fptr2;
-  char c;
-
-  fptr1 = stdin;
-  fptr2 = fopen(filename, "w");
-  if (fptr2 == NULL) {
-    printf("Cannot open file %s \n", filename);
-    exit(0);
-  }
-
-  c = fgetc(fptr1);
-  while (c != EOF) {
-    fputc(c, fptr2);
-    c = fgetc(fptr1);
-  }
-
-  fclose(fptr2);
-  fptr2 = NULL;
-
-  return 0;
-}
-
-long lrs_file_to_cache(FILE *ifp) {
-  long ret;
-
-  if (ifp != NULL)
-    if (fseek(ifp, 0L, SEEK_END) == 0) {
-      ret = ftell(ifp);
-      if (ret == -1) {
-        fputs("*Error reading file", stderr);
-        return 1;
-      }
-      infileLen = ret;
-      infile = (char *)malloc(sizeof(char) * (infileLen + 1));
-
-      if (fseek(ifp, 0L, SEEK_SET) != 0) {
-        fputs("*Error resetting input file", stderr);
-        return 1;
-      }
-      infileLen = fread(infile, sizeof(char), infileLen, ifp);
-      if (ferror(ifp) != 0) {
-        fputs("*Error reading input file", stderr);
-        return 1;
-      } else
-        infile[infileLen++] = '\0'; /* Just to be safe. */
-    }
-  rewind(ifp);
-  return 0;
-}
-
-long lrs_cache_to_file(char *name, const char *restart) {
-  FILE *ofp = fopen(name, "wb");
-
-  if (ofp == NULL) {
-    printf("*Error opening output file %s", name);
-    return 1;
-  }
-  fwrite(infile, sizeof(char), infileLen, ofp);
-
-  if (lrs_global_list[0]->count[2] > 1L && overflow == 2)
-    fprintf(ofp, "\nrestart %s", restart);
-
-  fclose(ofp);
-  return 0;
 }

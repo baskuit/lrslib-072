@@ -268,11 +268,7 @@ extern __int128 MAXDm, MAXDl,
 #define DEC2DIG(d) ((d) % BASE_DIG ? (d) / BASE_DIG + 1 : (d) / BASE_DIG)
 #define DIG2DEC(d) ((d) * BASE_DIG)
 
-#ifndef OMIT_SIGNALS
-#include <signal.h>
 #include <stdlib.h> /* labs */
-#include <unistd.h>
-#endif
 
 #define CALLOC(n, s) xcalloc(n, s, __LINE__, __FILE__)
 
@@ -397,7 +393,6 @@ void *calloc();
 void *malloc();
 void *xcalloc(long n, long s, long l, const char *f);
 
-void lrs_default_digits_overflow();
 void lrs_exit(int i);
 void lrs_overflow(int i);
 void lrsv2_overflow(int i);

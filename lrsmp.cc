@@ -27,14 +27,6 @@
 long lrs_digits = DEC2DIG(DEFAULT_DIGITS);
 long lrs_record_digits; /* this is the biggest acheived so far.     */
 
-/******************************************************************/
-/* digit overflow is caught by digits_overflow at the end of this */
-/* file, make sure it is either user supplied or uncomment        */
-/*  the define below                                              */
-/******************************************************************/
-
-#define digits_overflow() lrs_default_digits_overflow()
-
 /*********************************************************/
 /* Initialization and allocation procedures - must use!  */
 /******************************************************* */
@@ -485,7 +477,7 @@ void mulint(lrs_mp a, lrs_mp b, lrs_mp c) /* multiply two integers a*b --> c */
   lb = length(b);
   nlength = la + lb - 2;
   if (nlength > lrs_digits)
-    digits_overflow();
+    lrs_exit(1);
 
   for (i = 0; i < la - 2; i++)
     c[lb + i] = 0;
@@ -532,7 +524,7 @@ start:
     i--;
   if (i > lrs_record_digits) {
     if ((lrs_record_digits = i) > lrs_digits)
-      digits_overflow();
+      lrs_exit(1);
   };
   storelength(a, i);
   if (i == 2 && a[1] == 0)
@@ -973,14 +965,6 @@ void lrs_getdigits(long *a, long *b) {
   *a = DIG2DEC(lrs_digits);
   *b = DIG2DEC(lrs_record_digits);
   return;
-}
-
-void lrs_default_digits_overflow() {
-  fprintf(stdout, "\nlrsmp: overflow at digits=%ld", DIG2DEC(lrs_digits));
-  fprintf(stdout, "\nInitialize lrs_mp_init with  dec_digits > %ldL\n",
-          DIG2DEC(lrs_digits));
-
-  lrs_overflow(1);
 }
 
 /* end of lrsmp.c */
