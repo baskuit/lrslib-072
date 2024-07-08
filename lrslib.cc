@@ -20,7 +20,6 @@
 */
 
 /* modified by Gary Roumanis and Skip Jordan for multithread compatability */
-/* truncate needs mod to supress last pivot */
 /* need to add a test for non-degenerate pivot step in reverse I guess?? */
 /* Copyright: David Avis 2005,2022 avis@cs.mcgill.ca         */
 
@@ -291,11 +290,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->name = (char *)CALLOC((unsigned)strlen(name) + 1, sizeof(char));
   strcpy(Q->name, name);
 
-  /* initialize variables */
-  Q->messages = TRUE;
-#ifdef LRS_QUIET
-  Q->messages = FALSE;
-#endif
   strcpy(Q->fname, ""); /* name of program, filled in later */
   Q->m = 0L;
   Q->n = 0L;
@@ -310,11 +304,8 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   for (i = 0; i < 10; i++) {
     Q->count[i] = 0L;
     Q->cest[i] = 0.0;
-    if (i < 5)
-      Q->startcount[i] = 0L;
   }
   Q->count[2] = 1L;      /* basis counter */
-  Q->startcount[2] = 0L; /* starting basis counter */
                          /* initialize flags */
   Q->allbases = FALSE;
   Q->bound = FALSE;     /* upper/lower bound on objective function given */
@@ -338,8 +329,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
 
   Q->nonnegative = FALSE;
   Q->printslack = FALSE;
-  Q->truncate = FALSE; /* truncate tree when moving from opt vertex        */
-  Q->voronoi = FALSE;
   Q->maximize = FALSE;   /*flag for LP maximization                          */
   Q->minimize = FALSE;   /*flag for LP minimization                          */
   Q->givenstart = FALSE; /* TRUE if a starting cobasis is given              */
@@ -447,33 +436,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     if (j == k)
       inequality[k++] = i;
   }
-  /* for voronoi convert to h-description using the transform */
-  /* a_0 .. a_d-1 -> (a_0^2 + ... a_d-1 ^2)-2a_0x_0-...-2a_d-1x_d-1 + x_d >= 0
-   */
-  /* note constant term is stored in column d, and column d-1 is all ones */
-  /* the other coefficients are multiplied by -2 and shifted one to the right */
-  if (Q->voronoi) {
-    Q->hull = FALSE;
-    hull = FALSE;
-    for (i = 1; i <= m; i++) {
-      if (zero(A[i][1])) {
-        printf("\nWith voronoi option column one must be all one\n");
-        return (FALSE);
-      }
-      copy(scale, A[i][1]); /*adjust for scaling to integers of rationals */
-      itomp(ZERO, A[i][0]);
-      for (j = 2; j <= d; j++) /* transform each input row */
-      {
-        copy(Temp, A[i][j]);
-        mulint(A[i][j], Temp, Temp);
-        linint(A[i][0], ONE, Temp, ONE);
-        linint(A[i][j - 1], ZERO, A[i][j], -TWO);
-        mulint(scale, A[i][j - 1], A[i][j - 1]);
-      } /* end of for (j=1;..) */
-      copy(A[i][d], scale);
-      mulint(scale, A[i][d], A[i][d]);
-    } /* end of for (i=1;..) */
-  } /* end of if(voronoi)     */
+
   if (!Q->maximize && !Q->minimize)
     for (j = 0; j <= d; j++)
       itomp(ZERO, A[0][j]);
@@ -666,10 +629,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
         return FALSE;                /* no nextbasis  */
     } // if (D->depth >= Q->maxdepth)
 
-    /*      if ( Q->truncate && negative(D->A[0][0]))*/ /* truncate when moving
-                                                           from opt. vertex */
-    /*          backtrack = TRUE;    2011.7.14 */
-
     if (backtrack) /* go back to prev. dictionary, restore i,j */
     {
       backtrack = FALSE;
@@ -692,7 +651,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
     /* 2011.7.14 patch */
     while ((j < d) &&
-           (!reverse(D, Q, &i, j) || (Q->truncate && Q->minratio[D->m] == 1)))
+           (!reverse(D, Q, &i, j)))
       j++;
     if (j == d)
       backtrack = TRUE;
@@ -867,9 +826,6 @@ void getnextoutput(lrs_dic *P, lrs_dat *Q, long i, long col, lrs_mp out)
   long *B = P->B;
   long *Row = P->Row;
   long j;
-
-  if (i == d && Q->voronoi)
-    return; /* skip last column if voronoi set */
 
   row = Row[i];
 

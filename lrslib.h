@@ -143,7 +143,6 @@ struct lrs_dat /* global problem data   */
   long count[10]; /* count[0]=rays(facets)[1]=vertices(linearities)*/
                   /*  [2]=cobases [3]=pivots [4]=integer vertices  */
                   /*  [5-7]=mplrs R [8]=max vertex/facet depth     */
-  long startcount[5];
 
   long deepest;    /* max depth ever reached in search             */
   long nredundcol; /* number of redundant columns                  */
@@ -176,15 +175,12 @@ struct lrs_dat /* global problem data   */
   long maxoutput;     /* if positive, maximum number of output lines  */
   long maxcobases; /* if positive, after maxcobasis unexplored subtrees reported
                     */
-  long messages; /* TRUE for normal lrs output, FALSE for PLRS and LRS_QUIET */
   long minimize; /* flag for LP minimization                     */
   long long mindepth; /* do not backtrack above mindepth              */
   long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */
   long printslack;    /* TRUE if indices of slack inequal. printed    */
   long redund;        /* TRUE for computing nash equilibria           */
-  long truncate;      /* TRUE: truncate tree when moving from opt vert*/
-  long voronoi;       /* compute voronoi vertices by transformation   */
   long long
       subtreesize; /* in estimate mode, iterates if cob_est >= subtreesize */
 
