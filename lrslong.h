@@ -59,14 +59,8 @@
 /************************************************/
 #ifdef B128
 /* 128 bit machines */ /* compiler does not accept big constants! */
-#ifdef CONS
-#define MAXDm 9223372036854775807L /* 2^63 - 1 */
-#define MAXDl 9223372036854775807L /* should be 2^126 -1 but is  2^63 - 1 */
-#define MAXDa 9223372036854775807L /* should be 2^126 -1 but is  2^63 - 1 */
-#else
 extern __int128 MAXDm, MAXDl,
     MAXDa; /* set correctly in lrs_mp_init in lrslong.c */
-#endif
 
 /* max power of 10 fitting in signed int64 */
 #define P10_INT64 1000000000000000000ULL

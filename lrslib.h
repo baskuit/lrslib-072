@@ -115,12 +115,12 @@ struct lrs_dat /* global problem data   */
   lrs_mp_vector Lcm;    /* Lcm for each row of input denominators      */
   lrs_mp_vector output; /* One line of output dimensioned to n         */
 
-  lrs_mp sumdet;    /* sum of determinants                          */
-  lrs_mp Nvolume;   /* volume numerator                             */
-  lrs_mp Dvolume;   /* volume denominator                           */
-  lrs_mp boundn;    /* objective bound numerator                    */
-  lrs_mp boundd;    /* objective bound denominator                  */
-  long unbounded;   /* lp unbounded */
+  lrs_mp sumdet;  /* sum of determinants                          */
+  lrs_mp Nvolume; /* volume numerator                             */
+  lrs_mp Dvolume; /* volume denominator                           */
+  lrs_mp boundn;  /* objective bound numerator                    */
+  lrs_mp boundd;  /* objective bound denominator                  */
+  long unbounded; /* lp unbounded */
 
   /* initially holds order used to find starting  */
   /* basis, default: m,m-1,...,2,1                */
@@ -173,7 +173,7 @@ struct lrs_dat /* global problem data   */
   long maxoutput;     /* if positive, maximum number of output lines  */
   long maxcobases; /* if positive, after maxcobasis unexplored subtrees reported
                     */
-  long minimize; /* flag for LP minimization                     */
+  long minimize;   /* flag for LP minimization                     */
   long long mindepth; /* do not backtrack above mindepth              */
   long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */

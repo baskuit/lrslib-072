@@ -15,7 +15,7 @@
 long lrs_digits;        /* max permitted no. of digits   */
 long lrs_record_digits; /* this is the biggest acheived so far.     */
 
-#if defined(B128) && !defined(CONS)
+#ifdef B128
 __int128 MAXDm, MAXDl, MAXDa;
 #endif
 
@@ -461,12 +461,10 @@ long lrs_mp_init(long dec_digits, FILE *fpin, FILE *fpout)
   lrs_ofp = fpout;
 
 #ifdef B128
-#ifndef CONS
   MAXDl = 9223372036854775807L;       /* 2^63 - 1 */
   MAXDa = MAXDl * MAXDl;              /* should be 2^126 - 1 */
   MAXDm = 3611622602L;                /* sqrt(sqrt( 2^127 -1 ))         */
   MAXDm = MAXDm * MAXDm + 6000000000; /* too big to initialize directly */
-#endif
 #endif
 
   lrs_record_digits = 0;

@@ -245,11 +245,6 @@ void lrs_getdigits(long *a, long *b); /* send digit information to user */
 
 void stringcpy(char *s, char *t); /* copy t to s pointer version */
 
-#ifndef __STDC__
-void *calloc();
-void *malloc();
-#endif
-
 void *xcalloc(long n, long s, long l, const char *f);
 
 void lrs_exit(int i);
