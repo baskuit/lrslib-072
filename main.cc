@@ -45,7 +45,7 @@ char LegacyMsg[] =
 
 #include "lrsdriver.h"
 #include "lrslib.h"
-#include "lrsnashlib.h"
+#include "lib.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -276,7 +276,20 @@ int main(int argc, char **argv) {
     if (readGame(g, argv[optind++])) {
       if (Print_game_flag)
         printGame(g);
-      lrs_solve_nash(g);
+      for (int i = 0; i < (1 << 0); ++i) {
+        SolveInput input;
+        input.rows = g->nstrats[0];
+        input.cols = g->nstrats[1];
+        input.den = 64;
+        input.data = (int *)calloc(input.rows * input.cols, sizeof(int));
+        for (int ii = 0; ii < input.rows; ++ii) {
+          for (int jj = 0; jj < input.cols; ++jj) {
+            input.data[ii * input.cols + jj] = g->payoff[ii][jj][0].num;
+          }
+        }
+        lrs_solve_nash(&input);
+        free(input.data);
+      }
     }
   }
   closeIO();

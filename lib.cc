@@ -29,7 +29,7 @@ long Verbose_flag;
 //========================================================================
 // Standard solver. Modified version of main() from lrsNash
 //========================================================================
-int lrs_solve_nash(game *g) {
+int lrs_solve_nash(const SolveInput *g) {
   lrs_dic *P1;      /* structure for holding current dictionary and indices */
   lrs_dat *Q1, *Q2; /* structure for holding static problem data            */
 
@@ -65,15 +65,15 @@ int lrs_solve_nash(game *g) {
     return 0;
   }
 
-  Q1->n = g->nstrats[ROW] + 2;
-  Q1->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
+  Q1->n = g->rows + 2;
+  Q1->m = g->rows + g->cols + 1;
 
   P1 = lrs_alloc_dic(Q1); /* allocate and initialize lrs_dic */
   if (P1 == NULL) {
     return 0;
   }
 
-  BuildRep(P1, Q1, g, 1, 0);
+  BuildRepP1Is1(P1, Q1, g);
 
   output1 = lrs_alloc_mp_vector(
       Q1->n + Q1->m); /* output holds one line of output from dictionary     */
@@ -84,14 +84,14 @@ int lrs_solve_nash(game *g) {
     return 0;
   }
 
-  Q2->n = g->nstrats[COL] + 2;
-  Q2->m = g->nstrats[ROW] + g->nstrats[COL] + 1;
+  Q2->n = g->cols + 2;
+  Q2->m = g->rows + g->cols + 1;
 
   P2orig = lrs_alloc_dic(Q2); /* allocate and initialize lrs_dic */
   if (P2orig == NULL) {
     return 0;
   }
-  BuildRep(P2orig, Q2, g, 0, 1);
+  BuildRepP1Is0(P2orig, Q2, g);
   A2orig = P2orig->A;
 
   output2 = lrs_alloc_mp_vector(
@@ -800,6 +800,140 @@ void BuildRep(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2) {
 
   // TL added this to get first row of ones. (Is this necessary?)
   FillFirstRow(P, Q, n);
+}
+
+void BuildRepP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g) {
+  long m = Q->m; /* number of inequalities      */
+  long n = Q->n;
+  FillConstraintRowsP1Is0(P, Q, g, 1);
+  FillNonnegativityRows(P, Q, g->rows + 1, g->rows + g->cols, n);
+  FillLinearityRow(P, Q, m, n);
+  FillFirstRow(P, Q, n);
+}
+
+void BuildRepP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g) {
+  long m = Q->m; /* number of inequalities      */
+  long n = Q->n;
+  FillNonnegativityRows(P, Q, 1, g->rows, n);
+  FillConstraintRowsP1Is1(P, Q, g, g->rows + 1); // 1 here
+  FillLinearityRow(P, Q, m, n);
+  FillFirstRow(P, Q, n);
+}
+
+void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
+                            long ineq)
+/* set row of dictionary using num and den arrays for rational input */
+/* ineq = 1 (GE)   - ordinary row  */
+/*      = 0 (EQ)   - linearity     */
+{
+  lrs_mp Temp, mpone;
+  lrs_mp_vector oD; /* denominator for row  */
+
+  long i, j;
+
+  /* assign local variables to structures */
+
+  lrs_mp_matrix A;
+  lrs_mp_vector Gcd, Lcm;
+  long hull;
+  long m, d;
+  lrs_alloc_mp(Temp);
+  lrs_alloc_mp(mpone);
+  hull = Q->hull;
+  A = P->A;
+  m = P->m;
+  d = P->d;
+  Gcd = Q->Gcd;
+  Lcm = Q->Lcm;
+
+  oD = lrs_alloc_mp_vector(d);
+  itomp(ONE, mpone);
+  itomp(ONE, oD[0]);
+
+  i = row;
+  itomp(ONE, Lcm[i]);         /* Lcm of denominators */
+  itomp(ZERO, Gcd[i]);        /* Gcd of numerators */
+  for (j = hull; j <= d; j++) /* hull data copied to cols 1..d */
+  {
+    itomp(num[j - hull], A[i][j]);
+    itomp(ONE, oD[j]);
+    if (!one(oD[j]))
+      lcm(Lcm[i], oD[j]); /* update lcm of denominators */
+    copy(Temp, A[i][j]);
+    gcd(Gcd[i], Temp); /* update gcd of numerators   */
+  }
+
+  if (hull) {
+    itomp(ZERO,
+          A[i][0]); /*for hull, we have to append an extra column of zeroes */
+    if (!one(A[i][1]) ||
+        !one(oD[1])) /* all rows must have a one in column one */
+      Q->polytope = FALSE;
+  }
+  if (!zero(A[i][hull]))    /* for H-rep, are zero in column 0     */
+    Q->homogeneous = FALSE; /* for V-rep, all zero in column 1     */
+
+  storesign(Gcd[i], POS);
+  storesign(Lcm[i], POS);
+  if (mp_greater(Gcd[i], mpone) || mp_greater(Lcm[i], mpone))
+    for (j = 0; j <= d; j++) {
+      exactdivint(A[i][j], Gcd[i], Temp); /*reduce numerators by Gcd  */
+      mulint(Lcm[i], Temp, Temp);         /*remove denominators */
+      exactdivint(Temp, oD[j], A[i][j]);  /*reduce by former denominator */
+    }
+
+  if (ineq == EQ) /* input is linearity */
+  {
+    Q->linearity[Q->nlinearity] = row;
+    Q->nlinearity++;
+  }
+
+  /* 2010.4.26   Set Gcd and Lcm for the non-existant rows when nonnegative set
+   */
+
+  if (Q->nonnegative && row == m)
+    for (j = 1; j <= d; j++) {
+      itomp(ONE, Lcm[m + j]);
+      itomp(ONE, Gcd[m + j]);
+    }
+
+  lrs_clear_mp_vector(oD, d);
+  lrs_clear_mp(Temp);
+  lrs_clear_mp(mpone);
+} /* end of lrs_set_row_mp */
+
+void FillConstraintRowsP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
+                             int firstRow) {
+  const int MAXCOL = 1000; /* maximum number of columns */
+  long num[MAXCOL];
+  int row, s, t;
+
+  for (row = firstRow; row < firstRow + g->rows; row++) {
+    num[0] = 0;
+    s = row - firstRow;
+    for (t = 0; t < g->cols; t++) {
+      num[t + 1] = -g->data[s * g->cols + t];
+    }
+    num[g->cols + 1] = 1;
+    lrs_set_row_constraint(P, Q, row, num, GE);
+  }
+}
+
+void FillConstraintRowsP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
+                             int firstRow) {
+  const int MAXCOL = 1000; /* maximum number of columns */
+  long num[MAXCOL];
+  int row, s, t;
+
+  for (row = firstRow; row < firstRow + g->cols; row++) {
+    num[0] = 0;
+    s = row - firstRow;
+    for (t = 0; t < g->rows; t++) {
+      num[t + 1] = g->data[t * g->cols + s] - g->den;
+    }
+    num[g->rows + 1] = 1;
+    lrs_set_row_constraint(P, Q, row, num, GE);
+  }
 }
 
 //----------------------------------------------------------------------------------------//

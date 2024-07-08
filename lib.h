@@ -37,7 +37,14 @@ struct gInfo {
   int fwidth[MAXSTRAT][2]; // Column field widths (for output)
 };
 
-int lrs_solve_nash(game *g);
+struct SolveInput {
+  long rows;
+  long cols;
+  int *data;
+  int den;
+};
+
+int lrs_solve_nash(const SolveInput *g);
 
 long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
                 long *numequilib, lrs_mp_vector output, long linindex[]);
@@ -52,7 +59,12 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
 long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, long player);
 /* returns TRUE and prints output if not the origin */
 
-void BuildRep(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2);
+void BuildRepP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g);
+void BuildRepP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g);
+void FillConstraintRowsP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
+                             int firstRow);
+void FillConstraintRowsP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
+                             int firstRow);
 void FillFirstRow(lrs_dic *P, lrs_dat *Q, int n);
 void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n);
 void FillConstraintRows(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2,
