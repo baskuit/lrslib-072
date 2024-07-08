@@ -206,17 +206,8 @@ struct lrs_dat /* global problem data   */
   lrs_dic *Qhead, *Qtail, *olddic;
 };
 
-/***************************/
-/* mplrs hooks and hacks   */
-/***************************/
-void lrs_open_outputblock(void);  /* prevent mplrs output flushes   */
-void lrs_close_outputblock(void); /* re-enable mplrs output flushes */
-void lrs_post_output(const char *, const char *); /* lrs call to post_output */
-
 #ifndef LRSLONG
 void lrs_overflow(int i);
-void lrsv2_overflow(int i);
-void lrslong_overflow(int i);
 void lrs_exit(int i);
 #endif
 

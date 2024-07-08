@@ -2898,16 +2898,7 @@ long lrs_leaf(lrs_dic *P, lrs_dat *Q) {
     return 1;
 }
 
-/* prevent output flushes in mplrs */
-void lrs_open_outputblock(void) {}
-
-/* re-enable output flushes in mplrs */
-void lrs_close_outputblock(void) {}
-
-void lrs_post_output(const char *type, const char *data) {}
-
-/* replace by user overflow routine if not using lrsv2_main() */
-void lrs_overflow(int parm) { lrs_exit(parm); /* should not happen */ }
+void lrs_overflow(int parm) { lrs_exit(parm); }
 
 void lrs_exit(int i) {
   // fflush(stdout);
