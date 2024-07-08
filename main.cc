@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <random>
+#include <algorithm>
+#include "assert.h"
 
 template <typename T, typename U>
 void print_output(const T& input, const U& output) {
@@ -15,6 +17,46 @@ void print_output(const T& input, const U& output) {
     std::cout << output.col_strategy[i] << ", ";
   }
   std::cout << '\n';
+}
+
+template <typename T, typename U>
+void check_output (const T& input, const U& output) {
+
+  const static float eps = .0001;
+
+  std::vector<float> row_scores{};
+  std::vector<float> col_scores{};
+  row_scores.resize(input.rows);
+  col_scores.resize(input.cols);
+  float value = 0;
+  int k = 0;
+  for (int i = 0; i < input.rows; ++i) {
+    for (int j = 0; j < input.cols; ++j) {
+     int d = input.data[k];
+     row_scores[i] += d * output.col_strategy[j];
+     col_scores[j] += d * output.row_strategy[i];
+    value += output.row_strategy[i] * output.col_strategy[j] * d;
+     ++k;  
+    }
+  }
+
+  value /= input.den;
+
+  float row_max = *std::max_element(row_scores.begin(), row_scores.end());
+  float col_min = *std::min_element(col_scores.begin(), col_scores.end());
+
+  float expl = row_max - col_min;
+
+  std::cout << "row_max: " << row_max << std::endl;
+  std::cout << "col_min: " << col_min << std::endl;
+
+  std::cout << "expl: " << expl << std::endl;
+  std::cout << "calulated value: " << value << std::endl;
+  std::cout << "output value: " << output.value << std::endl;
+
+  assert(std::abs(value - output.value) < eps);
+  assert(std::abs(expl) < eps);
+
 }
 
 int main(int argc, char **argv) {
@@ -55,7 +97,9 @@ int main(int argc, char **argv) {
     
     solve_fast(&input, &output);
 
-    // print_output(input, output);
+    print_output(input, output);
+    check_output(input, output);
+    std::cout << std::endl;
   }
 
   return 0;

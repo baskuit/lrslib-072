@@ -193,9 +193,8 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   free(linindex);
 
-  // printf("num-eq: %ld\n", numequilib);
+  gg->value /= g->den;
 
-  //  lrs_close("nash:");
   return 0;
 }
 
@@ -634,20 +633,32 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg, lon
     return FALSE;
 
   const float den = static_cast<float>(mptoi(output[0]));
-  // printf("lrs_nashoutput\n");
+  printf("den conversion: %ld = %f\n", mptoi(output[0]), den);
+
   if (player == 1) {
+    printf("p1 output dump:\n");
+    for (int j = 0; j < Q->n; ++j) {
+      printf("%ld, ", mptoi(output[j]));
+    }
+    printf("\n");
+
     for (i = 1; i < Q->n; i++) {
       gg->row_strategy[i - 1] = mptoi(output[i]) / den;
-      // printf("%l / %f, ", mptoi(output[i]), den);
     }
   } else {
-    gg->value = mptoi(output[i + 1]) / den;
+    gg->value = mptoi(output[Q->n - 1]) / den;
+    printf("value set: %ld / %f = %f\n", mptoi(output[Q->n - 1]), den, gg->value);
+
+    printf("p2 output dump:\n");
+    for (int j = 0; j < Q->n; ++j) {
+      printf("%ld, ", mptoi(output[j]));
+    }
+    printf("\n");
+
     for (i = 1; i < Q->n; i++) {
       gg->col_strategy[i - 1] = mptoi(output[i]) / den;
-      // printf("%l / %f, ", mptoi(output[i]), den);
     }
   }
-  // printf("\n");
   return TRUE;
 }
 

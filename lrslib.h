@@ -221,7 +221,6 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col);
 long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long comment,
                 lrs_mp_vector output);
 long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output);
-void lrs_close(const char *name); /* close lrs lib program "name" */
 long lrs_init(const char *name); /* initialize lrslib and arithmetic package for
                                     prog "name" */
 long lrs_init_no_header();

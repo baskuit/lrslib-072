@@ -53,10 +53,6 @@ static long check_cache(lrs_dic **D_p, lrs_dat *global, long *i_p, long *j_p);
 
 static void pushQ(lrs_dat *global, long m, long d, long m_A);
 
-#ifndef TIMES
-static void ptimes(void);
-#endif
-
 char *basename(char *path);
 
 /*******************************/
@@ -215,54 +211,6 @@ long lrs_init_no_header() /* returns TRUE if successful, else FALSE */
   lrs_global_count = 0;
   lrs_checkpoint_seconds = 0;
   return TRUE;
-}
-
-
-void lrs_close(const char *name) {
-
-#ifdef LRS_QUIET
-  fprintf(lrs_ofp, "\n");
-  if (lrs_ofp != stdout) {
-    fclose(lrs_ofp);
-    lrs_ofp = NULL;
-  }
-  return;
-#endif
-
-#ifdef LRSLONG
-#ifdef SAFE
-  fprintf(lrs_ofp, "\n*overflow checking on lrslong arithmetic");
-#else
-  fprintf(lrs_ofp,
-          "\n*caution: no overflow checking on long integer arithemtic");
-#endif
-#endif
-
-  fprintf(lrs_ofp, "\n*%s:", name);
-  fprintf(lrs_ofp, TITLE);
-  fprintf(lrs_ofp, VERSION);
-  fprintf(lrs_ofp, "(");
-  fprintf(lrs_ofp, BIT);
-  fprintf(lrs_ofp, ",");
-  fprintf(lrs_ofp, ARITH);
-#ifdef MA
-  fprintf(lrs_ofp, ",hybrid arithmetic");
-#endif
-  fprintf(lrs_ofp, ")");
-
-#ifdef MP
-  fprintf(lrs_ofp, " max decimal digits=%ld/%ld", DIG2DEC(lrs_record_digits),
-          DIG2DEC(lrs_digits));
-#endif
-
-#ifndef TIMES
-  ptimes();
-#endif
-
-  if (lrs_ofp != stdout) {
-    fclose(lrs_ofp);
-    lrs_ofp = NULL;
-  }
 }
 
 /***********************************/
@@ -2491,33 +2439,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   p->Col[d] = 0;
   return p;
 } /* end of lrs_alloc_dic */
-
-#ifndef TIMES
-/*
- * Not sure about the portability of this yet,
- *              - db
- */
-#include <sys/resource.h>
-#define double_time(t) ((double)(t.tv_sec) + (double)(t.tv_usec) / 1000000)
-
-static void ptimes() {
-  struct rusage rusage;
-  getrusage(RUSAGE_SELF, &rusage);
-  fprintf(
-      lrs_ofp,
-      "\n*%0.3fu %0.3fs %ldKb %ld flts %ld swaps %ld blks-in %ld blks-out \n",
-      double_time(rusage.ru_utime), double_time(rusage.ru_stime),
-      rusage.ru_maxrss, rusage.ru_majflt, rusage.ru_nswap, rusage.ru_inblock,
-      rusage.ru_oublock);
-  if (lrs_ofp != stdout)
-    printf(
-        "\n*%0.3fu %0.3fs %ldKb %ld flts %ld swaps %ld blks-in %ld blks-out \n",
-        double_time(rusage.ru_utime), double_time(rusage.ru_stime),
-        rusage.ru_maxrss, rusage.ru_majflt, rusage.ru_nswap, rusage.ru_inblock,
-        rusage.ru_oublock);
-}
-
-#endif
 
 /* Routines based on lp_solve */
 
