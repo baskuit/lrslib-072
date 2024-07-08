@@ -2,7 +2,7 @@
 
 # C compiler requires __int128 support for 128bit arithmetic (eg. gcc v. 4.6.0 or later for 128bit integer support) 
 # otherwise use %make lrs64 to compile
-# add -DTIMES if your compiler does *not* support ptimes() and get_time()
+# add -DTIMES if your compiler does *not* support ptimes()
 # add -DSIGNALS if your compiler does *not* support <signal.h> <unistd.h>
 
 #try uncommenting next line if cc is the default C compiler

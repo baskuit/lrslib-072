@@ -121,7 +121,6 @@ struct lrs_dat /* global problem data   */
   lrs_mp boundn;    /* objective bound numerator                    */
   lrs_mp boundd;    /* objective bound denominator                  */
   long unbounded;   /* lp unbounded */
-  char fname[4096]; /* program name: lrs redund fel nash            */
 
   /* initially holds order used to find starting  */
   /* basis, default: m,m-1,...,2,1                */
@@ -130,7 +129,6 @@ struct lrs_dat /* global problem data   */
   long *inequality;    /* indices of inequalities corr. to cobasic ind */
   long *linearity;     /* holds cobasic indices of input linearities   */
   long *vars;          /* ordered list of vars for extract,project etc */
-  long *startcob;      /* starting cobasis if given else zeroes        */
   long *minratio;      /* used for lexicographic ratio test            */
   long *temparray;     /* for sorting indices, dimensioned to d        */
   long *isave, *jsave; /* arrays for estimator, malloc'ed at start     */

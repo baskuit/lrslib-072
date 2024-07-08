@@ -337,11 +337,10 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   long *inequality;
   long *linearity;
   long hull = Q->hull;
-  long m, d, lastdv, nlinearity, nredundcol;
+  long m, d, nlinearity, nredundcol;
 
   m = D->m;
   d = D->d;
-  lastdv = Q->lastdv;
 
   nredundcol = 0L;            /* will be set after getabasis        */
   nlinearity = Q->nlinearity; /* may be reset if new linearity read */
@@ -391,7 +390,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   nredundcol = Q->nredundcol;
-  lastdv = Q->lastdv;
   d = D->d;
 
   /********************************************************************/

@@ -87,7 +87,7 @@ call_executable_and_compare("./build/lrsnash1", "./games/game", lrsnash1_expecte
 call_executable_and_compare("./build/lrsnash2", "./games/game", lrsnash2_expected, False)
 call_executable_and_compare("./build/lrsnashgmp", "./games/game", lrsnashgmp_expected, False)
 
-call_executable_and_compare("./lrsnash", "./games/game", lrsnash_expected, True)
-call_executable_and_compare("./lrsnash1", "./games/game", lrsnash1_expected, False)
-call_executable_and_compare("./lrsnash2", "./games/game", lrsnash2_expected, False)
-call_executable_and_compare("./lrsnashgmp", "./games/game", lrsnashgmp_expected, False)
+# call_executable_and_compare("./lrsnash", "./games/game", lrsnash_expected, True)
+# call_executable_and_compare("./lrsnash1", "./games/game", lrsnash1_expected, False)
+# call_executable_and_compare("./lrsnash2", "./games/game", lrsnash2_expected, False)
+# call_executable_and_compare("./lrsnashgmp", "./games/game", lrsnashgmp_expected, False)

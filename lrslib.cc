@@ -41,17 +41,8 @@ static long lrs_checkpoint_seconds = 0;
 
 static long lrs_global_count = 0; /* Track how many lrs_dat records are
                                      allocated */
-static size_t infileLen;          /* length of cache of input file       */
-static char *infile = NULL;       /* cache of input for restart          */
-static char infilename[PATH_MAX];
-static char outfilename[PATH_MAX];
-static char tmpfilename[PATH_MAX];
 static long overflow =
     0; /* =0 no overflow =1 restart overwrite =2 restart append */
-static long pivoting =
-    FALSE; /* =0 no overflow =1 restart overwrite =2 restart append */
-
-static jmp_buf buf1;
 
 static lrs_dat *lrs_global_list[MAX_LRS_GLOBALS + 1];
 
@@ -62,13 +53,8 @@ static long check_cache(lrs_dic **D_p, lrs_dat *global, long *i_p, long *j_p);
 
 static void pushQ(lrs_dat *global, long m, long d, long m_A);
 
-#ifdef LRSLONG
-static int tmpfd;
-#endif
-
 #ifndef TIMES
 static void ptimes(void);
-static double get_time(void);
 #endif
 
 char *basename(char *path);
@@ -290,7 +276,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->name = (char *)CALLOC((unsigned)strlen(name) + 1, sizeof(char));
   strcpy(Q->name, name);
 
-  strcpy(Q->fname, ""); /* name of program, filled in later */
   Q->m = 0L;
   Q->n = 0L;
   Q->inputd = 0L;
@@ -342,7 +327,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->inequality = NULL;
   Q->linearity = NULL;
   Q->vars = NULL;
-  Q->startcob = NULL;
   Q->minratio = NULL;
   Q->temparray = NULL;
   Q->redineq = NULL;
@@ -374,8 +358,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 /* no_output is TRUE supresses output headers   */
 /* 2017.12.22  could use no_output=2 to get early exit for criss-cross method */
 {
-  lrs_mp scale, Temp;
-
   long i, j, k;
 
   /* assign local variables to structures */
@@ -406,9 +388,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   inequality = Q->inequality;
 
   /**2020.6.17 with extract just select columns and quit */
-
-  lrs_alloc_mp(Temp);
-  lrs_alloc_mp(scale);
 
   if (Q->runs > 0) /* arrays for estimator */
   {
@@ -468,12 +447,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   lastdv = Q->lastdv;
   d = D->d;
 
-  /********************************************************************/
-  /* now we start printing the output file  unless no output requested */
-  /********************************************************************/
-
-  /* end of if !no_output .......   */
-
   /* Reset up the inequality array to remember which index is which input
    * inequality */
   /* inequality[B[i]-lastdv] is row number of the inequality with index B[i] */
@@ -527,9 +500,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   if (Q->maximize || Q->minimize) {
     Q->unbounded = !lrs_solvelp(D, Q, Q->maximize);
     if (Q->lponly) {
-
-      lrs_clear_mp(Temp);
-      lrs_clear_mp(scale);
       return TRUE;
     }
 
@@ -569,9 +539,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* bug fix 2018.6.7 new value of d required below */
   if (Q->inputd > D->d)
     *D_p = resize(D, Q);
-
-  lrs_clear_mp(Temp);
-  lrs_clear_mp(scale);
   return TRUE;
 }
 /********* end of lrs_getfirstbasis  ***************/
@@ -590,7 +557,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
   long i = 0L, j = 0L;
   long m = D->m;
   long d = D->d;
-  long saveflag;
   long cob_est =
       0; /* estimated number of cobases in subtree from current node */
 
@@ -608,7 +574,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
         // 2015.2.9 do iterative estimation backtracking when estimate is small
 
-        saveflag = false;
         cob_est = lrs_estimate(D, Q);
         if (cob_est <= Q->subtreesize) /* stop iterative estimation */
         {
@@ -687,17 +652,11 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
 /*Print out current vertex if it is lexmin and return it in output */
 /* return FALSE if no output generated  */
 {
-  lrs_mp_matrix A = P->A;
   long i;
   long ind;  /* output index                                  */
   long ired; /* counts number of redundant columns            */
              /* assign local variables to structures */
   long *redundcol = Q->redundcol;
-  long *count = Q->count;
-  long *B = P->B;
-  long *Row = P->Row;
-
-  long lastdv = Q->lastdv;
 
   long hull;
   long lexflag;
@@ -775,10 +734,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
   long *count = Q->count;
   long hull = Q->hull;
   long n = Q->n;
-
-  long *B = P->B;
-  long *Row = P->Row;
-  long lastdv = Q->lastdv;
 
   if (redcol == n) {
     ++count[0];
@@ -1001,7 +956,7 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
 /*  find reverse indices  */
 /* TRUE if B[*r] C[s] is a reverse lexicographic pivot */
 {
-  long i, j, enter, row, col;
+  long i, j, row, col;
 
   /* assign local variables to structures */
   lrs_mp_matrix A = P->A;
@@ -1011,7 +966,6 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
   long *Col = P->Col;
   long d = P->d;
 
-  enter = C[s];
   col = Col[s];
   if (!negative(A[0][col])) {
     Q->minratio[P->m] = 0; /* 2011.7.14 */
@@ -1092,8 +1046,6 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
   /* assign local variables to structures */
 
   lrs_mp_matrix A = P->A;
-  long *B = P->B;
-  long *C = P->C;
   long *Row = P->Row;
   long *Col = P->Col;
   long d, m_A;
@@ -1278,7 +1230,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
   long *redundcol = Q->redundcol;
   long m, d, nlinearity;
   long nredundcol = 0L; /* will be calculated here */
-  char mess[100];
   m = P->m;
   d = P->d;
   nlinearity = Q->nlinearity;
@@ -1922,14 +1873,13 @@ long checkcobasic(lrs_dic *P, lrs_dat *Q, long index)
   /* assign local variables to structures */
 
   lrs_mp_matrix A = P->A;
-  long *B, *C, *Row, *Col;
+  long *C, *Row, *Col;
   long d = P->d;
   long m = P->m;
   long i = 0;
   long j = 0;
   long s;
 
-  B = P->B;
   C = P->C;
   Row = P->Row;
   Col = P->Col;
@@ -2035,12 +1985,9 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   /* project option also removes redundant rows -  fel mode   */
 
   long i, j, m, n;
-  long ncols;
-  long rows;
   lrs_mp_matrix A;
   long *Col, *Row, *remain, *output, *redineq;
 
-  lrs_dic *P1;
 
   Col = P->Col;
   Row = P->Row;
@@ -2048,7 +1995,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   output = Q->temparray;
   m = P->m;
   n = Q->n;
-  ncols = remain[n + 1];
 
   for (j = 0; j < n; j++)
     output[j] = 0;
@@ -2057,7 +2003,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
     output[remain[j]] = 1;
 
   redineq = Q->redineq;
-  rows = m;
   for (i = 1; i <= m; i++)
     redineq[i] = 0;
 
@@ -2383,7 +2328,6 @@ void lrs_free_dat(lrs_dat *Q) {
   free(Q->inequality);
   free(Q->linearity);
   free(Q->vars);
-  free(Q->startcob);
   free(Q->minratio);
   free(Q->redineq);
   free(Q->temparray);
@@ -2561,12 +2505,6 @@ static void ptimes() {
         double_time(rusage.ru_utime), double_time(rusage.ru_stime),
         rusage.ru_maxrss, rusage.ru_majflt, rusage.ru_nswap, rusage.ru_inblock,
         rusage.ru_oublock);
-}
-
-static double get_time() {
-  struct rusage rusage;
-  getrusage(RUSAGE_SELF, &rusage);
-  return (double_time(rusage.ru_utime));
 }
 
 #endif
