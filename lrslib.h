@@ -193,15 +193,6 @@ struct lrs_dat /* global problem data   */
   long id;    /* numbered sequentially */
   char *name; /* passed by user */
 
-  long saved_count[5]; /* Saves Q->count[*] */
-  long *saved_C;
-  lrs_mp saved_det;
-  lrs_mp saved_sumdet;
-  long saved_depth;
-  long saved_d;
-
-  long saved_flag; /* There is something in the saved cobasis */
-
   /* Variables for cacheing dictionaries, db */
   lrs_dic *Qhead, *Qtail, *olddic;
 };

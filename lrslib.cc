@@ -360,11 +360,9 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->Ain = NULL;
   Q->olddic = NULL;
 
-  Q->saved_flag = 0; /* no cobasis saved initially, db */
   lrs_alloc_mp(Q->Nvolume);
   lrs_alloc_mp(Q->Dvolume);
   lrs_alloc_mp(Q->sumdet);
-  lrs_alloc_mp(Q->saved_det);
   lrs_alloc_mp(Q->boundn);
   lrs_alloc_mp(Q->boundd);
   itomp(ZERO, Q->Nvolume);
@@ -2421,7 +2419,6 @@ void lrs_free_dat(lrs_dat *Q) {
   lrs_clear_mp(Q->sumdet);
   lrs_clear_mp(Q->Nvolume);
   lrs_clear_mp(Q->Dvolume);
-  lrs_clear_mp(Q->saved_det);
   lrs_clear_mp(Q->boundd);
   lrs_clear_mp(Q->boundn);
 
@@ -2436,7 +2433,6 @@ void lrs_free_dat(lrs_dat *Q) {
   free(Q->temparray);
 
   free(Q->name);
-  free(Q->saved_C);
 
   /*2020.8.1 DA: lrs_global_list is not a stack but a list, so have to delete Q
    */
@@ -2545,7 +2541,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   Q->Gcd = lrs_alloc_mp_vector(m);
   Q->Lcm = lrs_alloc_mp_vector(m);
   Q->output = lrs_alloc_mp_vector(Q->n);
-  Q->saved_C = (long int *)CALLOC(d + 1, sizeof(long));
 
   Q->lastdv = d; /* last decision variable may be decreased */
                  /* if there are redundant columns          */
