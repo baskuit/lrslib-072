@@ -130,30 +130,6 @@ void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output) {
 /* end of lrs_printoutput */
 /**************************/
 
-/****************/
-/* lrs_lpoutput */
-/****************/
-void lrs_lpoutput(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output) {
-
-  if (Q->unbounded || !Q->messages)
-    return;
-
-  lrs_mp Temp1, Temp2;
-  long i;
-
-  lrs_alloc_mp(Temp1);
-  lrs_alloc_mp(Temp2);
-
-  prat("\n*Obj=", P->objnum, P->objden);
-  fprintf(lrs_ofp, "    pivots=%ld ", Q->count[3]);
-  fprintf(lrs_ofp, "\n");
-  lrs_clear_mp(Temp1);
-  lrs_clear_mp(Temp2);
-}
-/***********************/
-/* end of lrs_lpoutput */
-/***********************/
-
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 /* check if column indexed by col in this dictionary */
 /* contains output                                   */
@@ -302,9 +278,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   long i;
 
   if (lrs_global_count >= MAX_LRS_GLOBALS) {
-    fprintf(stderr,
-            "Fatal: Attempt to allocate more than %ld global data blocks\n",
-            MAX_LRS_GLOBALS);
     return NULL;
   }
 
@@ -586,7 +559,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   /* Do dual pivots to get primal feasibility */
   if (!primalfeasible(D, Q)) {
-    fprintf(lrs_ofp, "\nend");
     return FALSE;
   }
 
@@ -828,16 +800,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
      }
   */
 
-  /* printslack inequality indices  */
-
-  if (Q->printslack) {
-    fprintf(lrs_ofp, "\nslack ineq:");
-    for (i = lastdv + 1; i <= P->m; i++) {
-      if (!zero(A[Row[i]][0]))
-        fprintf(lrs_ofp, " %ld ", Q->inequality[B[i] - lastdv]);
-    }
-  }
-
   return TRUE;
 } /* end of lrs_getvertex */
 
@@ -892,14 +854,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
   reducearray(output, n);
   /* printslack for rays: 2006.10.10 */
   /* printslack inequality indices  */
-
-  if (Q->printslack) {
-    fprintf(lrs_ofp, "\nslack ineq:");
-    for (i = lastdv + 1; i <= P->m; i++) {
-      if (!zero(P->A[Row[i]][col]))
-        fprintf(lrs_ofp, " %ld ", Q->inequality[B[i] - lastdv]);
-    }
-  }
 
   return TRUE;
 } /* end of lrs_getray */
@@ -1064,7 +1018,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
       selectpivot(P, Q, &i, &j);
       pivot(P, Q, i, j);
       update(P, Q, &i, &j); /*Update B,C,i,j */
-      /*fprintf(lrs_ofp,"\n0  +++"); */
       j++;
     }
 
@@ -2157,17 +2110,9 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   A = P->A;
   m = Q->m;
 
-  if (Q->nlinearity > 0) {
-    fprintf(lrs_ofp, "\nlinearity %ld", Q->nlinearity);
-    for (i = 0; i < Q->nlinearity; i++)
-      fprintf(lrs_ofp, " %ld", Q->linearity[i]);
-  }
-
-  fprintf(lrs_ofp, "\nbegin\n%ld %ld rational", rows, ncols + 1);
   for (i = 1; i <= m; i++) {
     if (redineq[i] != 1) {
       reducearray(A[Row[i]], n + Q->hull); /*we already decremented n */
-      fprintf(lrs_ofp, "\n");
       if (Q->hull) {
         for (j = 0; j < n; j++)
           if (output[j]) {
@@ -2185,14 +2130,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
       }
     }
   }
-  fprintf(lrs_ofp, "\nend");
-
-  fprintf(lrs_ofp, "\n*columns retained:");
-  for (j = 0; j < n; j++)
-    if (output[j])
-      fprintf(lrs_ofp, " %ld", j);
-
-  fprintf(lrs_ofp, "\n");
 
   return 0;
 } /* extractcols */
@@ -2220,10 +2157,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
   n = Q->n;
   d = Q->inputd;
 
-  fprintf(lrs_ofp, "\n*extract col order: ");
-
-  for (j = 0; j < n - 1; j++)
-    fprintf(lrs_ofp, "%ld ", remain[j]);
 
   for (k = 0; k < n - 1; k++) /* go through input order for vars to remain */
   {
@@ -2245,36 +2178,14 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
     } /* while i <= m  */
   } /* for k=0       */
 
-  if (Q->hull)
-    fprintf(lrs_ofp, "\n*columns retained:");
-  else
-    fprintf(lrs_ofp, "\n*columns retained: 0");
-  for (j = 0; j < d - nlinearity; j++)
-    fprintf(lrs_ofp, " %ld", C[j] - Q->hull);
-
-  if (Q->hull)
-    fprintf(lrs_ofp, "\nV-representation\nbegin");
-  else
-    fprintf(lrs_ofp, "\nH-representation\nbegin");
-  fprintf(lrs_ofp, "\n%ld %ld rational", m - nlinearity,
-          d - nlinearity + 1 - Q->hull);
 
   for (i = nlinearity + 1; i <= m; i++) {
     reducearray(A[Row[i]], n - nlinearity);
-    fprintf(lrs_ofp, "\n");
     if (!Q->hull)
       pmp("", A[Row[i]][0]);
     for (j = 0; j < d - nlinearity; j++)
       pmp("", A[Row[i]][Col[j]]);
   }
-  fprintf(lrs_ofp, "\nend");
-  if (Q->hull)
-    fprintf(lrs_ofp, "\n*columns retained:");
-  else
-    fprintf(lrs_ofp, "\n*columns retained: 0");
-  for (j = 0; j < d - nlinearity; j++)
-    fprintf(lrs_ofp, " %ld", C[j] - Q->hull);
-  fprintf(lrs_ofp, "\n");
 
   return 0;
 } /* linextractcols  */
@@ -2452,12 +2363,10 @@ void lrs_free_dic(lrs_dic *P, lrs_dat *Q) {
   lrs_dic *P1;
 
   if (Q == NULL) {
-    fprintf(stderr, "*lrs_free_dic trying to free null Q : skipped");
     return;
   }
 
   if (P == NULL) {
-    fprintf(stderr, "*lrs_free_dic trying to free null P : skipped");
     return;
   }
   /* repeat until cache is empty */
@@ -2500,7 +2409,6 @@ void lrs_free_dat(lrs_dat *Q) {
   int i = 0;
 
   if (Q == NULL) {
-    fprintf(stderr, "*lrs_free_dat trying to free null Q : skipped");
     return;
   }
 
@@ -2935,8 +2843,6 @@ long phaseone(lrs_dic *P, lrs_dat *Q)
   k = d + 1;
 
   itomp(0, b_vector);
-
-  fprintf(lrs_ofp, "\nLP: Phase One: Dual pivot on artificial variable");
 
   /*find most negative b vector */
   while (k <= m) {
