@@ -16,26 +16,7 @@ set(LIB_SOURCES
     lrsdriver.cc
 )
 
-# old execs
-
-add_executable(lrsnash lrsmp.cc ${SOURCES})
-target_compile_definitions(lrsnash PRIVATE MP LRS_QUIET)
-target_compile_options(lrsnash PRIVATE -Wno-write-strings -Wall)
-
-add_executable(lrsnash1 lrslong.cc ${SOURCES})
-target_compile_definitions(lrsnash1 PRIVATE LRSLONG SAFE)
-target_compile_options(lrsnash1 PRIVATE -Wno-write-strings -Wall)
-
-add_executable(lrsnash2 lrslong.cc ${SOURCES})
-target_compile_definitions(lrsnash2 PRIVATE LRSLONG SAFE B128)
-target_compile_options(lrsnash2 PRIVATE -Wno-write-strings -Wall)
-
-add_executable(lrsnashgmp lrsgmp.cc ${SOURCES})
-target_compile_definitions(lrsnashgmp PRIVATE GMP)
-target_compile_options(lrsnashgmp PRIVATE -Wno-write-strings -Wall)
-target_link_libraries(lrsnashgmp PRIVATE ${GMP_LIBRARY})
-
-# library
+# libraries
 
 add_library(lrslib lrsmp.cc ${LIB_SOURCES})
 target_compile_definitions(lrslib PRIVATE MP LRS_QUIET)

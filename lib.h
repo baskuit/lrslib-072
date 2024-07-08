@@ -1,79 +1,23 @@
-/*******************************************************/
-/* lrsnashlib is a library of routines for computing   */
-/* computing all nash equilibria for two person games  */
-/* given by mxn payoff matrices A,B                    */
-/*                                                     */
-/*                                                     */
-/* Main user callable function is                      */
-/*         lrs_solve_nash(game *g)                     */
-/*                                                     */
-/* Sample driver: lrsnash.c                            */
-/* Derived from nash.c in lrslib-060                   */
-/* by Terje Lensberg, October 26, 2015:                */
-/*******************************************************/
-
-/*************/
-/* Games     */
-/*************/
-
-#define MAXSTRAT 200
-#define ROW 0
-#define COL 1
+struct lrs_dic;
+struct lrs_dat;
 
 struct ratnum {
   long num;
   long den;
 };
 
-struct game {
-  long nstrats[2];
-  ratnum payoff[MAXSTRAT][MAXSTRAT][2];
-  // For auxiliary information
-  void *aux;
-};
 
-struct gInfo {
-  char name[100];
-  int fwidth[MAXSTRAT][2]; // Column field widths (for output)
-};
-
-struct SolveInput {
+struct FastInput {
   long rows;
   long cols;
   int *data;
   int den;
 };
 
-int lrs_solve_nash(const SolveInput *g);
+struct FloatOneSumOutput {
+  float* row_strategy;
+  float* col_strategy;
+  float value;
+};
 
-long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
-                long *numequilib, lrs_mp_vector output, long linindex[]);
-/* lrs driver, argv[2]= 2nd input file for nash equilibria */
-
-long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
-                        lrs_mp_matrix *Lin, long no_output, long linindex[]);
-
-long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
-                long linindex[]);
-
-long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, long player);
-/* returns TRUE and prints output if not the origin */
-
-void BuildRepP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g);
-void BuildRepP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g);
-void FillConstraintRowsP1Is0(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
-                             int firstRow);
-void FillConstraintRowsP1Is1(lrs_dic *P, lrs_dat *Q, const SolveInput *g,
-                             int firstRow);
-void FillFirstRow(lrs_dic *P, lrs_dat *Q, int n);
-void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n);
-void FillConstraintRows(lrs_dic *P, lrs_dat *Q, const game *g, int p1, int p2,
-                        int firstRow);
-void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
-                           int n);
-void printGame(game *g);
-void initFwidth(game *g);
-void updateFwidth(game *g, int col, int pos, char *str);
-
-extern long Debug_flag;
-extern long Verbose_flag;
+int solve_fast(const FastInput *g, FloatOneSumOutput *gg);
