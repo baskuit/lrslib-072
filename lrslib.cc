@@ -2122,34 +2122,6 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
 /*                                                             */
 /***************************************************************/
 
-void lprat(const char *name, long Nt, long Dt)
-/*print the long precision rational Nt/Dt without reducing  */
-{
-  if (Nt > 0)
-    fprintf(lrs_ofp, " ");
-  fprintf(lrs_ofp, "%s%ld", name, Nt);
-  if (Dt != 1)
-    fprintf(lrs_ofp, "/%ld", Dt);
-  fprintf(lrs_ofp, " ");
-} /* lprat */
-
-long lreadrat(long *Num, long *Den)
-/* read a rational string and convert to long    */
-/* returns true if denominator is not one        */
-{
-  char in[MAXINPUT], num[MAXINPUT], den[MAXINPUT];
-  if (fscanf(lrs_ifp, "%s", in) == EOF)
-    return (FALSE);
-  atoaa(in, num, den); /*convert rational to num/dem strings */
-  *Num = atol(num);
-  if (den[0] == '\0') {
-    *Den = 1L;
-    return (FALSE);
-  }
-  *Den = atol(den);
-  return (TRUE);
-}
-
 long extractcols(lrs_dic *P, lrs_dat *Q) {
   /* 2020.6.17*/
   /* extract option just pulls out the columns - extract mode */
@@ -2306,59 +2278,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
 
   return 0;
 } /* linextractcols  */
-
-void printA(lrs_dic *P, lrs_dat *Q) /* print the integer m by n array A
-                                       with B,C,Row,Col vectors         */
-{
-  long i, j;
-  /* assign local variables to structures */
-  lrs_mp_matrix A = P->A;
-  long *B = P->B;
-  long *C = P->C;
-  long *Row = P->Row;
-  long *Col = P->Col;
-  long m, d;
-  m = P->m;
-  d = P->d;
-
-  fprintf(lrs_ofp, "\n Basis    ");
-  for (i = 0; i <= m; i++)
-    fprintf(lrs_ofp, "%ld ", B[i]);
-  fprintf(lrs_ofp, " Row ");
-  for (i = 0; i <= m; i++)
-    fprintf(lrs_ofp, "%ld ", Row[i]);
-  fprintf(lrs_ofp, "\n Co-Basis ");
-  for (i = 0; i <= d; i++)
-    fprintf(lrs_ofp, "%ld ", C[i]);
-  fprintf(lrs_ofp, " Column ");
-  for (i = 0; i <= d; i++)
-    fprintf(lrs_ofp, "%ld ", Col[i]);
-  pmp(" det=", P->det);
-  fprintf(lrs_ofp, "\n");
-  i = 0;
-  while (i <= m) {
-    for (j = 0; j <= d; j++)
-      pimat(P, i, j, A[Row[i]][Col[j]], "A");
-    fprintf(lrs_ofp, "\n");
-    if (i == 0 && Q->nonnegative) /* skip basic rows - don't exist! */
-      i = d;
-    i++;
-    fflush(stdout);
-  }
-  fflush(stdout);
-}
-
-void pimat(lrs_dic *P, long r, long s, lrs_mp Nt, const char *name)
-/*print the long precision integer in row r col s of matrix A */
-{
-  long *B = P->B;
-  long *C = P->C;
-  if (s == 0)
-    fprintf(lrs_ofp, "%s[%ld][%ld]=", name, B[r], C[s]);
-  else
-    fprintf(lrs_ofp, "[%ld]=", C[s]);
-  pmp("", Nt);
-}
 
 /***************************************************************/
 /*                                                             */
@@ -2759,51 +2678,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   p->Col[d] = 0;
   return p;
 } /* end of lrs_alloc_dic */
-
-/* print out the saved copy of the basis */
-void print_basis(FILE *fp, lrs_dat *global) {
-  int i;
-  /* assign local variables to structures */
-  fprintf(fp, "lrs_lib: State #%ld: (%s)\t", global->id, global->name);
-
-  if (global->saved_flag) {
-
-    /* legacy output which is not actually correct for V-representations as V#
-     * is not used */
-    /*
-          fprintf (fp, "V#%ld R#%ld B#%ld h=%ld facets ",
-                   global->saved_count[1],
-                   global->saved_count[0],
-                   global->saved_count[2],
-                   global->saved_depth);
-          for (i = 0; i < global->saved_d; i++)
-            fprintf (fp, "%ld ",
-                     global->inequality[global->saved_C[i] - global->lastdv]);
-          pmp (" det=", global->saved_det);
-          fprintf (fp, "\n");
-    */
-
-    if (global->hull)
-      fprintf(fp, "\nrestart %ld %ld %ld ", global->saved_count[0],
-              global->saved_count[2], global->saved_depth);
-    else
-      fprintf(fp, "\nrestart %ld %ld %ld %ld ", global->saved_count[1],
-              global->saved_count[0], global->saved_count[2],
-              global->saved_depth);
-
-    for (i = 0; i < global->saved_d; i++)
-      fprintf(fp, "%ld ",
-              global->inequality[global->saved_C[i] - global->lastdv]);
-    if (global->saved_count[4] > 0)
-      fprintf(fp, "\nintegervertices %ld", global->saved_count[4]);
-    fprintf(fp, "\n");
-
-  } else {
-    fprintf(fp, "lrs_lib: Computing initial basis\n");
-  }
-
-  fflush(fp);
-}
 
 #ifndef TIMES
 /*

@@ -304,11 +304,6 @@ long lrs_degenerate(
     lrs_dic *P, lrs_dat *Q); /* TRUE if the dictionary is primal degenerate */
 long extractcols(lrs_dic *P,
                  lrs_dat *Q); /* preprocess to just extract given cols */
-void print_basis(FILE *fp, lrs_dat *Q);
-void printA(lrs_dic *P,
-            lrs_dat *Q); /* raw print of dictionary, bases for debugging   */
-void pimat(lrs_dic *P, long r, long s, lrs_mp Nt,
-           const char *name); /* print the row r col s of A              */
 void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
                 lrs_mp Vden); /* rescale determinant to get its volume */
 void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
@@ -344,11 +339,6 @@ lrs_dic *resize(lrs_dic *P, lrs_dat *Q);
 /*******************************/
 /* utilities                   */
 /*******************************/
-void lprat(const char *name, long Num,
-           long Den); /* Print Num/Den without reducing  */
-long lreadrat(
-    long *Num,
-    long *Den); /* read a rational string and convert to long integers */
 void reorder(long a[], long range); /* reorder array in increasing order with
                                        one misplaced element   */
 void reorder1(
