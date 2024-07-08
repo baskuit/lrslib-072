@@ -207,9 +207,6 @@ char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* mp rat to char  */
 char *cpmp(const char *name, lrs_mp Nt);             /* mp int to char  */
 void pmp(const char *name, lrs_mp a); /* print the long precision integer a */
 void prat(const char *name, lrs_mp Nt, lrs_mp Dt); /* reduce and print  Nt/Dt */
-void readmp(lrs_mp a); /* read an integer and convert to lrs_mp          */
-long readrat(lrs_mp Na,
-             lrs_mp Da); /* read a rational or int and convert to lrs_mp   */
 void reduce(lrs_mp Na, lrs_mp Da);  /* reduces Na Da by gcd(Na,Da)  */
 void storesign(lrs_mp Na, long sa); /* change sign of Na to sa=POS/NEG */
 /*********************************************************/

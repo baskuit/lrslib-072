@@ -163,8 +163,6 @@ void pmp(const char *name, lrs_mp a); /* print the long precision integer a */
 void prat(const char *name, lrs_mp Nt, lrs_mp Dt); /* reduce and print  Nt/Dt */
 char *cpmp(const char *name, lrs_mp Nt);           /* mp int to char  */
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* C version of prat */
-long readrat(lrs_mp Na,
-             lrs_mp Da); /* read a rational or int and convert to lrs_mp   */
 void reduce(lrs_mp Na, lrs_mp Da); /* reduces Na Da by gcd(Na,Da) */
 
 /*********************************************************/

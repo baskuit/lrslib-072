@@ -248,57 +248,6 @@ void rattodouble(lrs_mp a, lrs_mp b, double *x) /* convert lrs_mp rati
   *x = y / (*x);
 }
 
-long readrat(lrs_mp Na,
-             lrs_mp Da) /* read a rational or integer and convert to lrs_mp */
-                        /* returns true if denominator is not one       */
-{
-  char in[MAXINPUT], num[MAXINPUT], den[MAXINPUT];
-  if (fscanf(lrs_ifp, "%s", in) == EOF) {
-    fprintf(lrs_ofp, "\nInvalid input: check you have entered enough data!\n");
-    exit(1);
-  }
-
-  if (!strcmp(in, "end")) /*premature end of input file */
-  {
-    return (999L);
-  }
-
-  atoaa(in, num, den); /*convert rational to num/dem strings */
-  atomp(num, Na);
-  if (den[0] == '\0') {
-    itomp(1L, Da);
-    return (FALSE);
-  }
-  atomp(den, Da);
-  return (TRUE);
-}
-
-/* read a rational or integer and convert to lrs_mp with base BASE */
-/* returns true if denominator is not one                      */
-long plrs_readrat(lrs_mp Na, lrs_mp Da, const char *rat) {
-  char in[MAXINPUT], num[MAXINPUT], den[MAXINPUT];
-  strcpy(in, rat);
-  atoaa(in, num, den); /*convert rational to num/dem strings */
-  atomp(num, Na);
-  if (den[0] == '\0') {
-    itomp(1L, Da);
-    return (FALSE);
-  }
-  atomp(den, Da);
-  return (TRUE);
-}
-
-void readmp(lrs_mp a) /* read an integer and convert to lrs_mp */
-{
-  long in;
-  if (fscanf(lrs_ifp, "%ld", &in) == EOF) {
-    fprintf(lrs_ofp, "\nInvalid integer input");
-    exit(1);
-  }
-
-  itomp(in, a);
-}
-
 char *cprat(const char *name, lrs_mp Nin, lrs_mp Din) {
   char *num, *den, *ret;
   unsigned long len;
