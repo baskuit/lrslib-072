@@ -29,6 +29,7 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
+#include <exception>
 
 #include "lrslib.h"
 
@@ -601,7 +602,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* Do dual pivots to get primal feasibility */
   if (!primalfeasible(D, Q)) {
     fprintf(lrs_ofp, "\nend");
-    lrs_warning(Q, "finalwarn", "\nNo feasible solution\n");
     return FALSE;
   }
 
@@ -701,7 +701,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
 
         if (!backtrack)
           if (!lrs_leaf(D, Q)) /* 2015.6.5 cobasis returned if not a leaf */
-            lrs_return_unexplored(D, Q);
+            {}
 
       backtrack = TRUE;
 
@@ -1412,7 +1412,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
           linearity[j] = 0l;
           Q->redineq[j] = 1; /* check for redundancy if running redund */
         } else {
-          lrs_warning(Q, "warning", "*No feasible solution");
           return FALSE;
         }
       }
@@ -1454,7 +1453,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
     while (k < d && C[k] != linearity[i] + d)
       k++;
     if (k >= d) {
-      lrs_warning(Q, "warning", "\nError removing linearity");
       return FALSE;
     }
     if (!removecobasicindex(P, Q, k))
@@ -1624,8 +1622,6 @@ long restartpivots(lrs_dic *P, lrs_dat *Q)
         pivot(P, Q, ii, k);
         update(P, Q, &ii, &k);
       } else {
-        lrs_warning(Q, "warning",
-                    "\nInvalid Co-basis - does not have correct rank");
         free(Cobasic);
         return FALSE;
       }
@@ -1637,8 +1633,6 @@ long restartpivots(lrs_dic *P, lrs_dat *Q)
   /* check restarting from a primal feasible dictionary               */
   for (i = lastdv + 1; i <= m; i++)
     if (negative(A[Row[i]][0])) {
-      lrs_warning(Q, "warning",
-                  "\nTrying to restart from infeasible dictionary");
       free(Cobasic);
       return FALSE;
     }
@@ -2678,9 +2672,7 @@ void lrs_free_dat(lrs_dat *Q) {
   while (i < lrs_global_count && lrs_global_list[i] != Q)
     i++;
 
-  if (i == lrs_global_count)
-    lrs_warning(Q, "warning", "lrs_free_dat(Q) not in global list - skipped");
-  else
+  if (i != lrs_global_count)
     while (i < lrs_global_count) {
       lrs_global_list[i] = lrs_global_list[i + 1];
       i++;
@@ -3328,132 +3320,15 @@ void lrs_close_outputblock(void) {}
 
 void lrs_post_output(const char *type, const char *data) {}
 
-void lrs_return_unexplored(
-    lrs_dic *P, lrs_dat *Q) /* send cobasis data for unexplored nodes */
-
-{}
-
-#ifdef MP
-void lrs_overflow(int parm) { lrs_exit(parm); }
-#endif
-
-#ifdef LRSLONG
-
 /* replace by user overflow routine if not using lrsv2_main() */
-void lrs_overflow(int parm) { lrsv2_overflow(parm); }
-
-void lrsv2_overflow(int parm) {
-  lrs_dat *Q;
-  lrs_dic *P;
-  char *restart;
-  char *part;
-
-  int i;
-  int try_restart = FALSE;
-
-  if (lrs_global_list[0] == NULL) {
-    fprintf(stderr, "*lrs_overflow has null Q ");
-    lrs_exit(parm);
-  }
-
-  /* db's cunningly hidden locations */
-  Q = lrs_global_list[lrs_global_count - 1];
-  P = Q->Qhead;
-
-  /* non mplrs overflow handling             */
-  /* lrs, redund,fel restarted at the moment */
-
-#ifdef MA
-  if (strcmp(Q->fname, "lrs") == 0 || strcmp(Q->fname, "lrsmp") == 0 ||
-      Q->redund)
-    try_restart = TRUE;
-#endif
-
-  if (lrs_ifp != NULL)
-    fclose(lrs_ifp);
-
-  if (!try_restart) /* hard exit */
-  {
-    if (strcmp(BIT, "64bit") == 0) {
-      fprintf(
-          stderr,
-          "\n*64bit integer overflow: try running 128bit or gmp versions\n");
-      if (lrs_ofp != stdout)
-        fprintf(
-            lrs_ofp,
-            "\n*64bit integer overflow: try running 128bit or gmp versions\n");
-    } else {
-      fprintf(stderr, "\n*128bit integer overflow: try running gmp version\n");
-      if (lrs_ofp != stdout)
-        fprintf(lrs_ofp,
-                "\n*128bit integer overflow: try running gmp version\n");
-    }
-    lrs_exit(parm);
-  }
-
-  /* try to restart */
-  if (overflow == 0) /*  first overflow */
-  {
-    if (*tmpfilename != '\0') /* we made a temporary file for stdin  */
-      if (remove(tmpfilename) != 0)
-        fprintf(lrs_ofp, "\nCould not delete temporary file");
-    strncpy(tmpfilename, "/tmp/lrs_restartXXXXXX", PATH_MAX);
-    /* XXX in principle this file descriptor should be used instead of the name
-     */
-    tmpfd = mkstemp(tmpfilename);
-  } else
-    strcpy(tmpfilename, infilename);
-
-  if (!pivoting || Q->redund || Q->getvolume) /* we make restart from original input   */
-  {
-    overflow = 1L;
-    lrs_cache_to_file(tmpfilename, " ");
-  } else {
-    restart = (char *)malloc(Q->saved_d * 20 + 100);
-    part = (char *)malloc(Q->saved_d * 20 + 100);
-    overflow = 2L;
-    if (Q->hull)
-      sprintf(restart, " %ld %ld %ld ", Q->saved_count[2], Q->saved_count[0],
-              Q->saved_depth);
-    else
-      sprintf(restart, " %ld %ld %ld %ld ", Q->saved_count[1],
-              Q->saved_count[0], Q->saved_count[2], Q->saved_depth);
-
-    for (i = 0; i < Q->saved_d; i++) {
-      sprintf(part, "%ld ", Q->inequality[Q->saved_C[i] - Q->lastdv]);
-      strcat(restart, part);
-    }
-    sprintf(part, "\nintegervertices %ld", Q->saved_count[4]);
-    strcat(restart, part);
-
-    lrs_cache_to_file(tmpfilename, restart);
-    free(restart);
-    free(part);
-  }
-
-  if (Q->redund)
-    if (Q->Ain != NULL)
-      lrs_clear_mp_matrix(Q->Ain, Q->m, Q->n);
-
-  Q->m = P->m;
-
-  lrs_free_dic(P, Q); /* note Q is not freed here and is needed again  */
-
-  if (lrs_ofp != NULL && lrs_ofp != stdout) {
-    fclose(lrs_ofp);
-    lrs_ofp = NULL;
-  }
-  close(tmpfd);
-
-  longjmp(buf1, 1); /* return to lrsv2_main */
-
+void lrs_overflow(int parm) {
   lrs_exit(parm); /* should not happen */
 }
-#endif
 
 void lrs_exit(int i) {
-  fflush(stdout);
-  exit(i);
+  // fflush(stdout);
+  // exit(i);
+  throw std::exception();
 }
 
 void lrs_free_all_memory(lrs_dic *P, lrs_dat *Q) {
@@ -3540,12 +3415,4 @@ long lrs_cache_to_file(char *name, const char *restart) {
 
   fclose(ofp);
   return 0;
-}
-
-void lrs_warning(lrs_dat *Q, char *type, char *ss) {
-  if (Q->messages) {
-    fprintf(lrs_ofp, "\n%s", ss);
-    if (lrs_ofp != stdout)
-      fprintf(stderr, "\n%s", ss);
-  }
 }

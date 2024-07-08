@@ -215,8 +215,6 @@ struct lrs_dat /* global problem data   */
 /***************************/
 void lrs_open_outputblock(void);  /* prevent mplrs output flushes   */
 void lrs_close_outputblock(void); /* re-enable mplrs output flushes */
-void lrs_return_unexplored(
-    lrs_dic *P, lrs_dat *Q); /* send cobasis data for unexplored nodes */
 void lrs_post_output(const char *, const char *); /* lrs call to post_output */
 
 #ifndef LRSLONG
@@ -262,8 +260,6 @@ void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output); /* print output array */
 long lrs_solvelp(
     lrs_dic *P, lrs_dat *Q,
     long maximize); /* solve primal feas LP:TRUE bounded else FALSE */
-void lrs_warning(lrs_dat *Q, char *type,
-                 char *ss); /* warnings sent to printer or mplrs */
 
 long lrs_stdin_to_file(char *name);
 long lrs_file_to_cache(FILE *ifp);
