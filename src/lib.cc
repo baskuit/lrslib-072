@@ -14,9 +14,10 @@
 /* by Terje Lensberg, October 26, 2015:                */
 /*******************************************************/
 
-#include "lrslib.h"
-// this must be last
 #include "lib.h"
+#include "lrslib.h"
+
+#include <exception>
 
 // hack
 long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
@@ -53,7 +54,7 @@ void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
 //========================================================================
 static long FirstTime; /* set this to true for every new game to be solved */
 
-int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
+void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   lrs_init_no_header();
 
@@ -80,17 +81,11 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   Q1 = lrs_alloc_dat(
       "LRS globals");
-  if (Q1 == NULL) {
-    return 0;
-  }
 
   Q1->n = g->rows + 2;
   Q1->m = g->rows + g->cols + 1;
 
   P1 = lrs_alloc_dic(Q1);
-  if (P1 == NULL) {
-    return 0;
-  }
 
   BuildRepP1Is1(P1, Q1, g);
 
@@ -98,17 +93,11 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
       Q1->n + Q1->m);
 
   Q2 = lrs_alloc_dat("LRS globals");
-  if (Q2 == NULL) {
-    return 0;
-  }
 
   Q2->n = g->cols + 2;
   Q2->m = g->rows + g->cols + 1;
 
   P2orig = lrs_alloc_dic(Q2);
-  if (P2orig == NULL) {
-    return 0;
-  }
   BuildRepP1Is0(P2orig, Q2, g);
   A2orig = P2orig->A;
 
@@ -119,7 +108,7 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
       calloc((P2orig->m + P2orig->d + 2), sizeof(long))); /* for next time */
 
   if (!lrs_getfirstbasis(&P1, Q1, &Lin, TRUE))
-    return 1;
+    throw std::exception();
 
   if (Q1->homogeneous && Q1->hull)
     startcol++; /* col zero not treated as redundant   */
@@ -154,8 +143,6 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   free(linindex);
 
   gg->value /= g->den;
-
-  return 0;
 }
 
 long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,

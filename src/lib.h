@@ -19,4 +19,4 @@ struct FloatOneSumOutput {
   float value;
 };
 
-int solve_fast(const FastInput *g, FloatOneSumOutput *gg);
+void solve_fast(const FastInput *g, FloatOneSumOutput *gg);
