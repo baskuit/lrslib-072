@@ -45,10 +45,6 @@ void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n);
 void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
                            int n);
 
-#define MAXSTRAT 200
-#define ROW 0
-#define COL 1
-
 #include <stdio.h>
 #include <string.h>
 
@@ -80,13 +76,10 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   long numequilib = 0; /* number of nash equilibria found */
   long oldnum = 0;
 
-  /*********************************************************************************/
-  /* Step 1: Allocate lrs_dat, lrs_dic and set up the problem */
-  /*********************************************************************************/
-  FirstTime = TRUE; /* This is done for each new game */
+  FirstTime = TRUE;
 
   Q1 = lrs_alloc_dat(
-      "LRS globals"); /* allocate and init structure for static problem data */
+      "LRS globals");
   if (Q1 == NULL) {
     return 0;
   }
@@ -94,7 +87,7 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   Q1->n = g->rows + 2;
   Q1->m = g->rows + g->cols + 1;
 
-  P1 = lrs_alloc_dic(Q1); /* allocate and initialize lrs_dic */
+  P1 = lrs_alloc_dic(Q1);
   if (P1 == NULL) {
     return 0;
   }
@@ -102,9 +95,8 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   BuildRepP1Is1(P1, Q1, g);
 
   output1 = lrs_alloc_mp_vector(
-      Q1->n + Q1->m); /* output holds one line of output from dictionary     */
+      Q1->n + Q1->m);
 
-  /* allocate and init structure for player 2's problem data */
   Q2 = lrs_alloc_dat("LRS globals");
   if (Q2 == NULL) {
     return 0;
@@ -113,7 +105,7 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   Q2->n = g->cols + 2;
   Q2->m = g->rows + g->cols + 1;
 
-  P2orig = lrs_alloc_dic(Q2); /* allocate and initialize lrs_dic */
+  P2orig = lrs_alloc_dic(Q2);
   if (P2orig == NULL) {
     return 0;
   }
@@ -121,44 +113,19 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   A2orig = P2orig->A;
 
   output2 = lrs_alloc_mp_vector(
-      Q1->n + Q1->m); /* output holds one line of output from dictionary     */
+      Q1->n + Q1->m);
 
   linindex = static_cast<long *>(
       calloc((P2orig->m + P2orig->d + 2), sizeof(long))); /* for next time */
 
-  /*********************************************************************************/
-  /* Step 2: Find a starting cobasis from default of specified order */
-  /*         P1 is created to hold  active dictionary data and may be cached */
-  /*         Lin is created if necessary to hold linearity space */
-  /*         Print linearity space if any, and retrieve output from first dict.
-   */
-  /*********************************************************************************/
-
   if (!lrs_getfirstbasis(&P1, Q1, &Lin, TRUE))
     return 1;
-
-  /* Pivot to a starting dictionary                      */
-  /* There may have been column redundancy               */
-  /* If so the linearity space is obtained and redundant */
-  /* columns are removed. User can access linearity space */
-  /* from lrs_mp_matrix Lin dimensions nredundcol x d+1  */
 
   if (Q1->homogeneous && Q1->hull)
     startcol++; /* col zero not treated as redundant   */
 
   col = Q1->nredundcol;
 
-  /*********************************************************************************/
-  /* Step 3: Terminate if lponly option set, otherwise initiate a reverse */
-  /*         search from the starting dictionary. Get output for each new dict.
-   */
-  /*********************************************************************************/
-
-  /* We initiate reverse search from this dictionary       */
-  /* getting new dictionaries until the search is complete */
-  /* User can access each output line from output which is */
-  /* vertex/ray/facet from the lrs_mp_vector output         */
-  /* prune is TRUE if tree should be pruned at current node */
   do {
     prune = lrs_checkbound(P1, Q1);
     if (!prune && lrs_getsolution(P1, Q1, output1, col)) {
@@ -174,15 +141,15 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   lrs_clear_mp_vector(output1, Q1->m + Q1->n);
   lrs_clear_mp_vector(output2, Q1->m + Q1->n);
 
-  lrs_free_dic(P1, Q1); /* deallocate lrs_dic */
-  lrs_free_dat(Q1);     /* deallocate lrs_dat */
+  lrs_free_dic(P1, Q1);
+  lrs_free_dat(Q1);
 
-  /* 2015.10.10  new code to clear P2orig */
-  Q2->Qhead = P2orig; /* reset this or you crash free_dic */
-  P2orig->A = A2orig; /* reset this or you crash free_dic */
+  /* reset these or you crash free_dic */
+  Q2->Qhead = P2orig;
+  P2orig->A = A2orig;
 
-  lrs_free_dic(P2orig, Q2); /* deallocate lrs_dic */
-  lrs_free_dat(Q2);         /* deallocate lrs_dat */
+  lrs_free_dic(P2orig, Q2);
+  lrs_free_dat(Q2);
 
   free(linindex);
 
@@ -190,15 +157,6 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   return 0;
 }
-
-/*********************************************/
-/* end of nash driver                        */
-/*********************************************/
-
-/**********************************************************/
-/* nash2_main is a second driver used in computing nash   */
-/* equilibria on a second polytope interleaved with first */
-/**********************************************************/
 
 long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
                 long *numequilib, lrs_mp_vector output, FloatOneSumOutput *gg,
@@ -260,20 +218,10 @@ sayonara:
   return 0;
 }
 
-/*********************************************/
-/* end of nash2_main                          */
-/*********************************************/
-
-/* In lrs_getfirstbasis and lrs_getnextbasis we use D instead of P */
-/* since the dictionary P may change, ie. &P in calling routine    */
-
 #define D (*D_p)
 
 long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
                         lrs_mp_matrix *Lin, long no_output, long linindex[])
-/* gets first basis, FALSE if none              */
-/* P may get changed if lin. space Lin found    */
-/* no_output is TRUE supresses output headers   */
 {
   long i, j, k;
 
@@ -299,12 +247,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   Col = D->Col;
   inequality = Q->inequality;
 
-  /* default is to look for starting cobasis using linearies first, then     */
-  /* filling in from last rows of input as necessary                         */
-  /* linearity array is assumed sorted here                                  */
-  /* note if restart/given start inequality indices already in place         */
-  /* from nlinearity..d-1                                                    */
-
   for (i = 0; i < nlinearity; i++) /* put linearities first in the order */
     inequality[i] = linearity[i];
 
@@ -326,23 +268,12 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     for (j = 0; j <= d; j++)
       itomp(ZERO, A[0][j]);
 
-  /* Now we pivot to standard form, and then find a primal feasible basis */
-  /* Note these steps MUST be done, even if restarting, in order to get */
-  /* the same index/inequality correspondance we had for the original prob. */
-  /* The inequality array is used to give the insertion order */
-  /* and is defaulted to the last d rows when givenstart=FALSE */
-
   if (!getabasis2(D, Q, P2orig, inequality, linindex)) {
     return FALSE;
   }
 
   nredundcol = Q->nredundcol;
   d = D->d;
-
-  /* Reset up the inequality array to remember which index is which input
-   * inequality */
-  /* inequality[B[i]-lastdv] is row number of the inequality with index B[i] */
-  /* inequality[C[i]-lastdv] is row number of the inequality with index C[i] */
 
   for (i = 1; i <= m; i++)
     inequality[i] = i;
@@ -422,21 +353,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
 /********* end of lrs_getfirstbasis  ***************/
 long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
                 long linindex[])
-
-/* Pivot Ax<=b to standard form */
-/*Try to find a starting basis by pivoting in the variables x[1]..x[d]        */
-/*If there are any input linearities, these appear first in order[]           */
-/* Steps: (a) Try to pivot out basic variables using order                    */
-/*            Stop if some linearity cannot be made to leave basis            */
-/*        (b) Permanently remove the cobasic indices of linearities           */
-/*        (c) If some decision variable cobasic, it is a linearity,           */
-/*            and will be removed.                                            */
 {
-  /* 2015.10.10 linindex now preallocated and received as parameter so we can
-   * free it */
-
-  //  static long firsttime = TRUE; /* stays true until first valid dictionary
-  //  built */
 
   long i, j, k;
   /* assign local variables to structures */
@@ -595,26 +512,11 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg,
   // printf("den conversion: %ld = %f\n", mptoi(output[0]), den);
 
   if (player == 1) {
-    // printf("p1 output dump:\n");
-    // for (int j = 0; j < Q->n; ++j) {
-    //   printf("%ld, ", mptoi(output[j]));
-    // }
-    // printf("\n");
-
     for (i = 1; i < Q->n; i++) {
       gg->row_strategy[i - 1] = mptoi(output[i]) / den;
     }
   } else {
     gg->value = mptoi(output[Q->n - 1]) / den;
-    // printf("value set: %ld / %f = %f\n", mptoi(output[Q->n - 1]), den,
-    //        gg->value);
-
-    // printf("p2 output dump:\n");
-    // for (int j = 0; j < Q->n; ++j) {
-    //   printf("%ld, ", mptoi(output[j]));
-    // }
-    // printf("\n");
-
     for (i = 1; i < Q->n; i++) {
       gg->col_strategy[i - 1] = mptoi(output[i]) / den;
     }
@@ -622,26 +524,6 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg,
   return TRUE;
 }
 
-/*********************************************/
-/* end of nash driver                        */
-/*********************************************/
-
-//==========================================================================
-//   Building the problem representations (adapted from Gambit-enummixed)
-//==========================================================================
-
-//
-// These two functions are based upon the program setupnash.c from the
-// lrslib distribution, and the user's guide documentation.
-// There are two separate functions, one for each player's problem.
-// According to the user's guide, the ordering of the constraint rows
-// is significant, and differs between the players; for player 1's problem
-// the nonnegativity constraints come first, whereas for player 2's problem
-// they appear later.  Experiments suggest this is in fact true, and
-// reversing them breaks something.
-//
-
-//----------------------------------------------------------------------------------------//
 void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
                            int n) {
   const int MAXCOL = 1000; /* maximum number of columns */
@@ -660,7 +542,6 @@ void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
   }
 }
 
-//----------------------------------------------------------------------------------------//
 void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n) {
   const int MAXCOL = 1000; /* maximum number of columns */
   long num[MAXCOL], den[MAXCOL];
@@ -680,9 +561,6 @@ void FillLinearityRow(lrs_dic *P, lrs_dat *Q, int m, int n) {
   lrs_set_row(P, Q, m, num, den, EQ);
 }
 
-//
-// TL added this to get first row of ones. Don't know if it's needed
-//----------------------------------------------------------------------------------------//
 void FillFirstRow(lrs_dic *P, lrs_dat *Q, int n) {
   const int MAXCOL = 1000; /* maximum number of columns */
   long num[MAXCOL], den[MAXCOL];
@@ -715,9 +593,6 @@ void BuildRepP1Is1(lrs_dic *P, lrs_dat *Q, const FastInput *g) {
 
 void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
                             long ineq)
-/* set row of dictionary using num and den arrays for rational input */
-/* ineq = 1 (GE)   - ordinary row  */
-/*      = 0 (EQ)   - linearity     */
 {
   lrs_mp Temp, mpone;
   lrs_mp_vector oD; /* denominator for row  */
