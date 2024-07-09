@@ -158,16 +158,12 @@ lrs_alloc_dat(const char *name); /* allocate for lrs_dat structure "name" */
 lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
 
-long lrs_checkbound(
-    lrs_dic *P,
-    lrs_dat *Q); /* TRUE if current objective value exceeds specified bound */
 long lrs_getfirstbasis(
     lrs_dic **P_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     long no_output); /* gets first basis, FALSE if none,P may get changed if
                         lin. space Lin found  no_output is TRUE supresses output
                         headers P may get changed if lin. space Lin found    */
-long lrs_getnextbasis(lrs_dic **dict_p, lrs_dat *Q,
-                      long prune); /* gets next lrs tree basis, FALSE if none
+long lrs_getnextbasis(lrs_dic **dict_p, lrs_dat *Q); /* gets next lrs tree basis, FALSE if none
                                       backtrack if prune is TRUE */
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col);
 long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long comment,

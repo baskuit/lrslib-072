@@ -83,7 +83,6 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   long *linindex; /* for faster restart of player 2                       */
 
   long col; /* output column index for dictionary                   */
-  long prune = FALSE; /* if TRUE, getnextbasis will prune tree and backtrack  */
   long numequilib = 0; /* number of nash equilibria found */
   long oldnum = 0;
 
@@ -120,8 +119,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   col = Q1->nredundcol;
 
   do {
-    prune = lrs_checkbound(P1, Q1);
-    if (!prune && lrs_getsolution(P1, Q1, output1, col)) {
+    if (lrs_getsolution(P1, Q1, output1, col)) {
       oldnum = numequilib;
       nash2_main(P1, Q1, P2orig, Q2, &numequilib, output2, gg, linindex);
       if (numequilib > oldnum) {
@@ -129,7 +127,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
         break;
       }
     }
-  } while (lrs_getnextbasis(&P1, Q1, prune));
+  } while (lrs_getnextbasis(&P1, Q1));
 
   lrs_clear_mp_vector(output1, Q1->m + Q1->n);
   lrs_clear_mp_vector(output2, Q1->m + Q1->n);
@@ -156,7 +154,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   lrs_dic *P2;       /* This can get resized, cached etc. Loaded from P2orig */
   lrs_mp_matrix Lin; /* holds input linearities if any are found             */
   long col;          /* output column index for dictionary                   */
-  long prune = FALSE;
   long nlinearity;
   long *linearity;
 
@@ -186,15 +183,14 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   if (lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
   {
     do {
-      prune = lrs_checkbound(P2, Q2);
       col = 0;
-      if (!prune && lrs_getsolution(P2, Q2, output, col)) {
+      if (lrs_getsolution(P2, Q2, output, col)) {
         if (lrs_nashoutput(Q2, output, gg, 2L)) {
           (*numequilib)++;
           break;
         }
       }
-    } while (lrs_getnextbasis(&P2, Q2, prune));
+    } while (lrs_getnextbasis(&P2, Q2));
   }
 
   lrs_free_dic(P2, Q2);

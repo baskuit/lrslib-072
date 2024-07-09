@@ -321,11 +321,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 /* getnextbasis in reverse search order  */
 /*****************************************/
 
-long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
-/* gets next reverse search tree basis, FALSE if none  */
-/* switches to estimator if maxdepth set               */
-/* backtrack TRUE means backtrack from here            */
-
+long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q)
 {
   /* assign local variables to structures */
   long i = 0L, j = 0L;
@@ -334,8 +330,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
   long cob_est =
       0; /* estimated number of cobases in subtree from current node */
 
-  if (backtrack && D->depth == 0)
-    return FALSE; /* cannot backtrack from root      */
+  long backtrack = FALSE;
 
   while ((j < d) || (D->B[m] != m)) /*main while loop for getnextbasis */
   {
@@ -2177,11 +2172,6 @@ long phaseone(lrs_dic *P, lrs_dat *Q)
   }
   lrs_clear_mp(b_vector);
   return (TRUE);
-}
-
-long lrs_checkbound(lrs_dic *P, lrs_dat *Q) {
-  /* check bound on objective and return TRUE if exceeded */
-  return FALSE;
 }
 
 long lrs_leaf(lrs_dic *P, lrs_dat *Q) {

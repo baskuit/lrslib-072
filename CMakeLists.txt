@@ -40,3 +40,15 @@ target_link_libraries(test128 PRIVATE lrslib128)
 
 add_executable(testgmp test.cc)
 target_link_libraries(testgmp PRIVATE lrslibgmp)
+
+add_executable(benchmark benchmark.cc)
+target_link_libraries(benchmark PRIVATE lrslib)
+
+add_executable(benchmark64 benchmark.cc)
+target_link_libraries(benchmark64 PRIVATE lrslib64)
+
+add_executable(benchmark128 benchmark.cc)
+target_link_libraries(benchmark128 PRIVATE lrslib128)
+
+add_executable(benchmarkgmp benchmark.cc)
+target_link_libraries(benchmarkgmp PRIVATE lrslibgmp)
