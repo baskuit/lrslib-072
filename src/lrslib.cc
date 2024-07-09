@@ -73,11 +73,6 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 
   /*  check for rays: negative in row 0 , positive if lponly */
 
-  if (Q->lponly) {
-    if (!positive(A[0][col]))
-      return FALSE;
-  }
-
   else if (!negative(A[0][col]))
     return FALSE;
 
@@ -95,9 +90,6 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
       Q->count[8] = P->depth;
     return lrs_getray(P, Q, col, Q->n, output);
   }
-
-  if (Q->lponly)
-    return lrs_getray(P, Q, col, Q->n, output);
 
   return FALSE; /* no more output in this dictionary */
 
@@ -139,7 +131,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->deepest = 0L;
   Q->nlinearity = 0L;
   Q->nredundcol = 0L;
-  Q->runs = 0L;
   Q->seed = 1234L;
   Q->totalnodes = 0L;
   for (i = 0; i < 10; i++) {
@@ -149,9 +140,7 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->count[2] = 1L; /* basis counter */
                     /* initialize flags */
   Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
-  Q->homogeneous = TRUE;
   Q->polytope = FALSE;
-  Q->lponly = FALSE;
   Q->maxdepth = MAXD;
   Q->mindepth = -MAXD;
 
@@ -207,8 +196,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   long *linearity;
   long m, d, lastdv, nlinearity, nredundcol;
 
-  if (Q->lponly)
-    no_output = TRUE;
   m = D->m;
   d = D->d;
 
@@ -227,11 +214,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   /**2020.6.17 with extract just select columns and quit */
 
-  if (Q->runs > 0) /* arrays for estimator */
-  {
-    Q->isave = (long *)CALLOC((unsigned)(m * d), sizeof(long));
-    Q->jsave = (long *)CALLOC((unsigned)(m * d), sizeof(long));
-  }
   /* default is to look for starting cobasis using linearies first, then     */
   /* filling in from last rows of input as necessary                         */
   /* linearity array is assumed sorted here                                  */
@@ -321,18 +303,13 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* Now solve LP if objective function was given */
   if (Q->maximize || Q->minimize) {
     Q->unbounded = !lrs_solvelp(D, Q, Q->maximize);
-    if (Q->lponly) {
-      return TRUE;
-    }
 
-    else /* check to see if objective is dual degenerate */
-    {
-      j = 1;
-      while (j <= d && !zero(A[0][j]))
-        j++;
-      if (j <= d)
-        Q->dualdeg = TRUE;
-    }
+    j = 1;
+    while (j <= d && !zero(A[0][j]))
+      j++;
+    if (j <= d)
+      Q->dualdeg = TRUE;
+  
   } else
   /* re-initialize cost row to -det */
   {
@@ -388,23 +365,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
   while ((j < d) || (D->B[m] != m)) /*main while loop for getnextbasis */
   {
     if (D->depth >= Q->maxdepth) {
-      if (Q->runs > 0 && !backtrack) /*get an estimate of remaining tree */
-      {
-
-        // 2015.2.9 do iterative estimation backtracking when estimate is small
-
-        cob_est = lrs_estimate(D, Q);
-        if (cob_est <= MAXD) /* stop iterative estimation */
-        {
-          backtrack = TRUE;
-        }
-
-      } else // either not estimating or we are backtracking
-
-        if (!backtrack)
-          if (!lrs_leaf(D, Q)) /* 2015.6.5 cobasis returned if not a leaf */
-          {
-          }
 
       backtrack = TRUE;
 
@@ -486,8 +446,7 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
       Q->count[8] = P->depth;
   }
 
-  if (!lexflag &&
-      !Q->lponly) /* not lexmin, and not printing forced */
+  if (!lexflag) /* not lexmin, and not printing forced */
     return FALSE;
 
   /* copy column 0 to output */
@@ -586,131 +545,6 @@ void getnextoutput(lrs_dic *P, lrs_dat *Q, long i, long col, lrs_mp out)
   copy(out, A[row][col]);
 
 } /* end of getnextoutput */
-
-/************************/
-/*  Estimation function */
-/************************/
-long lrs_estimate(lrs_dic *P, lrs_dat *Q)
-/*returns estimate of subtree size (no. cobases) from current node    */
-/*current node is not counted.                   */
-/*cest[0]rays [1]vertices [2]bases [3]volume     */
-/*    [4] integer vertices                       */
-{
-
-  lrs_mp_vector
-      output;        /* holds one line of output; ray,vertex,facet,linearity */
-  long estdepth = 0; /* depth of basis/vertex in subtree for estimate */
-  long i = 0, j = 0, k, nchild, runcount, col;
-  double prod = 0.0;
-  double cave[] = {0.0, 0.0, 0.0, 0.0, 0.0};
-  double nvertices, nbases, nrays, nvol, nivertices;
-  long rays = 0;
-  /* assign local variables to structures */
-  lrs_mp_matrix A = P->A;
-  long *isave = Q->isave;
-  long *jsave = Q->jsave;
-  double *cest = Q->cest;
-  long d = P->d;
-  /* Main Loop of Estimator */
-
-  output = lrs_alloc_mp_vector(
-      Q->n); /* output holds one line of output from dictionary     */
-
-  for (runcount = 1; runcount <= Q->runs;
-       runcount++) { /* runcount counts number of random probes */
-    j = 0;
-    nchild = 1;
-    prod = 1;
-    nvertices = 0.0;
-    nbases = 0.0;
-    nrays = 0.0;
-    nvol = 0.0;
-    nivertices = 0.0;
-
-    while (nchild != 0) /* while not finished yet */
-    {
-
-      nchild = 0;
-      while (j < d) {
-        if (reverse(P, Q, &i, j)) {
-          isave[nchild] = i;
-          jsave[nchild] = j;
-          nchild++;
-        }
-        j++;
-      }
-
-      if (estdepth == 0 && nchild == 0) {
-        cest[0] = cest[0] + rays; /* may be some rays here */;
-        lrs_clear_mp_vector(output, Q->n);
-        return (0L); /*subtree is a leaf */
-      }
-
-      prod = prod * nchild;
-      nbases = nbases + prod;
-
-      if (nchild > 0) /*reverse pivot found choose random child */
-      {
-        k = myrandom(Q->seed, nchild);
-        Q->seed = myrandom(Q->seed, 977L);
-        i = isave[k];
-        j = jsave[k];
-        estdepth++;
-        Q->totalnodes++; /* calculate total number of nodes evaluated */
-        pivot(P, Q, i, j);
-        update(P, Q, &i, &j);   /*Update B,C,i,j */
-        if (lexmin(P, Q, ZERO)) /* see if lexmin basis for vertex */
-        {
-          nvertices = nvertices + prod;
-          /* integer vertex estimate */
-          if (lrs_getvertex(P, Q, output)) {
-            --Q->count[1];
-            if (one(output[0])) {
-              --Q->count[4];
-              nivertices = nivertices + prod;
-            }
-          }
-        }
-
-        rays = 0;
-        for (col = 1; col <= d; col++)
-          if (negative(A[0][col]) && (lrs_ratio(P, Q, col) == 0) &&
-              lexmin(P, Q, col))
-            rays++;
-        nrays = nrays + prod * rays; /* update ray info */
-
-        j = 0;
-      }
-    }
-    cave[0] = cave[0] + nrays;
-    cave[1] = cave[1] + nvertices;
-    cave[2] = cave[2] + nbases;
-    cave[3] = cave[3] + nvol;
-    cave[4] = cave[4] + nivertices;
-
-    /*  backtrack to root and do it again */
-
-    while (estdepth > 0) {
-      estdepth = estdepth - 1;
-      selectpivot(P, Q, &i, &j);
-      pivot(P, Q, i, j);
-      update(P, Q, &i, &j); /*Update B,C,i,j */
-      j++;
-    }
-
-  } /* end of for loop on runcount */
-
-  j = (long)cave[2] / Q->runs;
-
-  // 2015.2.9   Do not update totals if we do iterative estimating and subtree
-  // is too big
-  if (j <= MAXD)
-    for (i = 0; i < 5; i++)
-      cest[i] = cave[i] / Q->runs + cest[i];
-
-  lrs_clear_mp_vector(output, Q->n);
-  return (j);
-} /* end of lrs_estimate  */
 
 /*********************************/
 /* Internal functions            */
@@ -927,46 +761,11 @@ long lrs_solvelp(lrs_dic *P, lrs_dat *Q, long maximize)
 /* Solve primal feasible lp by Dantzig`s rule and lexicographic ratio test */
 /* return TRUE if bounded, FALSE if unbounded                              */
 {
-  long i, j, k = 0L;
-  long notdone = TRUE;
+  long i = 0L;
   /* assign local variables to structures */
   long d = P->d;
 
-  /* lponly=1 Dantzig,  =2 random,  =3 hybrid, =4 Bland */
-
-  if (Q->lponly <= 1) /* Dantzig's rule */
-    while (dan_selectpivot(P, Q, &i, &j)) {
-      pivot(P, Q, i, j);
-      update(P, Q, &i, &j); /*Update B,C,i,j */
-    }
-
-  if (Q->lponly == 2) /* random edge rule */
-    while (ran_selectpivot(P, Q, &i, &j)) {
-      pivot(P, Q, i, j);
-      update(P, Q, &i, &j); /*Update B,C,i,j */
-    }
-
-  if (Q->lponly == 3) /* alternate Dantzig/randome rules */
-    while (notdone) {
-      if (k % 2) /* odd for dantzig even for random */
-        notdone = dan_selectpivot(P, Q, &i, &j);
-      else
-        notdone = ran_selectpivot(P, Q, &i, &j);
-
-      if (notdone) {
-        pivot(P, Q, i, j);
-        update(P, Q, &i, &j); /*Update B,C,i,j */
-      }
-      k++;
-    }
-
-  if (Q->lponly == 4) /* Bland's rule - used for vertex enumeration */
-    while (selectpivot(P, Q, &i, &j)) {
-      pivot(P, Q, i, j);
-      update(P, Q, &i, &j); /*Update B,C,i,j */
-    }
-
-  if (j < d && i == 0) /* selectpivot gives information on unbounded solution */
+  if (0 < d && i == 0) /* selectpivot gives information on unbounded solution */
   {
     return FALSE;
   }
@@ -2246,9 +2045,6 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
     copy(Temp, A[i][j]);
     gcd(Gcd[i], Temp); /* update gcd of numerators   */
   }
-
-  if (!zero(A[i][0]))    /* for H-rep, are zero in column 0     */
-    Q->homogeneous = FALSE; /* for V-rep, all zero in column 1     */
 
   storesign(Gcd[i], POS);
   storesign(Lcm[i], POS);

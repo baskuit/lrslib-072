@@ -137,15 +137,12 @@ struct lrs_dat /* global problem data   */
   long nredundcol; /* number of redundant columns                  */
   long nlinearity; /* number of input linearities                  */
   long totalnodes; /* count total number of tree nodes evaluated   */
-  long runs;       /* probes for estimate function                 */
   long seed;       /* seed for random number generator             */
   double cest[10]; /* ests: 0=rays,1=vert,2=bases,3=vol,4=int vert */
   long nextineq;   /* start checking redundancy from this row:def=1*/
 
   /**** flags  **********                         */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
-  long homogeneous;   /* TRUE if all entries in column one are zero   */
-  long lponly;        /* true if only lp solution wanted              */
   long long maxdepth; /* max depth to search to in treee              */
   long maximize;      /* flag for LP maximization                     */
   long minimize;   /* flag for LP minimization                     */
@@ -170,8 +167,7 @@ lrs_dat *
 lrs_alloc_dat(const char *name); /* allocate for lrs_dat structure "name" */
 lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
-long lrs_estimate(lrs_dic *P, lrs_dat *Q); /* get estimates only and returns est
-                                              number of cobases in subtree */
+
 long lrs_checkbound(
     lrs_dic *P,
     lrs_dat *Q); /* TRUE if current objective value exceeds specified bound */

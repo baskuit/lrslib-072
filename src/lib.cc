@@ -569,11 +569,10 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
 
   lrs_mp_matrix A;
   lrs_mp_vector Gcd, Lcm;
-  long m, d;
+  long d;
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(mpone);
   A = P->A;
-  m = P->m;
   d = P->d;
   Gcd = Q->Gcd;
   Lcm = Q->Lcm;
@@ -594,9 +593,6 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
     copy(Temp, A[i][j]);
     gcd(Gcd[i], Temp); /* update gcd of numerators   */
   }
-
-  if (!zero(A[i][0]))    /* for H-rep, are zero in column 0     */
-    Q->homogeneous = FALSE; /* for V-rep, all zero in column 1     */
 
   storesign(Gcd[i], POS);
   storesign(Lcm[i], POS);
