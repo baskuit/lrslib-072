@@ -185,21 +185,6 @@ long ran_selectpivot(
     long *s); /* select pivot indices using randomedge-lex rule    */
 void update(lrs_dic *P, lrs_dat *Q, long *i,
             long *j); /* update the B,C, LOC arrays after a pivot       */
-void updatevolume(lrs_dic *P,
-                  lrs_dat *Q); /* rescale determinant and update the volume */
-
-/*******************************/
-/* other functions using P,Q   */
-/*******************************/
-long lrs_degenerate(
-    lrs_dic *P, lrs_dat *Q); /* TRUE if the dictionary is primal degenerate */
-void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
-                lrs_mp Vden); /* rescale determinant to get its volume */
-void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
-                   lrs_mp Vden); /* adjust volume for dimension          */
-long lrs_leaf(
-    lrs_dic *P,
-    lrs_dat *Q); /* true if current dictionary is leaf of reverse search tree */
 
 /***************************************************/
 /* Routines for redundancy checking                */

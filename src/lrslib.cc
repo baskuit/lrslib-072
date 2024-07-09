@@ -1084,26 +1084,6 @@ void update(lrs_dic *P, lrs_dat *Q, long *i, long *j)
     ; /*Find co-basis index */
 } /* end of update */
 
-long lrs_degenerate(lrs_dic *P, lrs_dat *Q)
-/* TRUE if the current dictionary is primal degenerate */
-/* not thoroughly tested   2000/02/15                  */
-{
-  long i;
-  long *Row;
-
-  lrs_mp_matrix A = P->A;
-  long d = P->d;
-  long m = P->m;
-
-  Row = P->Row;
-
-  for (i = d + 1; i <= m; i++)
-    if (zero(A[Row[i]][0]))
-      return TRUE;
-
-  return FALSE;
-}
-
 /*********************************************************/
 /*                 Miscellaneous                         */
 /******************************************************* */
@@ -1150,71 +1130,6 @@ void reorder1(long a[], long b[], long newone, long range)
     b[++newone] = temp;
   }
 } /* end of reorder1 */
-
-void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum, lrs_mp Vden)
-/* rescale determinant to get its volume */
-/* Vnum/Vden is volume of current basis  */
-{
-  lrs_mp gcdprod; /* to hold scale factors */
-  long i;
-  /* assign local variables to structures */
-  long *C = P->C;
-  long *B = P->B;
-  long m, d, lastdv;
-
-  lrs_alloc_mp(gcdprod);
-  m = P->m;
-  d = P->d;
-  lastdv = Q->lastdv;
-
-  itomp(ONE, gcdprod);
-  itomp(ONE, Vden);
-
-  for (i = 0; i < d; i++)
-    if (B[i] <= m) {
-      mulint(Q->Gcd[Q->inequality[C[i] - lastdv]], gcdprod, gcdprod);
-      mulint(Q->Lcm[Q->inequality[C[i] - lastdv]], Vden, Vden);
-    }
-  mulint(P->det, gcdprod, Vnum);
-  //  reduce (Vnum, Vden);
-  lrs_clear_mp(gcdprod);
-} /* end rescaledet */
-
-void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum, lrs_mp Vden)
-/* adjust volume for dimension */
-{
-  lrs_mp dfactorial;
-  /* assign local variables to structures */
-  long lastdv = Q->lastdv;
-
-  lrs_alloc_mp(dfactorial);
-
-  /*reduce Vnum by d factorial  */
-  getfactorial(dfactorial, lastdv);
-  mulint(dfactorial, Vden, Vden);
-
-  reduce(Vnum, Vden);
-  lrs_clear_mp(dfactorial);
-}
-
-void updatevolume(lrs_dic *P,
-                  lrs_dat *Q) /* rescale determinant and update the volume */
-{
-  lrs_mp tN, tD, Vnum, Vden;
-  lrs_alloc_mp(tN);
-  lrs_alloc_mp(tD);
-  lrs_alloc_mp(Vnum);
-  lrs_alloc_mp(Vden);
-  rescaledet(P, Q, Vnum, Vden);
-  copy(tN, Q->Nvolume);
-  copy(tD, Q->Dvolume);
-  linrat(tN, tD, ONE, Vnum, Vden, ONE, Q->Nvolume, Q->Dvolume);
-  lrs_clear_mp(tN);
-  lrs_clear_mp(tD);
-  lrs_clear_mp(Vnum);
-  lrs_clear_mp(Vden);
-
-} /* end of updatevolume */
 
 /***************************************************/
 /* Routines for redundancy checking                */
@@ -1910,63 +1825,6 @@ long ran_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
   free(perm);
   return (FALSE);
 } /* end of ran_selectpivot        */
-
-long phaseone(lrs_dic *P, lrs_dat *Q)
-/* Do a dual pivot to get primal feasibility (pivot in X_0)*/
-/* Bohdan Kaluzny's handiwork                                    */
-{
-  long i, j, k;
-  /* assign local variables to structures */
-  lrs_mp_matrix A = P->A;
-  long *Row = P->Row;
-  long *Col = P->Col;
-  long m, d;
-  lrs_mp b_vector;
-  lrs_alloc_mp(b_vector);
-  m = P->m;
-  d = P->d;
-  i = 0;
-  k = d + 1;
-
-  itomp(0, b_vector);
-
-  /*find most negative b vector */
-  while (k <= m) {
-    if (mp_greater(b_vector, A[Row[k]][0])) {
-      i = k;
-      copy(b_vector, A[Row[i]][0]);
-    }
-    k++;
-  }
-
-  if (negative(b_vector)) /* pivot row found! */
-  {
-    j = 0; /*find a positive entry for in row */
-    while (j < d && !positive(A[Row[i]][Col[j]]))
-      j++;
-    if (j >= d) {
-      lrs_clear_mp(b_vector);
-      return (FALSE); /* no positive entry */
-    }
-    pivot(P, Q, i, j);
-    update(P, Q, &i, &j);
-  }
-  lrs_clear_mp(b_vector);
-  return (TRUE);
-}
-
-long lrs_leaf(lrs_dic *P, lrs_dat *Q) {
-  /* check if current dictionary is a leaf of reverse search tree */
-  long col = 0;
-  long tmp = 0;
-
-  while (col < P->d && !reverse(P, Q, &tmp, col))
-    col++;
-  if (col < P->d)
-    return 0; /* dictionary is not a leaf */
-  else
-    return 1;
-}
 
 void lrs_overflow(int parm) { lrs_exit(parm); }
 
