@@ -111,43 +111,11 @@ void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
   lrs_clear_mp(temp1);
 }
 
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc = (Na/Da) /( Nb/Db ) and reduce */
-{
-  mulint(Na, Db, Nc);
-  mulint(Da, Nb, Dc);
-  reduce(Nc, Dc);
-}
-
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc=(Na/Da)*(Nb/Db) and reduce      */
-
-{
-  mulint(Na, Nb, Nc);
-  mulint(Da, Db, Dc);
-  reduce(Nc, Dc);
-}
-
 /***************************************************************/
 /*                                                             */
 /*     Conversion and I/O functions                            */
 /*                                                             */
 /***************************************************************/
-
-void atoaa(const char *in, char *num, char *den)
-/* convert rational string in to num/den strings */
-{
-  long i, j;
-  for (i = 0; in[i] != '\0' && in[i] != '/'; i++)
-    num[i] = in[i];
-  num[i] = '\0';
-  den[0] = '\0';
-  if (in[i] == '/') {
-    for (j = 0; in[j + i + 1] != '\0'; j++)
-      den[j] = in[i + j + 1];
-    den[j] = '\0';
-  }
-} /* end of atoaa */
 
 void rattodouble(lrs_mp a, lrs_mp b, double *x) /* convert lrs_mp rati
                                                    onal to double */
@@ -296,15 +264,6 @@ void reducearray(lrs_mp_vector p, long n) {
   lrs_clear_mp(temp1);
 }
 /* end of reducearray */
-
-long myrandom(long num, long nrange)
-/* return a random number in range 0..nrange-1 */
-
-{
-  long i;
-  i = (num * 401 + 673) % nrange;
-  return (i);
-}
 
 void stringcpy(char *s, char *t) /*copy t to s pointer version */
 {

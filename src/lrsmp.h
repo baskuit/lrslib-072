@@ -161,33 +161,20 @@ void reduce(lrs_mp Na, lrs_mp Da); /* reduces Na Da by gcd(Na,Da) */
 /* should be independent of mp implementation            */
 /******************************************************* */
 
-void atoaa(char in[], char num[],
-           char den[]); /* convert rational string in to num/den strings  */
 void addint(lrs_mp a, lrs_mp b, lrs_mp c); /* compute c=a+b */
-long atos(char s[]); /* convert s to integer                           */
 long comprod(lrs_mp Na, lrs_mp Nb, lrs_mp Nc,
              lrs_mp Nd); /* +1 if Na*Nb > Nc*Nd,-1 if Na*Nb > Nc*Nd else 0 */
 void decint(lrs_mp a, lrs_mp b); /* compute a=a-b */
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc = (Na/Da) /( Nb/Db ) and reduce */
 void getfactorial(lrs_mp factorial, long k); /* compute k factorial in lrs_mp */
 /* NC/DC = ka*Na/Da + kb*Nb/Db */
 void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
             lrs_mp Nc, lrs_mp Dc);
 void lcm(lrs_mp a,
          lrs_mp b); /* a = least common multiple of a, b; b is saved  */
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc=(Na/Da)*(Nb/Db) and reduce      */
-long myrandom(long num,
-              long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
-void rattodouble(lrs_mp a, lrs_mp b,
-                 double *x); /* convert lrs_mp rational to double          */
 void reduceint(lrs_mp Na, lrs_mp Da); /* divide Na by Da and return it */
 void reducearray(lrs_mp_vector p,
                  long n); /* find gcd of p[0]..p[n-1] and divide through by */
-void scalerat(lrs_mp Na, lrs_mp Da, long ka); /* scales rational by ka */
-void subint(lrs_mp a, lrs_mp b, lrs_mp c);    /* compute c=a-b    */
 
 /**********************************/
 /* Miscellaneous functions        */

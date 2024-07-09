@@ -126,42 +126,11 @@ void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
   reduce(Nc, Dc);
 }
 
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc = (Na/Da)  / ( Nb/Db ) and reduces answer by gcd(Nc,Dc) */
-{
-  mulint(Na, Db, Nc);
-  mulint(Da, Nb, Dc);
-  reduce(Nc, Dc);
-}
-
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc = Na/Da  * Nb/Db and reduces answer by gcd(Nc,Dc) */
-{
-  mulint(Na, Nb, Nc);
-  mulint(Da, Db, Dc);
-  reduce(Nc, Dc);
-}
-
 /***************************************************************/
 /*                                                             */
 /*     Conversion and I/O functions                            */
 /*                                                             */
 /***************************************************************/
-
-void atoaa(const char *in, char *num, char *den)
-/* convert rational string in to num/den strings */
-{
-  long i, j;
-  for (i = 0; in[i] != '\0' && in[i] != '/'; i++)
-    num[i] = in[i];
-  num[i] = '\0';
-  den[0] = '\0';
-  if (in[i] == '/') {
-    for (j = 0; in[j + i + 1] != '\0'; j++)
-      den[j] = in[i + j + 1];
-    den[j] = '\0';
-  }
-} /* end of atoaa */
 
 void mptodouble(lrs_mp a, double *x) /* convert lrs_mp to double */
 {
@@ -377,15 +346,6 @@ void reducearray(lrs_mp_vector p, long n)
     if (!zero(p[i]))
       reduceint(p[i], divisor);
 } /* end of reducearray */
-
-long myrandom(long num, long nrange)
-/* return a random number in range 0..nrange-1 */
-
-{
-  long i;
-  i = (num * 401 + 673) % nrange;
-  return (i);
-}
 
 void getfactorial(lrs_mp factorial, long k) /* compute k factorial
                                                in lrs_mp */

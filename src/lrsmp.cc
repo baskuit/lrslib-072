@@ -572,35 +572,10 @@ void addint(lrs_mp a, lrs_mp b,
   linint(c, 1, b, 1);
 }
 
-void subint(lrs_mp a, lrs_mp b, lrs_mp c) /* compute c=a-b */
-
-{
-  copy(c, a);
-  linint(a, 1, b, -1);
-}
-
 void decint(lrs_mp a, lrs_mp b) /* compute a=a-b */
 
 {
   linint(a, 1, b, -1);
-}
-
-long myrandom(long num, long nrange)
-/* return a random number in range 0..nrange-1 */
-
-{
-  long i;
-  i = (num * 401 + 673) % nrange;
-  return (i);
-}
-
-long atos(char s[]) /* convert s to integer */
-{
-  long i, j;
-  j = 0;
-  for (i = 0; s[i] >= '0' && s[i] <= '9'; ++i)
-    j = 10 * j + s[i] - '0';
-  return (j);
 }
 
 void stringcpy(char *s, char *t) /*copy t to s pointer version */
@@ -618,21 +593,6 @@ void rattodouble(lrs_mp a, lrs_mp b,
   mptodouble(b, x);
   *x = y / (*x);
 }
-
-void atoaa(char in[], char num[], char den[])
-/* convert rational string in to num/den strings */
-{
-  long i, j;
-  for (i = 0; in[i] != '\0' && in[i] != '/'; i++)
-    num[i] = in[i];
-  num[i] = '\0';
-  den[0] = '\0';
-  if (in[i] == '/') {
-    for (j = 0; in[j + i + 1] != '\0'; j++)
-      den[j] = in[i + j + 1];
-    den[j] = '\0';
-  }
-} /* end of atoaa */
 
 void lcm(lrs_mp a, lrs_mp b)
 /* a = least common multiple of a, b; b is preserved */
@@ -752,23 +712,6 @@ void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
   mulint(Da, Nb, c);
   linint(Nc, ka, c, kb); /* Nc = (ka*Na*Db)+(kb*Da*Nb)  */
   mulint(Da, Db, Dc);    /* Dc =  Da*Db           */
-  reduce(Nc, Dc);
-}
-
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc = (Na/Da)  / ( Nb/Db )
-   and reduces answer by gcd(Nc,Dc) */
-{
-  mulint(Na, Db, Nc);
-  mulint(Da, Nb, Dc);
-  reduce(Nc, Dc);
-}
-
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
-/* computes Nc/Dc = Na/Da  * Nb/Db and reduces by gcd(Nc,Dc) */
-{
-  mulint(Na, Nb, Nc);
-  mulint(Da, Db, Dc);
   reduce(Nc, Dc);
 }
 

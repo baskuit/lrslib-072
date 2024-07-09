@@ -201,13 +201,6 @@ extern __int128 MAXDm, MAXDl,
     else                                                                       \
       *(c) = *(a) + *(b);                                                      \
   }
-#define subint(a, b, c)                                                        \
-  {                                                                            \
-    if (mpsafea(a, b))                                                         \
-      lrs_overflow(1);                                                         \
-    else                                                                       \
-      *(c) = *(a) - *(b);                                                      \
-  }
 #define decint(a, b)                                                           \
   {                                                                            \
     if (mpsafea(a, b))                                                         \
@@ -221,7 +214,6 @@ extern __int128 MAXDm, MAXDl,
 /* unprotected routines */
 #define qpiv(a, b, c, d, e) *(a) = (*(a) * *(b) - *(c) * *(d)) / (*e)
 #define addint(a, b, c) *(c) = *(a) + *(b)
-#define subint(a, b, c) *(c) = *(a) - *(b)
 #define linint(a, ka, b, kb) *(a) = *(a) * ka + *(b) * kb
 #define mulint(a, b, c) *(c) = *(a) * *(b)
 #endif
@@ -325,22 +317,13 @@ void reduce(lrs_mp Na, lrs_mp Da);    /* reduces Na Da by gcd(Na,Da) */
 /* should be independent of mp implementation            */
 /******************************************************* */
 
-void atoaa(const char in[], char num[],
-           char den[]); /* convert rational string in to num/den strings  */
-long atos(char s[]);    /* convert s to integer                           */
 long comprod(lrs_mp Na, lrs_mp Nb, lrs_mp Nc,
              lrs_mp Nd); /* +1 if Na*Nb > Nc*Nd,-1 if Na*Nb > Nc*Nd else 0 */
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc = (Na/Da) /( Nb/Db ) and reduce */
 void getfactorial(lrs_mp factorial, long k); /* compute k factorial in lrs_mp */
 void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
             lrs_mp Nc, lrs_mp Dc);
 void lcm(lrs_mp a,
          lrs_mp b); /* a = least common multiple of a, b; b is saved  */
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc=(Na/Da)*(Nb/Db) and reduce      */
-long myrandom(long num,
-              long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
 void rattodouble(lrs_mp a, lrs_mp b,
                  double *x); /* convert lrs_mp rational to double          */

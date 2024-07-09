@@ -29,6 +29,8 @@
 
 #include "gmp.h"
 
+#include <stdlib.h> /* labs */
+
 /***********/
 /* defines */
 /***********/
@@ -98,7 +100,6 @@
 #define normalize(a) (void)0
 #define positive(a) (mpz_sgn(a) > 0 ? ONE : ZERO)
 #define sign(a) (mpz_sgn(a) < 0 ? NEG : POS)
-#define subint(a, b, c) mpz_sub((c), (a), (b))
 #define zero(a) (mpz_sgn(a) == 0 ? ONE : ZERO)
 
 /*
@@ -107,8 +108,6 @@
  */
 #define DEC2DIG(d) ((d) % BASE_DIG ? (d) / BASE_DIG + 1 : (d) / BASE_DIG)
 #define DIG2DEC(d) ((d) * BASE_DIG)
-
-#include <stdlib.h> /* labs */
 
 #define CALLOC(n, s) xcalloc(n, s, __LINE__, __FILE__)
 
@@ -161,21 +160,12 @@ void storesign(lrs_mp Na, long sa); /* change sign of Na to sa=POS/NEG */
 /* should be independent of mp implementation            */
 /******************************************************* */
 
-void atoaa(const char in[], char num[],
-           char den[]); /* convert rational string in to num/den strings  */
-long atos(char s[]);    /* convert s to integer                           */
 long comprod(lrs_mp Na, lrs_mp Nb, lrs_mp Nc,
              lrs_mp Nd); /* +1 if Na*Nb > Nc*Nd,-1 if Na*Nb > Nc*Nd else 0 */
-void divrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc = (Na/Da) /( Nb/Db ) and reduce */
 void linrat(lrs_mp Na, lrs_mp Da, long ka, lrs_mp Nb, lrs_mp Db, long kb,
             lrs_mp Nc, lrs_mp Dc);
 void lcm(lrs_mp a,
          lrs_mp b); /* a = least common multiple of a, b; b is saved  */
-void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc);
-/* computes Nc/Dc=(Na/Da)*(Nb/Db) and reduce      */
-long myrandom(long num,
-              long nrange); /* return a random number in range 0..nrange-1    */
 void notimpl(const char *s); /* bail out - help! */
 void rattodouble(lrs_mp a, lrs_mp b,
                  double *x); /* convert lrs_mp rational to double          */
