@@ -29,14 +29,14 @@ target_compile_options(lrslibgmp PRIVATE -Wno-write-strings -Wall)
 
 # targets
 
-add_executable(main main.cc)
-target_link_libraries(main PRIVATE lrslib)
+add_executable(test test.cc)
+target_link_libraries(test PRIVATE lrslib)
 
-add_executable(main64 main.cc)
-target_link_libraries(main64 PRIVATE lrslib64)
+add_executable(test64 test.cc)
+target_link_libraries(test64 PRIVATE lrslib64)
 
-add_executable(main128 main.cc)
-target_link_libraries(main128 PRIVATE lrslib128)
+add_executable(test128 test.cc)
+target_link_libraries(test128 PRIVATE lrslib128)
 
-add_executable(maingmp main.cc)
-target_link_libraries(maingmp PRIVATE lrslibgmp)
+add_executable(testgmp test.cc)
+target_link_libraries(testgmp PRIVATE lrslibgmp)
