@@ -14,7 +14,6 @@
 /* by Terje Lensberg, October 26, 2015:                */
 /*******************************************************/
 
-#include "lrsdriver.h"
 #include "lrslib.h"
 // this must be last
 #include "lib.h"

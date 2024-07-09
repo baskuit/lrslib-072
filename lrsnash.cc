@@ -43,7 +43,6 @@ char LegacyMsg[] =
     "\nProcessing legacy input files. Alternatively, you may skip\n"
     "setupnash and pass its input file to this program.\n";
 
-#include "lrsdriver.h"
 #include "lrslib.h"
 #include "lrsnashlib.h"
 #include <ctype.h>

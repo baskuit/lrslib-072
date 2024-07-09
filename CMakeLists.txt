@@ -7,13 +7,11 @@ set(SOURCES
     lrsnash.cc
     lrsnashlib.cc
     lrslib.cc
-    lrsdriver.cc
 )
 
 set(LIB_SOURCES
     lib.cc
     lrslib.cc
-    lrsdriver.cc
 )
 
 # libraries
