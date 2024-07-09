@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
   input.rows = 9;
   input.cols = 9;
   input.den = 80;
-  const int trials = 100000;
+  const int trials = 10000;
   const int entries = input.rows * input.cols;
 
 //   std::random_device rd{};
