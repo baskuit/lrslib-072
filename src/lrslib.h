@@ -118,10 +118,8 @@ struct lrs_dat /* global problem data   */
   long *redundcol;     /* holds columns which are redundant            */
   long *inequality;    /* indices of inequalities corr. to cobasic ind */
   long *linearity;     /* holds cobasic indices of input linearities   */
-  long *vars;          /* ordered list of vars for extract,project etc */
   long *minratio;      /* used for lexicographic ratio test            */
   long *temparray;     /* for sorting indices, dimensioned to d        */
-  long *isave, *jsave; /* arrays for estimator, malloc'ed at start     */
 
   long m;         /* number of rows in input file                 */
   long n;         /* number of columns in input file              */
@@ -132,10 +130,6 @@ struct lrs_dat /* global problem data   */
 
   long nredundcol; /* number of redundant columns                  */
   long nlinearity; /* number of input linearities                  */
-
-  /**** flags  **********                         */
-  long long maxdepth; /* max depth to search to in treee              */
-  long long mindepth; /* do not backtrack above mindepth              */
 
   /* Variables for cacheing dictionaries, db */
   lrs_dic *Qhead, *Qtail, *olddic;
@@ -188,8 +182,6 @@ long primalfeasible(lrs_dic *P,
 long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col); /* find lex min. ratio  */
 long removecobasicindex(lrs_dic *P, lrs_dat *Q,
                         long k); /* remove C[k] from problem  */
-long linextractcols(lrs_dic *P,
-                    lrs_dat *Q); /* preprocess to remove input linearities */
 long restartpivots(lrs_dic *P,
                    lrs_dat *Q); /* restart problem from given cobasis   */
 long reverse(lrs_dic *P, lrs_dat *Q, long *r,
@@ -211,8 +203,6 @@ void updatevolume(lrs_dic *P,
 /*******************************/
 long lrs_degenerate(
     lrs_dic *P, lrs_dat *Q); /* TRUE if the dictionary is primal degenerate */
-long extractcols(lrs_dic *P,
-                 lrs_dat *Q); /* preprocess to just extract given cols */
 void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,
                 lrs_mp Vden); /* rescale determinant to get its volume */
 void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum,

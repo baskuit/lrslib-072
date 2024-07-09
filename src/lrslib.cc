@@ -131,14 +131,11 @@ lrs_dat *lrs_alloc_dat() {
   }
   Q->count[2] = 1L; /* basis counter */
                     /* initialize flags */
-  Q->maxdepth = MAXD;
-  Q->mindepth = -MAXD;
 
   Q->facet = NULL;
   Q->redundcol = NULL;
   Q->inequality = NULL;
   Q->linearity = NULL;
-  Q->vars = NULL;
   Q->minratio = NULL;
   Q->temparray = NULL;
   Q->redineq = NULL;
@@ -323,21 +320,14 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q)
   long i = 0L, j = 0L;
   long m = D->m;
   long d = D->d;
-  long cob_est =
-      0; /* estimated number of cobases in subtree from current node */
 
   long backtrack = FALSE;
 
   while ((j < d) || (D->B[m] != m)) /*main while loop for getnextbasis */
   {
-    if (D->depth >= Q->maxdepth) {
-
+    if (D->depth >= MAXD) {
       backtrack = TRUE;
-
-      if (Q->maxdepth == 0 &&
-          cob_est <= MAXD) /* root estimate only */
-        return FALSE;                /* no nextbasis  */
-    } // if (D->depth >= Q->maxdepth)
+    }
 
     if (backtrack) /* go back to prev. dictionary, restore i,j */
     {
@@ -354,7 +344,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q)
       j++; /* go to next column */
     } /* end of if backtrack  */
 
-    if (D->depth < Q->mindepth)
+    if (D->depth < -MAXD)
       break;
 
     /* try to go down tree */
@@ -435,16 +425,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
   reducearray(output, Q->n);
   if (lexflag && one(output[0]))
     ++Q->count[4]; /* integer vertex */
-
-  /* uncomment to print nonzero basic variables
-
-   printf("\n nonzero basis: vars");
-    for(i=1;i<=lastdv; i++)
-     {
-      if ( !zero(A[Row[i]][0]) )
-           printf(" %ld ",B[i]);
-     }
-  */
 
   return TRUE;
 } /* end of lrs_getvertex */
@@ -1487,99 +1467,6 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
 
 /***************************************************************/
 /*                                                             */
-/* f I/O routines                          */
-/*                                                             */
-/***************************************************************/
-
-long extractcols(lrs_dic *P, lrs_dat *Q) {
-  /* 2020.6.17*/
-  /* extract option just pulls out the columns - extract mode */
-  /* project option also removes redundant rows -  fel mode   */
-
-  long i, j, m, n;
-  lrs_mp_matrix A;
-  long *Row, *remain, *output, *redineq;
-
-  Row = P->Row;
-  remain = Q->vars;
-  output = Q->temparray;
-  m = P->m;
-  n = Q->n;
-
-  for (j = 0; j < n; j++)
-    output[j] = 0;
-
-  for (j = 0; j < n; j++)
-    output[remain[j]] = 1;
-
-  redineq = Q->redineq;
-  for (i = 1; i <= m; i++)
-    redineq[i] = 0;
-
-  A = P->A;
-  m = Q->m;
-
-  for (i = 1; i <= m; i++) {
-    if (redineq[i] != 1) {
-      reducearray(A[Row[i]], n); /*we already decremented n */
-    }
-  }
-
-  return 0;
-} /* extractcols */
-
-long linextractcols(lrs_dic *P, lrs_dat *Q)
-/* 2020.2.2 */
-/* extract option to output the reduced A matrix after linearities are removed
- */
-/* should be followed by redund to get minimum representation */
-{
-  long d, i, j, k, m, n;
-  long ii, jj;
-  long nlinearity = Q->nlinearity;
-  lrs_mp_matrix A;
-  long *B, *C, *Col, *Row, *remain;
-
-  A = P->A;
-  B = P->B;
-  C = P->C;
-  Col = P->Col;
-  Row = P->Row;
-  remain = Q->vars;
-
-  m = P->m;
-  n = Q->n;
-  d = n - 1;
-
-  for (k = 0; k < n - 1; k++) /* go through input order for vars to remain */
-  {
-    i = 1;
-    while (i <= m) {
-      if (B[i] == remain[k]) {
-        j = 0;
-        while (j + nlinearity < d && (C[j] <= d || zero(A[Row[i]][Col[j]])))
-          j++;
-        if (j + nlinearity < d) {
-          ii = i;
-          jj = j;
-          pivot(P, Q, ii, jj);
-          update(P, Q, &ii, &jj);
-          i = 0;
-        }
-      } /* if B[i]...    */
-      i++;
-    } /* while i <= m  */
-  } /* for k=0       */
-
-  for (i = nlinearity + 1; i <= m; i++) {
-    reducearray(A[Row[i]], n - nlinearity);
-  }
-
-  return 0;
-} /* linextractcols  */
-
-/***************************************************************/
-/*                                                             */
 /*     Routines for caching, allocating etc.                   */
 /*                                                             */
 /***************************************************************/
@@ -1810,7 +1697,6 @@ void lrs_free_dat(lrs_dat *Q) {
   free(Q->redundcol);
   free(Q->inequality);
   free(Q->linearity);
-  free(Q->vars);
   free(Q->minratio);
   free(Q->redineq);
   free(Q->temparray);
