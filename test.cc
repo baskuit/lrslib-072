@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "src/lib.h"
 
 #include "assert.h"
 #include <algorithm>
@@ -47,12 +47,12 @@ void check_output(const T &input, const U &output) {
 
   float expl = row_max - col_min;
 
-  std::cout << "row_max: " << row_max << std::endl;
-  std::cout << "col_min: " << col_min << std::endl;
+  // std::cout << "row_max: " << row_max << std::endl;
+  // std::cout << "col_min: " << col_min << std::endl;
 
-  std::cout << "expl: " << expl << std::endl;
-  std::cout << "calulated value: " << value << std::endl;
-  std::cout << "output value: " << output.value << std::endl;
+  // std::cout << "expl: " << expl << std::endl;
+  // std::cout << "calulated value: " << value << std::endl;
+  // std::cout << "output value: " << output.value << std::endl;
 
   assert(std::abs(value - output.value) < eps);
   assert(std::abs(expl) < eps);
@@ -95,9 +95,9 @@ int main(int argc, char **argv) {
 
     solve_fast(&input, &output);
 
-    print_output(input, output);
-    check_output(input, output);
-    std::cout << std::endl;
+    // print_output(input, output);
+    // check_output(input, output);
+    // std::cout << std::endl;
   }
 
   return 0;
