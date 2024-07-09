@@ -1,12 +1,12 @@
 #include "lib.h"
 
+#include "assert.h"
+#include <algorithm>
 #include <iostream>
 #include <random>
-#include <algorithm>
-#include "assert.h"
 
 template <typename T, typename U>
-void print_output(const T& input, const U& output) {
+void print_output(const T &input, const U &output) {
   std::cout << "row strategy" << std::endl;
   for (int i = 0; i < input.rows; ++i) {
     std::cout << output.row_strategy[i] << ", ";
@@ -20,7 +20,7 @@ void print_output(const T& input, const U& output) {
 }
 
 template <typename T, typename U>
-void check_output (const T& input, const U& output) {
+void check_output(const T &input, const U &output) {
 
   const static float eps = .0001;
 
@@ -32,11 +32,11 @@ void check_output (const T& input, const U& output) {
   int k = 0;
   for (int i = 0; i < input.rows; ++i) {
     for (int j = 0; j < input.cols; ++j) {
-     int d = input.data[k];
-     row_scores[i] += d * output.col_strategy[j];
-     col_scores[j] += d * output.row_strategy[i];
-    value += output.row_strategy[i] * output.col_strategy[j] * d;
-     ++k;  
+      int d = input.data[k];
+      row_scores[i] += d * output.col_strategy[j];
+      col_scores[j] += d * output.row_strategy[i];
+      value += output.row_strategy[i] * output.col_strategy[j] * d;
+      ++k;
     }
   }
 
@@ -56,7 +56,6 @@ void check_output (const T& input, const U& output) {
 
   assert(std::abs(value - output.value) < eps);
   assert(std::abs(expl) < eps);
-
 }
 
 int main(int argc, char **argv) {
@@ -76,7 +75,6 @@ int main(int argc, char **argv) {
   std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dis(0, input.den + 1);
 
-
   for (int t = 0; t < trials; ++t) {
 
     std::vector<int> data{};
@@ -94,7 +92,7 @@ int main(int argc, char **argv) {
     col_strategy.resize(input.cols + 2);
     output.row_strategy = row_strategy.data();
     output.col_strategy = col_strategy.data();
-    
+
     solve_fast(&input, &output);
 
     print_output(input, output);

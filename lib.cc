@@ -218,10 +218,8 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   long prune = FALSE;
   long nlinearity;
   long *linearity;
-  static long firstwarning =
-      TRUE;
-  static long firstunbounded =
-      TRUE;
+  static long firstwarning = TRUE;
+  static long firstunbounded = TRUE;
 
   long i, j;
 
@@ -257,8 +255,7 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
     prune = lrs_checkbound(P2, Q2);
     col = 0;
     if (!prune && lrs_getsolution(P2, Q2, output, col)) {
-      if (lrs_nashoutput(Q2, output, gg, 2L))
-      {
+      if (lrs_nashoutput(Q2, output, gg, 2L)) {
         (*numequilib)++;
         break;
       }
@@ -620,8 +617,8 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
   return TRUE;
 } /*  end of getabasis2 */
 
-
-long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg, long player) {
+long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg,
+                    long player) {
   long i;
   long origin = TRUE;
 
@@ -647,7 +644,8 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg, lon
     }
   } else {
     gg->value = mptoi(output[Q->n - 1]) / den;
-    printf("value set: %ld / %f = %f\n", mptoi(output[Q->n - 1]), den, gg->value);
+    printf("value set: %ld / %f = %f\n", mptoi(output[Q->n - 1]), den,
+           gg->value);
 
     printf("p2 output dump:\n");
     for (int j = 0; j < Q->n; ++j) {

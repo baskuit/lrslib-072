@@ -248,8 +248,8 @@ lrs_dat *lrs_alloc_dat(const char *name) {
     Q->count[i] = 0L;
     Q->cest[i] = 0.0;
   }
-  Q->count[2] = 1L;      /* basis counter */
-                         /* initialize flags */
+  Q->count[2] = 1L; /* basis counter */
+                    /* initialize flags */
   Q->allbases = FALSE;
   Q->bound = FALSE;     /* upper/lower bound on objective function given */
   Q->countonly = FALSE; /* produce the usual output */
@@ -573,8 +573,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
     /* try to go down tree */
 
     /* 2011.7.14 patch */
-    while ((j < d) &&
-           (!reverse(D, Q, &i, j)))
+    while ((j < d) && (!reverse(D, Q, &i, j)))
       j++;
     if (j == d)
       backtrack = TRUE;
@@ -1946,7 +1945,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   lrs_mp_matrix A;
   long *Col, *Row, *remain, *output, *redineq;
 
-
   Col = P->Col;
   Row = P->Row;
   remain = Q->vars;
@@ -2014,7 +2012,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
   n = Q->n;
   d = Q->inputd;
 
-
   for (k = 0; k < n - 1; k++) /* go through input order for vars to remain */
   {
     i = 1;
@@ -2034,7 +2031,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
       i++;
     } /* while i <= m  */
   } /* for k=0       */
-
 
   for (i = nlinearity + 1; i <= m; i++) {
     reducearray(A[Row[i]], n - nlinearity);

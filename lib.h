@@ -6,7 +6,6 @@ struct ratnum {
   long den;
 };
 
-
 struct FastInput {
   long rows;
   long cols;
@@ -15,8 +14,8 @@ struct FastInput {
 };
 
 struct FloatOneSumOutput {
-  float* row_strategy;
-  float* col_strategy;
+  float *row_strategy;
+  float *col_strategy;
   float value;
 };
 
