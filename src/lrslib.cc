@@ -140,7 +140,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->nlinearity = 0L;
   Q->nredundcol = 0L;
   Q->runs = 0L;
-  Q->subtreesize = MAXD;
   Q->seed = 1234L;
   Q->totalnodes = 0L;
   for (i = 0; i < 10; i++) {
@@ -152,24 +151,14 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
   Q->homogeneous = TRUE;
   Q->polytope = FALSE;
-  Q->incidence = FALSE;
   Q->lponly = FALSE;
   Q->maxdepth = MAXD;
   Q->mindepth = -MAXD;
-  Q->maxoutput = 0L;
-  Q->maxcobases =
-      0L; /* after maxcobases have been found unexplored subtrees reported */
 
   Q->redund = FALSE;
 
-  Q->nonnegative = FALSE;
-  Q->printslack = FALSE;
   Q->maximize = FALSE;   /*flag for LP maximization                          */
   Q->minimize = FALSE;   /*flag for LP minimization                          */
-  Q->givenstart = FALSE; /* TRUE if a starting cobasis is given              */
-  Q->giveoutput = TRUE;  /* set to false for first output after restart      */
-  Q->verifyredund = FALSE;  /* set to true when mplrs verifies redund output  */
-  Q->noredundcheck = FALSE; /* set to true when mplrs skips verifying output */
   Q->nextineq = 15; /* start redundancy testing from this row           */
 
   Q->facet = NULL;
@@ -251,12 +240,8 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   for (i = 0; i < nlinearity; i++) /* put linearities first in the order */
     inequality[i] = linearity[i];
 
-  k = 0; /* index for linearity array   */
+  k = nlinearity;
 
-  if (Q->givenstart)
-    k = d;
-  else
-    k = nlinearity;
   for (i = m; i >= 1; i--) {
     j = 0;
     while (j < k && inequality[j] != i)
@@ -273,19 +258,12 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* Note these steps MUST be done, even if restarting, in order to get */
   /* the same index/inequality correspondance we had for the original prob. */
   /* The inequality array is used to give the insertion order */
-  /* and is defaulted to the last d rows when givenstart=FALSE */
 
-  if (Q->nonnegative) {
-    /* no need for initial pivots here, labelling already done */
-    Q->lastdv = d;
-    Q->nredundcol = 0;
-  } else {
-    if (!getabasis(D, Q, inequality))
-      return FALSE;
-    /* bug fix 2009.12.2 */
-    nlinearity =
-        Q->nlinearity; /*may have been reset if some lins are redundant*/
-  }
+  if (!getabasis(D, Q, inequality))
+    return FALSE;
+  /* bug fix 2009.12.2 */
+  nlinearity =
+      Q->nlinearity; /*may have been reset if some lins are redundant*/
 
   /* 2020.2.2 */
   /* extract option asked to remove all linearities and output the reduced A
@@ -407,9 +385,6 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
   if (backtrack && D->depth == 0)
     return FALSE; /* cannot backtrack from root      */
 
-  if (Q->maxoutput > 0 && Q->count[0] + Q->count[1] >= Q->maxoutput)
-    return FALSE; /* output limit reached            */
-
   while ((j < d) || (D->B[m] != m)) /*main while loop for getnextbasis */
   {
     if (D->depth >= Q->maxdepth) {
@@ -419,7 +394,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
         // 2015.2.9 do iterative estimation backtracking when estimate is small
 
         cob_est = lrs_estimate(D, Q);
-        if (cob_est <= Q->subtreesize) /* stop iterative estimation */
+        if (cob_est <= MAXD) /* stop iterative estimation */
         {
           backtrack = TRUE;
         }
@@ -434,7 +409,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
       backtrack = TRUE;
 
       if (Q->maxdepth == 0 &&
-          cob_est <= Q->subtreesize) /* root estimate only */
+          cob_est <= MAXD) /* root estimate only */
         return FALSE;                /* no nextbasis  */
     } // if (D->depth >= Q->maxdepth)
 
@@ -595,8 +570,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
     }
   }
   reducearray(output, n);
-  /* printslack for rays: 2006.10.10 */
-  /* printslack inequality indices  */
 
   return TRUE;
 } /* end of lrs_getray */
@@ -605,36 +578,12 @@ void getnextoutput(lrs_dic *P, lrs_dat *Q, long i, long col, lrs_mp out)
 /* get A[B[i][col] and copy to out */
 {
   long row;
-  long m = P->m;
-  long d = P->d;
-  long lastdv = Q->lastdv;
   lrs_mp_matrix A = P->A;
-  long *B = P->B;
   long *Row = P->Row;
-  long j;
 
   row = Row[i];
 
-  if (Q->nonnegative) /* if m+i basic get correct value from dictionary */
-  /* the slack for the inequality m-d+i contains decision    */
-  /* variable x_i. We first see if this is in the basis      */
-  /* otherwise the value of x_i is zero, except for a ray    */
-  /* when it is one (det/det) for the actual column it is in */
-  {
-    for (j = lastdv + 1; j <= m; j++) {
-      if (Q->inequality[B[j] - lastdv] == m - d + i) {
-        copy(out, A[Row[j]][col]);
-        return;
-      }
-    }
-    /* did not find inequality m-d+i in basis */
-    if (i == col)
-      copy(out, P->det);
-    else
-      itomp(ZERO, out);
-
-  } else
-    copy(out, A[row][col]);
+  copy(out, A[row][col]);
 
 } /* end of getnextoutput */
 
@@ -755,7 +704,7 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
 
   // 2015.2.9   Do not update totals if we do iterative estimating and subtree
   // is too big
-  if (Q->subtreesize == 0 || j <= Q->subtreesize)
+  if (j <= MAXD)
     for (i = 0; i < 5; i++)
       cest[i] = cave[i] / Q->runs + cest[i];
 
@@ -1121,12 +1070,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
     d = P->d;
   }
 
-  /* Check feasability */
-  if (Q->givenstart) {
-    i = Q->lastdv + 1;
-    while (i <= m && !negative(A[Row[i]][0]))
-      i++;
-  }
   return TRUE;
 } /*  end of getabasis */
 
@@ -1735,8 +1678,7 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
   long m = P->m;
   long zeroonly = 0;
 
-  if (index <
-      0) /* used to zero out known redundant rows in mplrs verifyredund */
+  if (index < 0)
   {
     zeroonly = 1;
     index = -index;
@@ -1998,12 +1940,6 @@ lrs_dic *lrs_getdic(lrs_dat *Q)
 
   m = Q->m;
 
-  /* nonnegative flag set means that problem is d rows "bigger"     */
-  /* since nonnegative constraints are not kept explicitly          */
-
-  if (Q->nonnegative)
-    m = m + Q->inputd;
-
   p = new_lrs_dic(m, Q->inputd, Q->m);
   if (!p)
     return NULL;
@@ -2173,12 +2109,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   d = Q->inputd;
   m_A = m; /* number of rows in A */
 
-  /* nonnegative flag set means that problem is d rows "bigger"     */
-  /* since nonnegative constraints are not kept explicitly          */
-
-  if (Q->nonnegative)
-    m = m + d;
-
   p = new_lrs_dic(m, d, m_A);
   if (!p)
     return NULL;
@@ -2234,31 +2164,16 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
     Q->inequality[i] = 0;
   }
 
-  /*initialize basis and co-basis indices, and row col locations */
-  /*if nonnegative, we label differently to avoid initial pivots */
-  /* set basic indices and rows */
-  if (Q->nonnegative)
-    for (i = 0; i <= m; i++) {
-      p->B[i] = i;
-      if (i <= d)
-        p->Row[i] = 0; /* no row for decision variables */
-      else
-        p->Row[i] = i - d;
-    }
-  else
-    for (i = 0; i <= m; i++) {
-      if (i == 0)
-        p->B[0] = 0;
-      else
-        p->B[i] = d + i;
-      p->Row[i] = i;
-    }
+  for (i = 0; i <= m; i++) {
+    if (i == 0)
+      p->B[0] = 0;
+    else
+      p->B[i] = d + i;
+    p->Row[i] = i;
+  }
 
   for (j = 0; j < d; j++) {
-    if (Q->nonnegative)
-      p->C[j] = m + j + 1;
-    else
-      p->C[j] = j + 1;
+    p->C[j] = j + 1;
     p->Col[j] = j + 1;
   }
   p->C[d] = m + d + 1;
@@ -2307,11 +2222,10 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
 
   lrs_mp_matrix A;
   lrs_mp_vector Gcd, Lcm;
-  long m, d;
+  long d;
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(mpone);
   A = P->A;
-  m = P->m;
   d = P->d;
   Gcd = Q->Gcd;
   Lcm = Q->Lcm;
@@ -2350,15 +2264,6 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
     Q->linearity[Q->nlinearity] = row;
     Q->nlinearity++;
   }
-
-  /* 2010.4.26   Set Gcd and Lcm for the non-existant rows when nonnegative set
-   */
-
-  if (Q->nonnegative && row == m)
-    for (j = 1; j <= d; j++) {
-      itomp(ONE, Lcm[m + j]);
-      itomp(ONE, Gcd[m + j]);
-    }
 
   lrs_clear_mp_vector(oD, d);
   lrs_clear_mp(Temp);

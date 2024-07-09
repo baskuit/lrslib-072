@@ -230,12 +230,8 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   for (i = 0; i < nlinearity; i++) /* put linearities first in the order */
     inequality[i] = linearity[i];
 
-  k = 0; /* index for linearity array   */
+  k = nlinearity;
 
-  if (Q->givenstart)
-    k = d;
-  else
-    k = nlinearity;
   for (i = m; i >= 1; i--) {
     j = 0;
     while (j < k && inequality[j] != i)
@@ -464,12 +460,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
   }
   /* set index value for first slack variable */
 
-  /* Check feasability */
-  if (Q->givenstart) {
-    i = Q->lastdv + 1;
-    while (i <= m && !negative(A[Row[i]][0]))
-      i++;
-  }
   return TRUE;
 } /*  end of getabasis2 */
 
@@ -622,15 +612,6 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
     Q->linearity[Q->nlinearity] = row;
     Q->nlinearity++;
   }
-
-  /* 2010.4.26   Set Gcd and Lcm for the non-existant rows when nonnegative set
-   */
-
-  if (Q->nonnegative && row == m)
-    for (j = 1; j <= d; j++) {
-      itomp(ONE, Lcm[m + j]);
-      itomp(ONE, Gcd[m + j]);
-    }
 
   lrs_clear_mp_vector(oD, d);
   lrs_clear_mp(Temp);

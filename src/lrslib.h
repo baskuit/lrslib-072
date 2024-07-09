@@ -144,27 +144,14 @@ struct lrs_dat /* global problem data   */
 
   /**** flags  **********                         */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
-  long givenstart;    /* TRUE if a starting cobasis is given          */
-  long giveoutput;    /* TRUE if output should be printed,used for supressing
-                         restart first output */
-  long verifyredund;  /* TRUE if mplrs consumer is verifying redund output */
-  long noredundcheck; /* TRUE if mplrs consumer skips verifying output     */
   long homogeneous;   /* TRUE if all entries in column one are zero   */
-  long incidence;     /* print all tight inequalities (vertices/rays) */
   long lponly;        /* true if only lp solution wanted              */
   long long maxdepth; /* max depth to search to in treee              */
   long maximize;      /* flag for LP maximization                     */
-  long maxoutput;     /* if positive, maximum number of output lines  */
-  long maxcobases; /* if positive, after maxcobasis unexplored subtrees reported
-                    */
   long minimize;   /* flag for LP minimization                     */
   long long mindepth; /* do not backtrack above mindepth              */
-  long nonnegative;   /* TRUE if last d constraints are nonnegativity */
   long polytope;      /* TRUE for facet computation of a polytope     */
-  long printslack;    /* TRUE if indices of slack inequal. printed    */
   long redund;        /* TRUE for computing nash equilibria           */
-  long long
-      subtreesize; /* in estimate mode, iterates if cob_est >= subtreesize */
 
   /* Variables for saving/restoring cobasis,  db */
 
