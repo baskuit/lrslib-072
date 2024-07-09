@@ -5,6 +5,13 @@
 #include <iostream>
 #include <random>
 
+void assert_(bool x) {
+  if (!x) {
+    std::cout << "assert fail" << std::endl;
+    exit(1);
+  }
+}
+
 template <typename T, typename U>
 void print_output(const T &input, const U &output) {
   std::cout << "row strategy" << std::endl;
@@ -54,8 +61,8 @@ void check_output(const T &input, const U &output) {
   // std::cout << "calulated value: " << value << std::endl;
   // std::cout << "output value: " << output.value << std::endl;
 
-  assert(std::abs(value - output.value) < eps);
-  assert(std::abs(expl) < eps);
+  assert_(std::abs(value - output.value) < eps);
+  assert_(std::abs(expl) < eps);
 }
 
 int main(int argc, char **argv) {

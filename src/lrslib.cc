@@ -59,56 +59,6 @@ char *basename(char *path);
 /* functions  for external use */
 /*******************************/
 
-/*******************/
-/* lrs_printoutput */
-/*  one line only   */
-/*******************/
-void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output) {
-  char *sss;
-  char **ss;
-
-  long i;
-  long len = 0;
-
-  if (Q->countonly)
-    return;
-
-  ss = (char **)malloc((1 + Q->n) * sizeof(char *));
-
-  if (Q->hull || zero(output[0])) /*non vertex */
-    for (i = 0; i < Q->n; i++) {
-      ss[i] = cpmp("", output[i]);
-      len = len + snprintf(NULL, 0, "%s ", ss[i]);
-    }
-  else
-    for (i = 1; i < Q->n; i++) {
-      ss[i] = cprat("", output[i], output[0]);
-      len = len + snprintf(NULL, 0, "%s ", ss[i]);
-    }
-
-  sss = (char *)malloc((len + 5) * sizeof(char *));
-  len = 0;
-
-  if (Q->hull || zero(output[0])) /*non vertex */
-    for (i = 0; i < Q->n; i++) {
-      len = len + sprintf(sss + len, "%s ", ss[i]);
-      free(ss[i]);
-    }
-  else { /* vertex   */
-    len = sprintf(sss, " 1 ");
-    for (i = 1; i < Q->n; i++) {
-      len = len + sprintf(sss + len, "%s ", ss[i]);
-      free(ss[i]);
-    }
-  }
-
-  free(ss);
-  free(sss);
-}
-/**************************/
-/* end of lrs_printoutput */
-/**************************/
-
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 /* check if column indexed by col in this dictionary */
 /* contains output                                   */

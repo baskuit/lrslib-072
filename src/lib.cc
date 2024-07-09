@@ -146,8 +146,7 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   if (Q1->homogeneous && Q1->hull)
     startcol++; /* col zero not treated as redundant   */
 
-  for (col = startcol; col < Q1->nredundcol; col++) /* print linearity space */
-    lrs_printoutput(Q1, Lin[col]); /* Array Lin[][] holds the coeffs.     */
+  col = Q1->nredundcol;
 
   /*********************************************************************************/
   /* Step 3: Terminate if lponly option set, otherwise initiate a reverse */

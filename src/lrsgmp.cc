@@ -191,56 +191,6 @@ void rattodouble(lrs_mp a, lrs_mp b, double *x) /* convert lrs_mp rati
   (*x) = y / (*x);
 }
 
-char *cprat(const char *name, lrs_mp Nin, lrs_mp Din) {
-  char *num, *den, *ret;
-  unsigned long len;
-  lrs_mp Nt, Dt;
-  lrs_alloc_mp(Nt);
-  lrs_alloc_mp(Dt);
-
-  copy(Nt, Nin);
-  copy(Dt, Din);
-  reduce(Nt, Dt);
-
-  num = mpgetstr10(NULL, Nt);
-  den = mpgetstr10(NULL, Dt);
-  len = snprintf(NULL, 0, " %s %s/%s", name, num, den);
-  ret = (char *)malloc(sizeof(char) * (len + 1));
-
-  if (one(Dt)) {
-    if (sign(Nt) != NEG)
-      sprintf(ret, "%s %s", name, num);
-    else
-      sprintf(ret, "%s%s", name, num);
-  } else {
-    if (sign(Nt) != NEG)
-      sprintf(ret, " %s %s/%s", name, num, den);
-    else
-      sprintf(ret, "%s%s/%s", name, num, den);
-  }
-
-  free(num);
-  free(den);
-  lrs_clear_mp(Nt);
-  lrs_clear_mp(Dt);
-  return ret;
-}
-char *cpmp(const char *name, lrs_mp Nin) {
-  char *num, *ret;
-  unsigned long len;
-
-  num = mpgetstr10(NULL, Nin);
-  len = snprintf(NULL, 0, "%s %s", name, num);
-  ret = (char *)malloc(sizeof(char) * (len + 1));
-
-  if (sign(Nin) != NEG)
-    sprintf(ret, "%s %s", name, num);
-  else
-    sprintf(ret, "%s%s", name, num);
-  free(num);
-  return ret;
-}
-
 /***************************************************************/
 /*                                                             */
 /*     Memory allocation functions                             */

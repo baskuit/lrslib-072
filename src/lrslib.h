@@ -225,7 +225,6 @@ long lrs_init(const char *name); /* initialize lrslib and arithmetic package for
                                     prog "name" */
 long lrs_init_no_header();
 void lrs_print_header(const char *name);
-void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output); /* print output array */
 long lrs_solvelp(
     lrs_dic *P, lrs_dat *Q,
     long maximize); /* solve primal feas LP:TRUE bounded else FALSE */
