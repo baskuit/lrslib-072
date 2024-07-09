@@ -83,7 +83,6 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   long *linindex; /* for faster restart of player 2                       */
 
   long col; /* output column index for dictionary                   */
-  long startcol = 0;
   long prune = FALSE; /* if TRUE, getnextbasis will prune tree and backtrack  */
   long numequilib = 0; /* number of nash equilibria found */
   long oldnum = 0;
@@ -157,7 +156,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   lrs_dic *P2;       /* This can get resized, cached etc. Loaded from P2orig */
   lrs_mp_matrix Lin; /* holds input linearities if any are found             */
   long col;          /* output column index for dictionary                   */
-  long startcol = 0;
   long prune = FALSE;
   long nlinearity;
   long *linearity;
@@ -205,8 +203,6 @@ sayonara:
   return 0;
 }
 
-#define D (*D_p)
-
 long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
                         lrs_mp_matrix *Lin, long no_output, long linindex[]) {
   long i, j, k;
@@ -219,17 +215,17 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   long *linearity;
   long m, d, nlinearity, nredundcol;
 
-  m = D->m;
-  d = D->d;
+  m = (*D_p)->m;
+  d = (*D_p)->d;
 
   nredundcol = 0L;            /* will be set after getabasis        */
   nlinearity = Q->nlinearity; /* may be reset if new linearity read */
   linearity = Q->linearity;
 
-  A = D->A;
-  B = D->B;
-  C = D->C;
-  Col = D->Col;
+  A = (*D_p)->A;
+  B = (*D_p)->B;
+  C = (*D_p)->C;
+  Col = (*D_p)->Col;
   inequality = Q->inequality;
 
   for (i = 0; i < nlinearity; i++) /* put linearities first in the order */
@@ -253,12 +249,12 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     for (j = 0; j <= d; j++)
       itomp(ZERO, A[0][j]);
 
-  if (!getabasis2(D, Q, P2orig, inequality, linindex)) {
+  if (!getabasis2((*D_p), Q, P2orig, inequality, linindex)) {
     return FALSE;
   }
 
   nredundcol = Q->nredundcol;
-  d = D->d;
+  d = (*D_p)->d;
 
   for (i = 1; i <= m; i++)
     inequality[i] = i;
@@ -277,11 +273,11 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     *Lin = lrs_alloc_mp_matrix(nredundcol, Qn);
 
     for (i = 0; i < nredundcol; i++) {
-      lrs_getray(D, Q, Col[0], D->C[0] + i,
+      lrs_getray((*D_p), Q, Col[0], (*D_p)->C[0] + i,
                   (*Lin)[i]); /* adjust index for deletions */
     
 
-      if (!removecobasicindex(D, Q, 0L)) {
+      if (!removecobasicindex((*D_p), Q, 0L)) {
         lrs_clear_mp_matrix(*Lin, nredundcol, Qn);
         return FALSE;
       }
@@ -289,13 +285,13 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   } /* end if nredundcol > 0 */
 
   /* Do dual pivots to get primal feasibility */
-  if (!primalfeasible(D, Q)) {
+  if (!primalfeasible((*D_p), Q)) {
     return FALSE;
   }
 
   /* Now solve LP if objective function was given */
   if (Q->maximize || Q->minimize) {
-    Q->unbounded = !lrs_solvelp(D, Q, Q->maximize);
+    Q->unbounded = !lrs_solvelp((*D_p), Q, Q->maximize);
 
     /* check to see if objective is dual degenerate */
     j = 1;
@@ -307,7 +303,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   /* re-initialize cost row to -det */
   {
     for (j = 1; j <= d; j++) {
-      copy(A[0][j], D->det);
+      copy(A[0][j], (*D_p)->det);
       storesign(A[0][j], NEG);
     }
 
@@ -327,8 +323,8 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   /* Check to see if necessary to resize */
-  if (Q->inputd > D->d)
-    *D_p = resize(D, Q);
+  if (Q->inputd > (*D_p)->d)
+    *D_p = resize((*D_p), Q);
 
   return TRUE;
 }
