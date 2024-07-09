@@ -1863,9 +1863,8 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
 
   long i, j, m, n;
   lrs_mp_matrix A;
-  long *Col, *Row, *remain, *output, *redineq;
+  long *Row, *remain, *output, *redineq;
 
-  Col = P->Col;
   Row = P->Row;
   remain = Q->vars;
   output = Q->temparray;
@@ -2099,7 +2098,7 @@ static lrs_dic *new_lrs_dic(long m, long d, long m_A) {
   NULLRETURN(p->C = (long int *)calloc((d + 1), sizeof(long)));
   NULLRETURN(p->Col = (long int *)calloc((d + 1), sizeof(long)));
 
-#if defined(GMP) || defined(FLINT)
+#if defined(GMP)
   lrs_alloc_mp(p->det);
   lrs_alloc_mp(p->objnum);
   lrs_alloc_mp(p->objden);

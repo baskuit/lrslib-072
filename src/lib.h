@@ -1,10 +1,4 @@
-struct lrs_dic;
-struct lrs_dat;
-
-struct ratnum {
-  long num;
-  long den;
-};
+#pragma once
 
 struct FastInput {
   long rows;

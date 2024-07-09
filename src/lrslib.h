@@ -31,7 +31,7 @@
 #ifdef LRSLONG
 #define ARITH "lrslong.h" /* lrs long integer arithmetic package */
 #else
-#if defined(GMP) || defined(FLINT)
+#if defined(GMP)
 #define ARITH                                                                  \
   "lrsgmp.h" /* lrs wrapper for gmp multiple precsion arithmetic    */
 #else

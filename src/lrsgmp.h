@@ -29,9 +29,6 @@
 
 #ifdef GMP
 #include "gmp.h"
-#elif defined(FLINT)
-#include "flint.h"
-#include "fmpz.h"
 #endif
 
 /***********/
@@ -106,33 +103,6 @@
 #define sign(a) (mpz_sgn(a) < 0 ? NEG : POS)
 #define subint(a, b, c) mpz_sub((c), (a), (b))
 #define zero(a) (mpz_sgn(a) == 0 ? ONE : ZERO)
-#elif defined(FLINT)
-#define addint(a, b, c) fmpz_add((c), (a), (b))
-#define changesign(a) fmpz_neg((a), (a))
-#define copy(a, b) fmpz_set(a, b)
-#define decint(a, b) fmpz_sub((a), (a), (b))
-#define divint(a, b, c) fmpz_tdiv_qr((c), (a), (a), (b))
-#define exactdivint(a, b, c)                                                   \
-  fmpz_divexact((c), (a), (b)) /*known there is no remainder */
-#define getfactorial(a, b) fmpz_fac_ui((a), (b))
-#define mpcmp(a, b) fmpz_cmp((a), (b))
-#define mp_greater(a, b) (fmpz_cmp((a), (b)) > 0 ? ONE : ZERO)
-#define gcd(a, b) fmpz_gcd((a), (a), (b))
-#define itomp(in, a) fmpz_set_si((a), (in))
-#define mptoi(a) fmpz_get_si((a))
-#define mptodouble(a) fmpz_get_d((a))
-#define mpgetstr10(a, c) mpgetstr(a, 10, c)
-#define mpgetstr(a, b, c) fmpz_get_str((a), (b), (c))
-#define mpoutstr(a, b, c) fmpz_fprint((a), (c)) /* had a (b) */
-#define mulint(a, b, c) fmpz_mul((c), (a), (b))
-#define mului(a, b, c) fmpz_mul_ui((a), (b), (c))
-#define one(a) (fmpz_cmp_si((a), ONE) == 0 ? ONE : ZERO)
-#define negative(a) (fmpz_sgn(a) < 0 ? ONE : ZERO)
-#define normalize(a) (void)0
-#define positive (a)(fmpz_sgn(a) > 0 ? ONE : ZERO)
-#define sign(a) (fmpz_sgn(a) < 0 ? NEG : POS)
-#define subint(a, b, c) fmpz_sub((c), (a), (b))
-#define zero(a) (fmpz_sgn(a) == 0 ? ONE : ZERO)
 #endif
 
 /*
@@ -155,11 +125,6 @@ typedef mpz_t lrs_mp;   /* type lrs_mp holds one long integer    */
 typedef mpz_t lrs_mp_t; /* for GMP same as lrs_mp for MP *lrs_mp */
 typedef mpz_t *lrs_mp_vector;
 typedef mpz_t **lrs_mp_matrix;
-#elif defined(FLINT)
-typedef fmpz_t lrs_mp;   /* type lrs_mp holds one long integer    */
-typedef fmpz_t lrs_mp_t; /* for GMP same as lrs_mp for MP *lrs_mp */
-typedef fmpz_t *lrs_mp_vector;
-typedef fmpz_t **lrs_mp_matrix;
 #endif
 
 /*********************/
@@ -180,9 +145,6 @@ long lrs_mp_init(long dec_digits); /* max number of decimal digits, fps   */
 #ifdef GMP
 #define lrs_alloc_mp(a) (mpz_init(a))
 #define lrs_clear_mp(a) (mpz_clear(a))
-#elif defined(FLINT)
-#define lrs_alloc_mp(a) (fmpz_init(a))
-#define lrs_clear_mp(a) (fmpz_clear(a))
 #endif
 lrs_mp_vector
 lrs_alloc_mp_vector(long n); /* allocate lrs_mp_vector for n+1 lrs_mp numbers */
