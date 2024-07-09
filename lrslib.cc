@@ -102,8 +102,6 @@ void lrs_printoutput(lrs_dat *Q, lrs_mp_vector output) {
     }
   }
 
-  fprintf(lrs_ofp, "\n%s", sss);
-
   free(ss);
   free(sss);
 }
@@ -158,34 +156,6 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 } /* end of lrs_getsolution */
 
 void lrs_print_header(const char *name) {
-  if (lrs_ofp == NULL)
-    lrs_ofp = stdout;
-#ifdef LRS_QUIET
-  return;
-#endif
-  fprintf(lrs_ofp, "%s:", name);
-  fprintf(lrs_ofp, TITLE);
-  fprintf(lrs_ofp, VERSION);
-  fprintf(lrs_ofp, "(");
-  fprintf(lrs_ofp, BIT);
-  fprintf(lrs_ofp, ",");
-  fprintf(lrs_ofp, ARITH);
-#ifdef MA
-  fprintf(lrs_ofp, ",hybrid_arithmetic");
-#endif
-#ifdef LRSLONG
-#ifndef SAFE
-  fprintf(lrs_ofp, ",no_overflow_checking");
-#endif
-#endif
-  fprintf(lrs_ofp, ")");
-  if (overflow != 2) {
-#ifdef GMP
-    fprintf(lrs_ofp, "_gmp_v.%d.%d", __GNU_MP_VERSION, __GNU_MP_VERSION_MINOR);
-#elif defined(FLINT)
-    fprintf(lrs_ofp, "_%dbit_flint_v.%s", FLINT_BITS, FLINT_VERSION);
-#endif
-  }
 }
 
 long lrs_init(const char *name) /* returns TRUE if successful, else FALSE */
@@ -196,7 +166,7 @@ long lrs_init(const char *name) /* returns TRUE if successful, else FALSE */
     lrs_print_header(name);
 #endif
 
-  if (!lrs_mp_init(0, stdin, stdout)) /* initialize arithmetic */
+  if (!lrs_mp_init(0)) /* initialize arithmetic */
     return FALSE;
 
   lrs_global_count = 0;
@@ -206,7 +176,7 @@ long lrs_init(const char *name) /* returns TRUE if successful, else FALSE */
 
 long lrs_init_no_header() /* returns TRUE if successful, else FALSE */
 {
-  if (!lrs_mp_init(0, stdin, stdout)) /* initialize arithmetic */
+  if (!lrs_mp_init(0)) /* initialize arithmetic */
     return FALSE;
   lrs_global_count = 0;
   lrs_checkpoint_seconds = 0;

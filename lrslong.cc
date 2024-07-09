@@ -299,62 +299,11 @@ char *cpmp(const char *name, lrs_mp Nin) {
 }
 
 void pmp(const char *name, lrs_mp Nt) {
-  fprintf(lrs_ofp, "%s", name);
-  if (sign(Nt) != NEG)
-    fprintf(lrs_ofp, " ");
-#ifndef B128
-  fprintf(lrs_ofp, "%lld", *Nt);
-#else
-  char buf[41] = {0};
-  __int128 tmp = abs128(*Nt);
-  int c;
-  int i;
-  if (*Nt >= LLONG_MIN && *Nt <= LLONG_MAX) {
-    fprintf(lrs_ofp, "%lld ", (long long)*Nt);
-    return;
-  }
-  if (*Nt < 0)
-    putc('-', lrs_ofp);
-  for (i = 0; tmp > 0; i++) {
-    buf[i] = tmp % 10;
-    tmp = tmp / 10;
-  }
-  i--;
-  while (i >= 0) {
-    c = '0' + buf[i--];
-    putc(c, lrs_ofp);
-  }
-#endif
-  putc(' ', lrs_ofp);
 }
 
 void prat(const char *name, lrs_mp Nin, lrs_mp Din)
 /*print the long precision rational Nt/Dt  */
 {
-  lrs_mp Nt, Dt;
-  copy(Nt, Nin);
-  copy(Dt, Din);
-  reduce(Nt, Dt);
-  if (sign(Nt) != NEG)
-    fprintf(lrs_ofp, " ");
-#ifndef B128
-  fprintf(lrs_ofp, "%s%lld", name, *Nt);
-  if (*Dt != 1)
-    fprintf(lrs_ofp, "/%lld", *Dt);
-#else
-  {
-    char *Nc, *Dc;
-    Nc = mpgetstr10(NULL, Nt);
-    fprintf(lrs_ofp, "%s%s", name, Nc);
-    free(Nc);
-    if (*Dt != 1) {
-      Dc = mpgetstr10(NULL, Dt);
-      fprintf(lrs_ofp, "/%s", Dc);
-      free(Dc);
-    }
-  }
-#endif
-  fprintf(lrs_ofp, " ");
 } /* prat */
 
 /***************************************************************/
@@ -453,12 +402,10 @@ void *xcalloc(long n, long s, long l, const char *f) {
   return tmp;
 }
 
-long lrs_mp_init(long dec_digits, FILE *fpin, FILE *fpout)
+long lrs_mp_init(long dec_digits)
 /* max number of decimal digits for the computation */
 /* long int version                                 */
 {
-  lrs_ifp = fpin;
-  lrs_ofp = fpout;
 
 #ifdef B128
   MAXDl = 9223372036854775807L;       /* 2^63 - 1 */

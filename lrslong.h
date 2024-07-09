@@ -288,17 +288,13 @@ typedef __int128 ***lrs_mp_matrix;
 extern long lrs_digits;        /* max permitted no. of digits   */
 extern long lrs_record_digits; /* this is the biggest acheived so far.     */
 
-extern FILE *lrs_ifp; /* input file pointer       */
-extern FILE *lrs_ofp; /* output file pointer      */
-
 /*********************************************************/
 /* Initialization and allocation procedures - must use!  */
 /******************************************************* */
 
 // void mulint(lrs_mp a, lrs_mp b, lrs_mp c);
 
-long lrs_mp_init(long dec_digits, FILE *lrs_ifp,
-                 FILE *lrs_ofp); /* max number of decimal digits, fps   */
+long lrs_mp_init(long dec_digits); /* max number of decimal digits, fps   */
 
 #define lrs_alloc_mp(a)
 #define lrs_clear_mp(a)
@@ -366,7 +362,7 @@ lrs_mp_vector lrs_alloc_mp_vector(long n);
 void lrs_clear_mp_vector(lrs_mp_vector p, long n);
 lrs_mp_matrix lrs_alloc_mp_matrix(long m, long n);
 void lrs_clear_mp_matrix(lrs_mp_matrix p, long m, long n);
-long lrs_mp_init(long dec_digits, FILE *fpin, FILE *fpout);
+long lrs_mp_init(long dec_digits);
 
 /* how big are numbers? */
 extern long lrs_digits;        /* max permitted no. of digits   */

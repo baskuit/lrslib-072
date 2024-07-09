@@ -242,34 +242,11 @@ char *cpmp(const char *name, lrs_mp Nin) {
 }
 
 void pmp(const char *name, lrs_mp Nt) {
-  fprintf(lrs_ofp, "%s", name);
-  if (sign(Nt) != NEG)
-    fprintf(lrs_ofp, " ");
-  // mpz_out_str (lrs_ofp,10,Nt);
-  mpoutstr(lrs_ofp, 10, Nt);
-  fprintf(lrs_ofp, " ");
 }
 
 void prat(const char *name, lrs_mp Nin, lrs_mp Din)
 /*print the long precision rational Nt/Dt  */
 {
-  lrs_mp temp1, temp2;
-  lrs_alloc_mp(temp1);
-  lrs_alloc_mp(temp2);
-  copy(temp1, Nin);
-  copy(temp2, Din);
-  reduce(temp1, temp2);
-  fprintf(lrs_ofp, "%s", name);
-  if (sign(temp1) != NEG)
-    fprintf(lrs_ofp, " ");
-  mpoutstr(lrs_ofp, 10, temp1);
-  if (!one(temp2)) {
-    fprintf(lrs_ofp, "/");
-    mpoutstr(lrs_ofp, 10, temp2);
-  }
-  fprintf(lrs_ofp, " ");
-  lrs_clear_mp(temp1);
-  lrs_clear_mp(temp2);
 } /* prat */
 
 /***************************************************************/
@@ -352,12 +329,10 @@ void *xcalloc(long n, long s, long l, const char *f) {
   return tmp;
 }
 
-long lrs_mp_init(long dec_digits, FILE *fpin, FILE *fpout)
+long lrs_mp_init(long dec_digits)
 /* max number of decimal digits for the computation */
 /* long int version                                 */
 {
-  lrs_ifp = fpin;
-  lrs_ofp = fpout;
   lrs_record_digits = 0; /* not used for gmp arithmetic  */
   lrs_digits = 0;        /* not used for gmp arithmetic  */
 

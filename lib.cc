@@ -81,11 +81,6 @@ int solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   long numequilib = 0; /* number of nash equilibria found */
   long oldnum = 0;
 
-  /* global variables lrs_ifp and lrs_ofp are file pointers for input and output
-   */
-  /* they default to stdin and stdout, but may be overidden by command line
-   * parms. */
-
   /*********************************************************************************/
   /* Step 1: Allocate lrs_dat, lrs_dic and set up the problem */
   /*********************************************************************************/
@@ -346,29 +341,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   nredundcol = Q->nredundcol;
   d = D->d;
 
-  /********************************************************************/
-  /* now we start printing the output file  unless no output requested */
-  /********************************************************************/
-  if (!no_output) {
-    fprintf(lrs_ofp, "\nV-representation");
-
-    /* Print linearity space                 */
-    /* Don't print linearity if first column zero in hull computation */
-
-    k = 0;
-
-    if (nredundcol > k) {
-      fprintf(lrs_ofp, "\nlinearity %ld ",
-              nredundcol - k); /*adjust nredundcol for homog. */
-      for (i = 1; i <= nredundcol - k; i++)
-        fprintf(lrs_ofp, " %ld", i);
-    } /* end print of linearity space */
-
-    fprintf(lrs_ofp, "\nbegin");
-    fprintf(lrs_ofp, "\n***** %ld rational", Q->n);
-
-  } /* end of if !no_output .......   */
-
   /* Reset up the inequality array to remember which index is which input
    * inequality */
   /* inequality[B[i]-lastdv] is row number of the inequality with index B[i] */
@@ -526,9 +498,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
       while (i <= m && B[i] != d + order[j])
         i++;                         /* find leaving basis index i */
       if (j < nlinearity && i > m) { /* cannot pivot linearity to cobasis */
-#ifndef LRS_QUIET
-        fprintf(lrs_ofp, "\nCannot find linearity in the basis");
-#endif
         return FALSE;
       }
       if (i <= m) { /* try to do a pivot */
@@ -541,11 +510,6 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
           update(P, Q, &i, &k);
         } else if (j < nlinearity) { /* cannot pivot linearity to cobasis */
           if (zero(A[Row[i]][0])) {
-#ifndef LRS_QUIET
-            fprintf(lrs_ofp,
-                    "*Input linearity in row %ld is redundant--skipped\n",
-                    order[j]);
-#endif
             linearity[j] = 0;
           } else {
             return FALSE;

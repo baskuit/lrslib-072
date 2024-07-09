@@ -10,8 +10,4 @@
 struct lrs_dic;
 struct lrs_dat;
 
-extern FILE *lrs_cfp; /* output file for checkpoint information       */
-extern FILE *lrs_ifp; /* input file pointer       */
-extern FILE *lrs_ofp; /* output file pointer      */
-
 #endif

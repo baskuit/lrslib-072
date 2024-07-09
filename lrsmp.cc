@@ -31,21 +31,14 @@ long lrs_record_digits; /* this is the biggest acheived so far.     */
 /* Initialization and allocation procedures - must use!  */
 /******************************************************* */
 
-long lrs_mp_init(long dec_digits, FILE *fpin, FILE *fpout)
+long lrs_mp_init(long dec_digits)
 /* max number of decimal digits for the computation */
 {
-  /* global variables lrs_ifp and lrs_ofp are file pointers for input and output
-   */
-
-  lrs_ifp = fpin;
-  lrs_ofp = fpout;
   lrs_record_digits = 0;
   if (dec_digits <= 0)
     dec_digits = DEFAULT_DIGITS;
 
   lrs_digits = DEC2DIG(dec_digits); /* max permitted no. of digits   */
-  printf("\ndec_digits=%ld  lrs_digits=%ld\n", dec_digits, lrs_digits);
-
   if (lrs_digits > MAX_DIGITS) {
     lrs_digits = MAX_DIGITS;
     return FALSE;
@@ -641,44 +634,10 @@ char *cprat (const char *name, lrs_mp Nin, lrs_mp Din)
 void prat(const char *name, lrs_mp Nin,
           lrs_mp Din) /*reduce and print Nin/Din  */
 {
-  lrs_mp Nt, Dt;
-  long i;
-  fprintf(lrs_ofp, "%s", name);
-  /* reduce fraction */
-  copy(Nt, Nin);
-  copy(Dt, Din);
-  reduce(Nt, Dt);
-  /* print out       */
-  if (sign(Nin) * sign(Din) == NEG)
-    fprintf(lrs_ofp, "-");
-  else
-    fprintf(lrs_ofp, " ");
-  fprintf(lrs_ofp, "%llu", Nt[length(Nt) - 1]);
-  for (i = length(Nt) - 2; i >= 1; i--)
-    fprintf(lrs_ofp, FORMAT, Nt[i]);
-  if (!(Dt[0] == 2 && Dt[1] == 1)) /* rational */
-  {
-    fprintf(lrs_ofp, "/");
-    fprintf(lrs_ofp, "%llu", Dt[length(Dt) - 1]);
-    for (i = length(Dt) - 2; i >= 1; i--)
-      fprintf(lrs_ofp, FORMAT, Dt[i]);
-  }
-  fprintf(lrs_ofp, " ");
 }
 
 void pmp(const char *name, lrs_mp a) /*print the long precision integer a */
 {
-
-  long i;
-  fprintf(lrs_ofp, "%s", name);
-  if (sign(a) == NEG)
-    fprintf(lrs_ofp, "-");
-  else
-    fprintf(lrs_ofp, " ");
-  fprintf(lrs_ofp, "%llu", a[length(a) - 1]);
-  for (i = length(a) - 2; i >= 1; i--)
-    fprintf(lrs_ofp, FORMAT, a[i]);
-  fprintf(lrs_ofp, " ");
 }
 
 void addint(lrs_mp a, lrs_mp b,

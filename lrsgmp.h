@@ -170,15 +170,12 @@ extern long lrs_digits;        /* max permitted no. of digits   */
 extern long lrs_record_digits; /* this is the biggest acheived so far.     */
 
 #include <stdio.h>
-extern FILE *lrs_ifp; /* input file pointer       */
-extern FILE *lrs_ofp; /* output file pointer      */
 
 /*********************************************************/
 /* Initialization and allocation procedures - must use!  */
 /******************************************************* */
 
-long lrs_mp_init(long dec_digits, FILE *lrs_ifp,
-                 FILE *lrs_ofp); /* max number of decimal digits, fps   */
+long lrs_mp_init(long dec_digits); /* max number of decimal digits, fps   */
 
 #ifdef GMP
 #define lrs_alloc_mp(a) (mpz_init(a))
