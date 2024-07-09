@@ -182,7 +182,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
     reorder(linearity, nlinearity);
 
   Q2->nlinearity = nlinearity;
-  Q2->polytope = FALSE;
 
   if (lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
   {
@@ -240,9 +239,8 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
       inequality[k++] = i;
   }
 
-  if (!Q->maximize && !Q->minimize)
-    for (j = 0; j <= d; j++)
-      itomp(ZERO, A[0][j]);
+  for (j = 0; j <= d; j++)
+    itomp(ZERO, A[0][j]);
 
   if (!getabasis2((*D_p), Q, P2orig, inequality, linindex)) {
     return FALSE;
@@ -284,26 +282,13 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     return FALSE;
   }
 
-  /* Now solve LP if objective function was given */
-  if (Q->maximize || Q->minimize) {
-    Q->unbounded = !lrs_solvelp((*D_p), Q, Q->maximize);
-
-    /* check to see if objective is dual degenerate */
-    j = 1;
-    while (j <= d && !zero(A[0][j]))
-      j++;
-    if (j <= d)
-      Q->dualdeg = TRUE;
-  } else
-  /* re-initialize cost row to -det */
-  {
-    for (j = 1; j <= d; j++) {
-      copy(A[0][j], (*D_p)->det);
-      storesign(A[0][j], NEG);
-    }
-
-    itomp(ZERO, A[0][0]); /* zero optimum objective value */
+  for (j = 1; j <= d; j++) {
+    copy(A[0][j], (*D_p)->det);
+    storesign(A[0][j], NEG);
   }
+
+  itomp(ZERO, A[0][0]); /* zero optimum objective value */
+
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */

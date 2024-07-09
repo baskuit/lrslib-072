@@ -128,27 +128,15 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->m = 0L;
   Q->n = 0L;
   Q->inputd = 0L;
-  Q->deepest = 0L;
   Q->nlinearity = 0L;
   Q->nredundcol = 0L;
-  Q->seed = 1234L;
-  Q->totalnodes = 0L;
   for (i = 0; i < 10; i++) {
     Q->count[i] = 0L;
-    Q->cest[i] = 0.0;
   }
   Q->count[2] = 1L; /* basis counter */
                     /* initialize flags */
-  Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
-  Q->polytope = FALSE;
   Q->maxdepth = MAXD;
   Q->mindepth = -MAXD;
-
-  Q->redund = FALSE;
-
-  Q->maximize = FALSE;   /*flag for LP maximization                          */
-  Q->minimize = FALSE;   /*flag for LP minimization                          */
-  Q->nextineq = 15; /* start redundancy testing from this row           */
 
   Q->facet = NULL;
   Q->redundcol = NULL;
@@ -232,9 +220,8 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
       inequality[k++] = i;
   }
 
-  if (!Q->maximize && !Q->minimize)
-    for (j = 0; j <= d; j++)
-      itomp(ZERO, A[0][j]);
+  for (j = 0; j <= d; j++)
+    itomp(ZERO, A[0][j]);
 
   /* Now we pivot to standard form, and then find a primal feasible basis */
   /* Note these steps MUST be done, even if restarting, in order to get */
@@ -301,25 +288,13 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   }
 
   /* Now solve LP if objective function was given */
-  if (Q->maximize || Q->minimize) {
-    Q->unbounded = !lrs_solvelp(D, Q, Q->maximize);
 
-    j = 1;
-    while (j <= d && !zero(A[0][j]))
-      j++;
-    if (j <= d)
-      Q->dualdeg = TRUE;
-  
-  } else
-  /* re-initialize cost row to -det */
-  {
-    for (j = 1; j <= d; j++) {
-      copy(A[0][j], D->det);
-      storesign(A[0][j], NEG);
-    }
-
-    itomp(ZERO, A[0][0]); /* zero optimum objective value */
+  for (j = 1; j <= d; j++) {
+    copy(A[0][j], D->det);
+    storesign(A[0][j], NEG);
   }
+
+  itomp(ZERO, A[0][0]); /* zero optimum objective value */
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */
@@ -406,15 +381,12 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
          call to cache_dict */
 
       D->depth++;
-      if (D->depth > Q->deepest)
-        Q->deepest++;
 
       pivot(D, Q, i, j);
       update(D, Q, &i, &j); /*Update B,C,i,j */
 
       D->lexflag = lexmin(D, Q, ZERO); /* see if lexmin basis */
       Q->count[2]++;
-      Q->totalnodes++;
 
       return TRUE; /*return new dictionary */
     }
@@ -707,8 +679,8 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
   mulint(P->det, Q->Lcm[0], P->objden);
   mulint(Q->Gcd[0], A[0][0], P->objnum);
 
-  if (!Q->maximize)
-    changesign(P->objnum);
+  changesign(P->objnum);
+
   if (zero(P->objnum))
     storesign(P->objnum, POS);
   else

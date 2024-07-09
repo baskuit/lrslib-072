@@ -133,22 +133,12 @@ struct lrs_dat /* global problem data   */
                   /*  [2]=cobases [3]=pivots [4]=integer vertices  */
                   /*  [5-7]=mplrs R [8]=max vertex/facet depth     */
 
-  long deepest;    /* max depth ever reached in search             */
   long nredundcol; /* number of redundant columns                  */
   long nlinearity; /* number of input linearities                  */
-  long totalnodes; /* count total number of tree nodes evaluated   */
-  long seed;       /* seed for random number generator             */
-  double cest[10]; /* ests: 0=rays,1=vert,2=bases,3=vol,4=int vert */
-  long nextineq;   /* start checking redundancy from this row:def=1*/
 
   /**** flags  **********                         */
-  long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
   long long maxdepth; /* max depth to search to in treee              */
-  long maximize;      /* flag for LP maximization                     */
-  long minimize;   /* flag for LP minimization                     */
   long long mindepth; /* do not backtrack above mindepth              */
-  long polytope;      /* TRUE for facet computation of a polytope     */
-  long redund;        /* TRUE for computing nash equilibria           */
 
   /* Variables for saving/restoring cobasis,  db */
 
