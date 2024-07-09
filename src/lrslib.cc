@@ -60,7 +60,6 @@ char *basename(char *path);
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 /* check if column indexed by col in this dictionary */
 /* contains output                                   */
-/* col=0 for vertex 1....d for ray/facet             */
 {
 
   long j; /* cobasic index     */
@@ -132,7 +131,6 @@ lrs_dat *lrs_alloc_dat() {
   Q->count[2] = 1L; /* basis counter */
                     /* initialize flags */
 
-  Q->facet = NULL;
   Q->redundcol = NULL;
   Q->inequality = NULL;
   Q->linearity = NULL;
@@ -432,7 +430,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
 long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
                 lrs_mp_vector output)
 /*Print out solution in col and return it in output   */
-/*redcol =n for ray/facet 0..n-1 for linearity column */
 /* return FALSE if no output generated in column col  */
 {
   long i;
@@ -912,78 +909,6 @@ lrs_dic *resize(lrs_dic *P, lrs_dat *Q)
   return P1;
 }
 /********* resize                    ***************/
-
-long restartpivots(lrs_dic *P, lrs_dat *Q)
-/* facet contains a list of the inequalities in the cobasis for the restart */
-/* inequality contains the relabelled inequalities after initialization     */
-{
-  long i, j, k;
-  long *Cobasic; /* when restarting, Cobasic[j]=1 if j is in cobasis */
-                 /* assign local variables to structures */
-  lrs_mp_matrix A = P->A;
-  long *B = P->B;
-  long *C = P->C;
-  long *Row = P->Row;
-  long *Col = P->Col;
-  long *inequality = Q->inequality;
-  long *facet = Q->facet;
-  long nlinearity = Q->nlinearity;
-  long m, d, lastdv;
-  m = P->m;
-  d = P->d;
-  lastdv = Q->lastdv;
-
-  Cobasic = (long *)CALLOC((unsigned)m + d + 2, sizeof(long));
-
-  /* set Cobasic flags */
-  for (i = 0; i < m + d + 1; i++)
-    Cobasic[i] = 0;
-  for (i = 0; i < d; i++) /* find index corresponding to facet[i] */
-  {
-    j = 1;
-    while (facet[i + nlinearity] != inequality[j])
-      j++;
-    Cobasic[j + lastdv] = 1;
-  }
-
-  /* Note that the order of doing the pivots is important, as */
-  /* the B and C vectors are reordered after each pivot       */
-
-  /* Suggested new code from db starts */
-  i = m;
-  while (i > d) {
-    while (Cobasic[B[i]]) {
-      k = d - 1;
-      while ((k >= 0) && (zero(A[Row[i]][Col[k]]) || Cobasic[C[k]])) {
-        k--;
-      }
-      if (k >= 0) {
-        /*db asks: should i really be modified here? (see old code) */
-        /*da replies: modifying i only makes is larger, and so      */
-        /*the second while loop will put it back where it was       */
-        /*faster (and safer) as done below                          */
-        long ii = i;
-        pivot(P, Q, ii, k);
-        update(P, Q, &ii, &k);
-      } else {
-        free(Cobasic);
-        return FALSE;
-      }
-    }
-    i--;
-  }
-  /* Suggested new code from db ends */
-
-  /* check restarting from a primal feasible dictionary               */
-  for (i = lastdv + 1; i <= m; i++)
-    if (negative(A[Row[i]][0])) {
-      free(Cobasic);
-      return FALSE;
-    }
-  free(Cobasic);
-  return TRUE;
-
-} /* end of restartpivots */
 
 long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
 /* find min index ratio -aig/ais, ais<0 */
@@ -1693,7 +1618,6 @@ void lrs_free_dat(lrs_dat *Q) {
   lrs_clear_mp(Q->boundd);
   lrs_clear_mp(Q->boundn);
 
-  free(Q->facet);
   free(Q->redundcol);
   free(Q->inequality);
   free(Q->linearity);
@@ -1786,7 +1710,6 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
     Q->linearity = (long int *)CALLOC((m + d + 1), sizeof(long));
 
   Q->inequality = (long int *)CALLOC((m + d + 1), sizeof(long));
-  Q->facet = (long int *)CALLOC((unsigned)m + d + 1, sizeof(long));
   Q->redundcol = (long int *)CALLOC((m + d + 1), sizeof(long));
   Q->minratio = (long int *)CALLOC((m + d + 1), sizeof(long));
   /*  2011.7.14  minratio[m]=0 for degen =1 for nondegen pivot*/

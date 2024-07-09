@@ -114,7 +114,6 @@ struct lrs_dat /* global problem data   */
 
   /* initially holds order used to find starting  */
   /* basis, default: m,m-1,...,2,1                */
-  long *facet;         /* cobasic indices for restart if needed        */
   long *redundcol;     /* holds columns which are redundant            */
   long *inequality;    /* indices of inequalities corr. to cobasic ind */
   long *linearity;     /* holds cobasic indices of input linearities   */
@@ -182,8 +181,6 @@ long primalfeasible(lrs_dic *P,
 long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col); /* find lex min. ratio  */
 long removecobasicindex(lrs_dic *P, lrs_dat *Q,
                         long k); /* remove C[k] from problem  */
-long restartpivots(lrs_dic *P,
-                   lrs_dat *Q); /* restart problem from given cobasis   */
 long reverse(lrs_dic *P, lrs_dat *Q, long *r,
              long s); /* TRUE if B[*r] C[s] is a reverse lex-pos pivot  */
 long selectpivot(lrs_dic *P, lrs_dat *Q, long *r,
