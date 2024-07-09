@@ -142,13 +142,8 @@ lrs_dat *lrs_alloc_dat() {
 
   lrs_alloc_mp(Q->Nvolume);
   lrs_alloc_mp(Q->Dvolume);
-  lrs_alloc_mp(Q->sumdet);
-  lrs_alloc_mp(Q->boundn);
-  lrs_alloc_mp(Q->boundd);
   itomp(ZERO, Q->Nvolume);
   itomp(ONE, Q->Dvolume);
-  itomp(ZERO, Q->sumdet);
-  Q->unbounded = FALSE;
 
   return Q;
 } /* end of allocate and initialize lrs_dat */
@@ -1612,11 +1607,7 @@ void lrs_free_dat(lrs_dat *Q) {
   lrs_clear_mp_vector(Q->Lcm, Q->m);
   lrs_clear_mp_vector(Q->output, Q->n);
 
-  lrs_clear_mp(Q->sumdet);
   lrs_clear_mp(Q->Nvolume);
-  lrs_clear_mp(Q->Dvolume);
-  lrs_clear_mp(Q->boundd);
-  lrs_clear_mp(Q->boundn);
 
   free(Q->redundcol);
   free(Q->inequality);
