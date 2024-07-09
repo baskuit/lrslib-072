@@ -156,8 +156,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   long prune = FALSE;
   long nlinearity;
   long *linearity;
-  static long firstwarning = TRUE;
-  static long firstunbounded = TRUE;
 
   long i, j;
 
