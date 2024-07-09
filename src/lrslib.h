@@ -143,13 +143,7 @@ struct lrs_dat /* global problem data   */
   long nextineq;   /* start checking redundancy from this row:def=1*/
 
   /**** flags  **********                         */
-  long allbases;      /* TRUE if all bases should be printed          */
-  long bound;         /* TRUE if upper/lower bound on objective given */
-  long countonly;     /* TRUE if only count totals should be output   */
   long dualdeg;       /* TRUE if start dictionary is dual degenerate  */
-  long frequency;     /* frequency to print cobasis indices           */
-  long geometric;     /* TRUE if incident vertex prints after each ray */
-  long getvolume;     /* do volume calculation                        */
   long givenstart;    /* TRUE if a starting cobasis is given          */
   long giveoutput;    /* TRUE if output should be printed,used for supressing
                          restart first output */

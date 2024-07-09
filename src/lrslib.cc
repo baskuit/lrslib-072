@@ -98,7 +98,7 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
     return lrs_getray(P, Q, col, Q->n, output);
   }
 
-  if (Q->geometric || Q->allbases || Q->lponly)
+  if (Q->lponly)
     return lrs_getray(P, Q, col, Q->n, output);
 
   return FALSE; /* no more output in this dictionary */
@@ -151,13 +151,7 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   }
   Q->count[2] = 1L; /* basis counter */
                     /* initialize flags */
-  Q->allbases = FALSE;
-  Q->bound = FALSE;     /* upper/lower bound on objective function given */
-  Q->countonly = FALSE; /* produce the usual output */
-  Q->frequency = 0L;
   Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
-  Q->geometric = FALSE;
-  Q->getvolume = FALSE;
   Q->homogeneous = TRUE;
   Q->polytope = FALSE;
   Q->hull = FALSE;
@@ -521,22 +515,17 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
 
   hull = Q->hull;
   lexflag = P->lexflag;
-  if (lexflag || Q->allbases) {
+  if (lexflag) {
     ++(Q->count[1]);
     /* 2021.5.21 check for max depth output */
     if (P->depth > Q->count[8])
       Q->count[8] = P->depth;
   }
 
-  if (Q->getvolume) {
-    linint(Q->sumdet, 1, P->det, 1);
-    updatevolume(P, Q);
-  }
-
   if (hull)
     return FALSE; /* skip printing the origin */
 
-  if (!lexflag && !Q->allbases &&
+  if (!lexflag &&
       !Q->lponly) /* not lexmin, and not printing forced */
     return FALSE;
 
@@ -763,12 +752,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
             rays++;
         nrays = nrays + prod * rays; /* update ray info */
 
-        if (Q->getvolume) {
-          rescaledet(P, Q, Nvol,
-                     Dvol); /* scales determinant in case input rational */
-          rattodouble(Nvol, Dvol, &newvol);
-          nvol = nvol + newvol * prod; /* adjusts volume for degree */
-        }
         j = 0;
       }
     }
@@ -2568,17 +2551,6 @@ long phaseone(lrs_dic *P, lrs_dat *Q)
 
 long lrs_checkbound(lrs_dic *P, lrs_dat *Q) {
   /* check bound on objective and return TRUE if exceeded */
-
-  if (!Q->bound)
-    return FALSE;
-
-  if (Q->maximize && comprod(Q->boundn, P->objden, P->objnum, Q->boundd) == 1) {
-    return TRUE;
-  }
-  if (Q->minimize &&
-      comprod(Q->boundn, P->objden, P->objnum, Q->boundd) == -1) {
-    return TRUE;
-  }
   return FALSE;
 }
 
