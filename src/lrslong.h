@@ -319,7 +319,7 @@ void gcd(lrs_mp u, lrs_mp v); /* returns u=gcd(u,v) destroying v         */
 void mptodouble(lrs_mp a, double *x); /* convert lrs_mp to double */
 long mptoi(lrs_mp a);                 /* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp);     /* convert lrs_mp to string */
-void reduce(lrs_mp Na, lrs_mp Da); /* reduces Na Da by gcd(Na,Da) */
+void reduce(lrs_mp Na, lrs_mp Da);    /* reduces Na Da by gcd(Na,Da) */
 
 /*********************************************************/
 /* Standard arithmetic & misc. functions                 */

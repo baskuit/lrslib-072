@@ -105,26 +105,7 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 
 } /* end of lrs_getsolution */
 
-void lrs_print_header(const char *name) {
-}
-
-long lrs_init(const char *name) /* returns TRUE if successful, else FALSE */
-{
-
-#ifndef LRS_QUIET
-  if (overflow != 2)
-    lrs_print_header(name);
-#endif
-
-  if (!lrs_mp_init(0)) /* initialize arithmetic */
-    return FALSE;
-
-  lrs_global_count = 0;
-  lrs_checkpoint_seconds = 0;
-  return TRUE;
-}
-
-long lrs_init_no_header() /* returns TRUE if successful, else FALSE */
+long lrs_init() /* returns TRUE if successful, else FALSE */
 {
   if (!lrs_mp_init(0)) /* initialize arithmetic */
     return FALSE;

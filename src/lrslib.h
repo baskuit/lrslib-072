@@ -1,7 +1,4 @@
 /* lrslib.h (vertex enumeration using lexicographic reverse search) */
-#define TITLE "lrslib_"
-#define VERSION "v.7.2_2022.3.6"
-#define AUTHOR "*Copyright (C) 1995,2022, David Avis   avis@cs.mcgill.ca "
 
 /* This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,12 +37,6 @@
 #endif
 
 #include ARITH
-
-#define errcheck(s, e)                                                         \
-  if ((long)(e) == -1L) {                                                      \
-    perror(s);                                                                 \
-    exit(1);                                                                   \
-  }
 
 /*********************/
 /*global constants   */
@@ -191,11 +182,6 @@ struct lrs_dat /* global problem data   */
   lrs_dic *Qhead, *Qtail, *olddic;
 };
 
-#ifndef LRSLONG
-void lrs_overflow(int i);
-void lrs_exit(int i);
-#endif
-
 /*******************************/
 /* functions  for external use */
 /*******************************/
@@ -221,10 +207,7 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col);
 long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long comment,
                 lrs_mp_vector output);
 long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output);
-long lrs_init(const char *name); /* initialize lrslib and arithmetic package for
-                                    prog "name" */
-long lrs_init_no_header();
-void lrs_print_header(const char *name);
+long lrs_init();
 long lrs_solvelp(
     lrs_dic *P, lrs_dat *Q,
     long maximize); /* solve primal feas LP:TRUE bounded else FALSE */

@@ -27,9 +27,7 @@
    and this file is derived from lrsmp.h and lrslong.h
 */
 
-#ifdef GMP
 #include "gmp.h"
-#endif
 
 /***********/
 /* defines */
@@ -76,7 +74,6 @@
 /*         MACROS                 */
 /* dependent on mp implementation */
 /**********************************/
-#ifdef GMP
 #define addint(a, b, c) mpz_add((c), (a), (b))
 #define changesign(a) mpz_neg((a), (a))
 #define copy(a, b) mpz_set(a, b)
@@ -103,7 +100,6 @@
 #define sign(a) (mpz_sgn(a) < 0 ? NEG : POS)
 #define subint(a, b, c) mpz_sub((c), (a), (b))
 #define zero(a) (mpz_sgn(a) == 0 ? ONE : ZERO)
-#endif
 
 /*
  *  convert between decimal and machine (longword digits). Notice lovely
@@ -120,12 +116,10 @@
 /* typedefs  */
 /*************/
 
-#ifdef GMP
 typedef mpz_t lrs_mp;   /* type lrs_mp holds one long integer    */
 typedef mpz_t lrs_mp_t; /* for GMP same as lrs_mp for MP *lrs_mp */
 typedef mpz_t *lrs_mp_vector;
 typedef mpz_t **lrs_mp_matrix;
-#endif
 
 /*********************/
 /*global variables   */
@@ -142,10 +136,9 @@ extern long lrs_record_digits; /* this is the biggest acheived so far.     */
 
 long lrs_mp_init(long dec_digits); /* max number of decimal digits, fps   */
 
-#ifdef GMP
 #define lrs_alloc_mp(a) (mpz_init(a))
 #define lrs_clear_mp(a) (mpz_clear(a))
-#endif
+
 lrs_mp_vector
 lrs_alloc_mp_vector(long n); /* allocate lrs_mp_vector for n+1 lrs_mp numbers */
 lrs_mp_matrix

@@ -56,15 +56,26 @@ static long FirstTime; /* set this to true for every new game to be solved */
 
 void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
-  lrs_init_no_header();
+  // if (input.rows == 1) {
+  //   output.row_strategy[0] = 1;
+  //   if (input.cols == 1) {
+  //     output.col_strategy[0] = 1;
+  //   }
+
+  //   return;
+  // }
+  // if (input.cols == 1) {
+  //   output.col_strategy[0] = 1;
+  //   return;
+  // }
+
+  lrs_init();
 
   lrs_dic *P1;      /* structure for holding current dictionary and indices */
   lrs_dat *Q1, *Q2; /* structure for holding static problem data            */
 
-  lrs_mp_vector
-      output1; /* holds one line of output; ray,vertex,facet,linearity */
-  lrs_mp_vector
-      output2;       /* holds one line of output; ray,vertex,facet,linearity */
+  lrs_mp_vector output1;
+  lrs_mp_vector output2;
   lrs_mp_matrix Lin; /* holds input linearities if any are found             */
   lrs_mp_matrix A2orig;
   lrs_dic *P2orig; /* we will save player 2's dictionary in getabasis      */
@@ -79,8 +90,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   FirstTime = TRUE;
 
-  Q1 = lrs_alloc_dat(
-      "LRS globals");
+  Q1 = lrs_alloc_dat("LRS globals");
 
   Q1->n = g->rows + 2;
   Q1->m = g->rows + g->cols + 1;
@@ -89,8 +99,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   BuildRepP1Is1(P1, Q1, g);
 
-  output1 = lrs_alloc_mp_vector(
-      Q1->n + Q1->m);
+  output1 = lrs_alloc_mp_vector(Q1->n + Q1->m);
 
   Q2 = lrs_alloc_dat("LRS globals");
 
@@ -101,8 +110,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   BuildRepP1Is0(P2orig, Q2, g);
   A2orig = P2orig->A;
 
-  output2 = lrs_alloc_mp_vector(
-      Q1->n + Q1->m);
+  output2 = lrs_alloc_mp_vector(Q1->n + Q1->m);
 
   linindex = static_cast<long *>(
       calloc((P2orig->m + P2orig->d + 2), sizeof(long))); /* for next time */
@@ -206,8 +214,7 @@ sayonara:
 #define D (*D_p)
 
 long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
-                        lrs_mp_matrix *Lin, long no_output, long linindex[])
-{
+                        lrs_mp_matrix *Lin, long no_output, long linindex[]) {
   long i, j, k;
 
   /* assign local variables to structures */
@@ -337,8 +344,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
 
 /********* end of lrs_getfirstbasis  ***************/
 long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
-                long linindex[])
-{
+                long linindex[]) {
 
   long i, j, k;
   /* assign local variables to structures */
@@ -577,8 +583,7 @@ void BuildRepP1Is1(lrs_dic *P, lrs_dat *Q, const FastInput *g) {
 }
 
 void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
-                            long ineq)
-{
+                            long ineq) {
   lrs_mp Temp, mpone;
   lrs_mp_vector oD; /* denominator for row  */
 
