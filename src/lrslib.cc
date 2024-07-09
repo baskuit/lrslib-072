@@ -136,8 +136,6 @@ lrs_dat *lrs_alloc_dat() {
   Q->linearity = NULL;
   Q->minratio = NULL;
   Q->temparray = NULL;
-  Q->redineq = NULL;
-  Q->Ain = NULL;
   Q->olddic = NULL;
 
   lrs_alloc_mp(Q->Nvolume);
@@ -754,7 +752,6 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
       } else if (j < nlinearity) { /* cannot pivot linearity to cobasis */
         if (zero(A[Row[i]][0])) {
           linearity[j] = 0l;
-          Q->redineq[j] = 1; /* check for redundancy if running redund */
         } else {
           return FALSE;
         }
@@ -1605,7 +1602,6 @@ void lrs_free_dat(lrs_dat *Q) {
 
   lrs_clear_mp_vector(Q->Gcd, Q->m);
   lrs_clear_mp_vector(Q->Lcm, Q->m);
-  lrs_clear_mp_vector(Q->output, Q->n);
 
   lrs_clear_mp(Q->Nvolume);
 
@@ -1613,7 +1609,6 @@ void lrs_free_dat(lrs_dat *Q) {
   free(Q->inequality);
   free(Q->linearity);
   free(Q->minratio);
-  free(Q->redineq);
   free(Q->temparray);
 
   /*2020.8.1 DA: lrs_global_list is not a stack but a list, so have to delete Q
@@ -1703,20 +1698,16 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   Q->inequality = (long int *)CALLOC((m + d + 1), sizeof(long));
   Q->redundcol = (long int *)CALLOC((m + d + 1), sizeof(long));
   Q->minratio = (long int *)CALLOC((m + d + 1), sizeof(long));
-  /*  2011.7.14  minratio[m]=0 for degen =1 for nondegen pivot*/
-  Q->redineq = (long int *)CALLOC((m + d + 1), sizeof(long));
   Q->temparray = (long int *)CALLOC((unsigned)m + d + 1, sizeof(long));
 
   Q->inequality[0] = 2L;
   Q->Gcd = lrs_alloc_mp_vector(m);
   Q->Lcm = lrs_alloc_mp_vector(m);
-  Q->output = lrs_alloc_mp_vector(Q->n);
 
   Q->lastdv = d; /* last decision variable may be decreased */
                  /* if there are redundant columns          */
 
   for (i = 0; i < m + d + 1; i++) {
-    Q->redineq[i] = 1;
     Q->inequality[i] = 0;
   }
 

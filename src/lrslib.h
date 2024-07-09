@@ -99,11 +99,8 @@ struct lrs_dic /* dynamic dictionary data */
 
 struct lrs_dat /* global problem data   */
 {
-  long *redineq;        /* holds indices of rows for redundancy check  */
-  lrs_mp_matrix Ain;    /* used only in redund to hold input matrix    */
   lrs_mp_vector Gcd;    /* Gcd of each row of numerators               */
   lrs_mp_vector Lcm;    /* Lcm for each row of input denominators      */
-  lrs_mp_vector output; /* One line of output dimensioned to n         */
 
   lrs_mp Nvolume; /* volume numerator                             */
   lrs_mp Dvolume; /* volume denominator                           */
