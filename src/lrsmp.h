@@ -140,7 +140,6 @@ void lrs_clear_mp_matrix(lrs_mp_matrix a, long m, long n);
 /* Core library functions - depend on mp implementation  */
 /******************************************************* */
 long length(lrs_mp a);            /* return length of lrs_mp integer   */
-void atomp(char s[], lrs_mp a);   /* convert string to lrs_mp integer   */
 long compare(lrs_mp a, lrs_mp b); /* a ? b and returns -1,0,1 for <,=,> */
 void copy(lrs_mp a, lrs_mp b);    /* assigns a=b    */
 void divint(lrs_mp a, lrs_mp b,

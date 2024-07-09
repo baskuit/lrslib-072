@@ -572,32 +572,6 @@ void addint(lrs_mp a, lrs_mp b,
   linint(c, 1, b, 1);
 }
 
-void atomp(char s[], lrs_mp a) /*convert string to lrs_mp integer */
-{
-  lrs_mp mpone;
-  long diff, ten, i, sig;
-  itomp(1L, mpone);
-  ten = 10L;
-  for (i = 0; s[i] == ' ' || s[i] == '\n' || s[i] == '\t'; i++)
-    ;
-  /*skip white space */
-  sig = POS;
-  if (s[i] == '+' || s[i] == '-') /* sign */
-    sig = (s[i++] == '+') ? POS : NEG;
-  itomp(0L, a);
-  while (s[i] >= '0' && s[i] <= '9') {
-    diff = s[i] - '0';
-    linint(a, ten, mpone, diff);
-    i++;
-  }
-  storesign(a, sig);
-  if (s[i]) {
-    fprintf(stderr, "\nIllegal character in number: '%s'\n", s + i);
-    exit(1);
-  }
-
-} /* end of atomp */
-
 void subint(lrs_mp a, lrs_mp b, lrs_mp c) /* compute c=a-b */
 
 {

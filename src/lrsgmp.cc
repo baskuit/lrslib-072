@@ -134,36 +134,6 @@ void mulrat(lrs_mp Na, lrs_mp Da, lrs_mp Nb, lrs_mp Db, lrs_mp Nc, lrs_mp Dc)
 /*                                                             */
 /***************************************************************/
 
-void atomp(const char *s, lrs_mp a) /*convert string to lrs_mp integer */
-                                    /* based on  atoi KR p.58 */
-{
-  long diff, ten, i, sig;
-  lrs_mp mpone;
-  lrs_alloc_mp(mpone);
-  itomp(ONE, mpone);
-  ten = 10L;
-  for (i = 0; s[i] == ' ' || s[i] == '\n' || s[i] == '\t'; i++)
-    ;
-  /*skip white space */
-  sig = POS;
-  if (s[i] == '+' || s[i] == '-') /* sign */
-    sig = (s[i++] == '+') ? POS : NEG;
-  itomp(0L, a);
-  while (s[i] >= '0' && s[i] <= '9') {
-    diff = s[i] - '0';
-    linint(a, ten, mpone, diff);
-    i++;
-  }
-  storesign(a, sig);
-
-  if (s[i]) {
-    fprintf(stderr, "\nIllegal character in number: '%s'\n", s + i);
-    exit(1);
-  }
-
-  lrs_clear_mp(mpone);
-} /* end of atomp */
-
 void atoaa(const char *in, char *num, char *den)
 /* convert rational string in to num/den strings */
 {
