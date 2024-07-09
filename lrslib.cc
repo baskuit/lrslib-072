@@ -1938,21 +1938,6 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
   for (i = 1; i <= m; i++) {
     if (redineq[i] != 1) {
       reducearray(A[Row[i]], n + Q->hull); /*we already decremented n */
-      if (Q->hull) {
-        for (j = 0; j < n; j++)
-          if (output[j]) {
-            if (zero(A[Row[i]][Col[0]]))
-              pmp("", A[Row[i]][Col[j]]);
-            else
-              prat("", A[Row[i]][Col[j]], A[Row[i]][Col[0]]);
-          }
-      } else /* no lifting */
-      {
-        pmp("", A[Row[i]][0]);
-        for (j = 1; j < n; j++)
-          if (output[j])
-            pmp("", A[Row[i]][Col[j - 1]]);
-      }
     }
   }
 
@@ -2004,10 +1989,6 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
 
   for (i = nlinearity + 1; i <= m; i++) {
     reducearray(A[Row[i]], n - nlinearity);
-    if (!Q->hull)
-      pmp("", A[Row[i]][0]);
-    for (j = 0; j < d - nlinearity; j++)
-      pmp("", A[Row[i]][Col[j]]);
   }
 
   return 0;

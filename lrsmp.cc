@@ -631,15 +631,6 @@ char *cprat (const char *name, lrs_mp Nin, lrs_mp Din)
 }
 */
 
-void prat(const char *name, lrs_mp Nin,
-          lrs_mp Din) /*reduce and print Nin/Din  */
-{
-}
-
-void pmp(const char *name, lrs_mp a) /*print the long precision integer a */
-{
-}
-
 void addint(lrs_mp a, lrs_mp b,
             lrs_mp c) /* compute c=a+b; b,c different vars */
 {

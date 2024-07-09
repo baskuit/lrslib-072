@@ -321,8 +321,6 @@ long mptoi(lrs_mp a);                 /* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp);     /* convert lrs_mp to string */
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* mp rat to char  */
 char *cpmp(const char *name, lrs_mp Nt);             /* mp int to char  */
-void pmp(const char *name, lrs_mp a); /* print the long precision integer a */
-void prat(const char *name, lrs_mp Nt, lrs_mp Dt); /* reduce and print  Nt/Dt */
 void reduce(lrs_mp Na, lrs_mp Da); /* reduces Na Da by gcd(Na,Da) */
 
 /*********************************************************/

@@ -155,8 +155,6 @@ long mptoi(lrs_mp a);                      /* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp);          /* convert lrs_mp to char array */
 void mulint(lrs_mp a, lrs_mp b, lrs_mp c); /* multiply two integers a*b --> c */
 void normalize(lrs_mp a); /* normalize lrs_mp after computation             */
-void pmp(const char *name, lrs_mp a); /* print the long precision integer a */
-void prat(const char *name, lrs_mp Nt, lrs_mp Dt); /* reduce and print  Nt/Dt */
 char *cpmp(const char *name, lrs_mp Nt);           /* mp int to char  */
 char *cprat(const char *name, lrs_mp Nt, lrs_mp Dt); /* C version of prat */
 void reduce(lrs_mp Na, lrs_mp Da); /* reduces Na Da by gcd(Na,Da) */

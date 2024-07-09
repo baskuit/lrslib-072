@@ -298,14 +298,6 @@ char *cpmp(const char *name, lrs_mp Nin) {
   return ret;
 }
 
-void pmp(const char *name, lrs_mp Nt) {
-}
-
-void prat(const char *name, lrs_mp Nin, lrs_mp Din)
-/*print the long precision rational Nt/Dt  */
-{
-} /* prat */
-
 /***************************************************************/
 /*                                                             */
 /*     Memory allocation functions                             */
