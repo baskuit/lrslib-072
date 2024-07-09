@@ -3,12 +3,6 @@ project(lrsnash CXX)
 
 find_library(GMP_LIBRARY gmp)
 
-set(SOURCES
-    lrsnash.cc
-    lrsnashlib.cc
-    lrslib.cc
-)
-
 set(LIB_SOURCES
     lib.cc
     lrslib.cc
