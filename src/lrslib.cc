@@ -41,8 +41,6 @@ static long lrs_checkpoint_seconds = 0;
 
 static long lrs_global_count = 0; /* Track how many lrs_dat records are
                                      allocated */
-static long overflow =
-    0; /* =0 no overflow =1 restart overwrite =2 restart append */
 
 static lrs_dat *lrs_global_list[MAX_LRS_GLOBALS + 1];
 
@@ -154,7 +152,6 @@ lrs_dat *lrs_alloc_dat(const char *name) {
   Q->dualdeg = FALSE; /* TRUE if dual degenerate starting dictionary */
   Q->homogeneous = TRUE;
   Q->polytope = FALSE;
-  Q->hull = FALSE;
   Q->incidence = FALSE;
   Q->lponly = FALSE;
   Q->maxdepth = MAXD;
@@ -219,7 +216,6 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   long *B, *C, *Col;
   long *inequality;
   long *linearity;
-  long hull = Q->hull;
   long m, d, lastdv, nlinearity, nredundcol;
 
   if (Q->lponly)
@@ -326,13 +322,8 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
     for (i = 0; i < nredundcol; i++) {
 
-      if (!(Q->homogeneous && Q->hull &&
-            i == 0)) /* skip redund col 1 for homog. hull */
-      {
-
-        lrs_getray(D, Q, Col[0], D->C[0] + i - hull,
-                   (*Lin)[i]); /* adjust index for deletions */
-      }
+      lrs_getray(D, Q, Col[0], D->C[0] + i,
+                  (*Lin)[i]); /* adjust index for deletions */
 
       if (!removecobasicindex(D, Q, 0L)) {
         lrs_clear_mp_matrix(*Lin, nredundcol, Qn);
@@ -416,7 +407,7 @@ long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q, long backtrack)
   if (backtrack && D->depth == 0)
     return FALSE; /* cannot backtrack from root      */
 
-  if (Q->maxoutput > 0 && Q->count[0] + Q->count[1] - Q->hull >= Q->maxoutput)
+  if (Q->maxoutput > 0 && Q->count[0] + Q->count[1] >= Q->maxoutput)
     return FALSE; /* output limit reached            */
 
   while ((j < d) || (D->B[m] != m)) /*main while loop for getnextbasis */
@@ -510,10 +501,8 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
              /* assign local variables to structures */
   long *redundcol = Q->redundcol;
 
-  long hull;
   long lexflag;
 
-  hull = Q->hull;
   lexflag = P->lexflag;
   if (lexflag) {
     ++(Q->count[1]);
@@ -521,9 +510,6 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
     if (P->depth > Q->count[8])
       Q->count[8] = P->depth;
   }
-
-  if (hull)
-    return FALSE; /* skip printing the origin */
 
   if (!lexflag &&
       !Q->lponly) /* not lexmin, and not printing forced */
@@ -570,7 +556,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
                 lrs_mp_vector output)
 /*Print out solution in col and return it in output   */
 /*redcol =n for ray/facet 0..n-1 for linearity column */
-/*hull=1 implies facets will be recovered             */
 /* return FALSE if no output generated in column col  */
 {
   long i;
@@ -579,7 +564,6 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
              /* assign local variables to structures */
   long *redundcol = Q->redundcol;
   long *count = Q->count;
-  long hull = Q->hull;
   long n = Q->n;
 
   if (redcol == n) {
@@ -591,7 +575,7 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
 
   for (ind = 0; ind < n; ind++) /* print solution */
   {
-    if (ind == 0 && !hull) /* must have a ray, set first column to zero */
+    if (ind == 0) /* must have a ray, set first column to zero */
       itomp(ZERO, output[0]);
 
     else if ((ired < Q->nredundcol) && (redundcol[ired] == ind))
@@ -666,22 +650,18 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
 
   lrs_mp_vector
       output;        /* holds one line of output; ray,vertex,facet,linearity */
-  lrs_mp Nvol, Dvol; /* hold volume of current basis */
   long estdepth = 0; /* depth of basis/vertex in subtree for estimate */
   long i = 0, j = 0, k, nchild, runcount, col;
   double prod = 0.0;
   double cave[] = {0.0, 0.0, 0.0, 0.0, 0.0};
   double nvertices, nbases, nrays, nvol, nivertices;
   long rays = 0;
-  double newvol = 0.0;
   /* assign local variables to structures */
   lrs_mp_matrix A = P->A;
   long *isave = Q->isave;
   long *jsave = Q->jsave;
   double *cest = Q->cest;
   long d = P->d;
-  lrs_alloc_mp(Nvol);
-  lrs_alloc_mp(Dvol);
   /* Main Loop of Estimator */
 
   output = lrs_alloc_mp_vector(
@@ -712,9 +692,7 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
       }
 
       if (estdepth == 0 && nchild == 0) {
-        cest[0] = cest[0] + rays; /* may be some rays here */
-        lrs_clear_mp(Nvol);
-        lrs_clear_mp(Dvol);
+        cest[0] = cest[0] + rays; /* may be some rays here */;
         lrs_clear_mp_vector(output, Q->n);
         return (0L); /*subtree is a leaf */
       }
@@ -781,8 +759,6 @@ long lrs_estimate(lrs_dic *P, lrs_dat *Q)
     for (i = 0; i < 5; i++)
       cest[i] = cave[i] / Q->runs + cest[i];
 
-  lrs_clear_mp(Nvol);
-  lrs_clear_mp(Dvol);
   lrs_clear_mp_vector(output, Q->n);
   return (j);
 } /* end of lrs_estimate  */
@@ -1121,7 +1097,7 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
   k = 0;
   while (k < d && C[k] <= d) {
     if (C[k] <= d) { /* decision variable still in cobasis */
-      redundcol[nredundcol++] = C[k] - Q->hull; /* adjust for hull indices */
+      redundcol[nredundcol++] = C[k];
     }
     k++;
   }
@@ -1607,24 +1583,17 @@ void rescaledet(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum, lrs_mp Vden)
 void rescalevolume(lrs_dic *P, lrs_dat *Q, lrs_mp Vnum, lrs_mp Vden)
 /* adjust volume for dimension */
 {
-  lrs_mp temp, dfactorial;
+  lrs_mp dfactorial;
   /* assign local variables to structures */
   long lastdv = Q->lastdv;
 
-  lrs_alloc_mp(temp);
   lrs_alloc_mp(dfactorial);
 
   /*reduce Vnum by d factorial  */
   getfactorial(dfactorial, lastdv);
   mulint(dfactorial, Vden, Vden);
-  if (Q->hull && !Q->homogeneous) { /* For hull option multiply by d to correct
-                                       for lifting */
-    itomp(lastdv, temp);
-    mulint(temp, Vnum, Vnum);
-  }
 
   reduce(Vnum, Vden);
-  lrs_clear_mp(temp);
   lrs_clear_mp(dfactorial);
 }
 
@@ -1850,7 +1819,7 @@ long extractcols(lrs_dic *P, lrs_dat *Q) {
 
   for (i = 1; i <= m; i++) {
     if (redineq[i] != 1) {
-      reducearray(A[Row[i]], n + Q->hull); /*we already decremented n */
+      reducearray(A[Row[i]], n); /*we already decremented n */
     }
   }
 
@@ -2198,10 +2167,7 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   long i, j;
   long m, d, m_A;
 
-  if (Q->hull)        /* d=col dimension of A */
-    Q->inputd = Q->n; /* extra column for hull */
-  else
-    Q->inputd = Q->n - 1;
+  Q->inputd = Q->n - 1;
 
   m = Q->m;
   d = Q->inputd;
@@ -2341,11 +2307,9 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
 
   lrs_mp_matrix A;
   lrs_mp_vector Gcd, Lcm;
-  long hull;
   long m, d;
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(mpone);
-  hull = Q->hull;
   A = P->A;
   m = P->m;
   d = P->d;
@@ -2359,24 +2323,17 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
   i = row;
   itomp(ONE, Lcm[i]);         /* Lcm of denominators */
   itomp(ZERO, Gcd[i]);        /* Gcd of numerators */
-  for (j = hull; j <= d; j++) /* hull data copied to cols 1..d */
+  for (j = 0; j <= d; j++)
   {
-    copy(A[i][j], num[j - hull]);
-    copy(oD[j], den[j - hull]);
+    copy(A[i][j], num[j]);
+    copy(oD[j], den[j]);
     if (!one(oD[j]))
       lcm(Lcm[i], oD[j]); /* update lcm of denominators */
     copy(Temp, A[i][j]);
     gcd(Gcd[i], Temp); /* update gcd of numerators   */
   }
 
-  if (hull) {
-    itomp(ZERO,
-          A[i][0]); /*for hull, we have to append an extra column of zeroes */
-    if (!one(A[i][1]) ||
-        !one(oD[1])) /* all rows must have a one in column one */
-      Q->polytope = FALSE;
-  }
-  if (!zero(A[i][hull]))    /* for H-rep, are zero in column 0     */
+  if (!zero(A[i][0]))    /* for H-rep, are zero in column 0     */
     Q->homogeneous = FALSE; /* for V-rep, all zero in column 1     */
 
   storesign(Gcd[i], POS);

@@ -150,7 +150,6 @@ struct lrs_dat /* global problem data   */
   long verifyredund;  /* TRUE if mplrs consumer is verifying redund output */
   long noredundcheck; /* TRUE if mplrs consumer skips verifying output     */
   long homogeneous;   /* TRUE if all entries in column one are zero   */
-  long hull;          /* do convex hull computation if TRUE           */
   long incidence;     /* print all tight inequalities (vertices/rays) */
   long lponly;        /* true if only lp solution wanted              */
   long long maxdepth; /* max depth to search to in treee              */

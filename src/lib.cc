@@ -118,9 +118,6 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   if (!lrs_getfirstbasis(&P1, Q1, &Lin, TRUE))
     throw std::exception();
 
-  if (Q1->homogeneous && Q1->hull)
-    startcol++; /* col zero not treated as redundant   */
-
   col = Q1->nredundcol;
 
   do {
@@ -192,9 +189,6 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   if (!lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
     goto sayonara;
 
-  if (Q2->homogeneous && Q2->hull)
-    startcol++; /* col zero not treated as redundant   */
-
   do {
     prune = lrs_checkbound(P2, Q2);
     col = 0;
@@ -223,7 +217,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   long *B, *C, *Col;
   long *inequality;
   long *linearity;
-  long hull = Q->hull;
   long m, d, nlinearity, nredundcol;
 
   m = D->m;
@@ -284,11 +277,9 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
     *Lin = lrs_alloc_mp_matrix(nredundcol, Qn);
 
     for (i = 0; i < nredundcol; i++) {
-      if (!(Q->homogeneous && Q->hull &&
-            i == 0)) { /* skip redund col 1 for homog. hull */
-        lrs_getray(D, Q, Col[0], D->C[0] + i - hull,
-                   (*Lin)[i]); /* adjust index for deletions */
-      }
+      lrs_getray(D, Q, Col[0], D->C[0] + i,
+                  (*Lin)[i]); /* adjust index for deletions */
+    
 
       if (!removecobasicindex(D, Q, 0L)) {
         lrs_clear_mp_matrix(*Lin, nredundcol, Qn);
@@ -444,7 +435,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
     k = 0;
     while (k < d && C[k] <= d) {
       if (C[k] <= d) /* decision variable still in cobasis */
-        redundcol[nredundcol++] = C[k] - Q->hull; /* adjust for hull indices */
+        redundcol[nredundcol++] = C[k];
       k++;
     }
 
@@ -593,11 +584,9 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
 
   lrs_mp_matrix A;
   lrs_mp_vector Gcd, Lcm;
-  long hull;
   long m, d;
   lrs_alloc_mp(Temp);
   lrs_alloc_mp(mpone);
-  hull = Q->hull;
   A = P->A;
   m = P->m;
   d = P->d;
@@ -611,9 +600,9 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
   i = row;
   itomp(ONE, Lcm[i]);         /* Lcm of denominators */
   itomp(ZERO, Gcd[i]);        /* Gcd of numerators */
-  for (j = hull; j <= d; j++) /* hull data copied to cols 1..d */
+  for (j = 0; j <= d; j++)
   {
-    itomp(num[j - hull], A[i][j]);
+    itomp(num[j], A[i][j]);
     itomp(ONE, oD[j]);
     if (!one(oD[j]))
       lcm(Lcm[i], oD[j]); /* update lcm of denominators */
@@ -621,14 +610,7 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
     gcd(Gcd[i], Temp); /* update gcd of numerators   */
   }
 
-  if (hull) {
-    itomp(ZERO,
-          A[i][0]); /*for hull, we have to append an extra column of zeroes */
-    if (!one(A[i][1]) ||
-        !one(oD[1])) /* all rows must have a one in column one */
-      Q->polytope = FALSE;
-  }
-  if (!zero(A[i][hull]))    /* for H-rep, are zero in column 0     */
+  if (!zero(A[i][0]))    /* for H-rep, are zero in column 0     */
     Q->homogeneous = FALSE; /* for V-rep, all zero in column 1     */
 
   storesign(Gcd[i], POS);
