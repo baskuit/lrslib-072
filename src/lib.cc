@@ -184,21 +184,20 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   Q2->nlinearity = nlinearity;
   Q2->polytope = FALSE;
 
-  if (!lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
-    goto sayonara;
-
-  do {
-    prune = lrs_checkbound(P2, Q2);
-    col = 0;
-    if (!prune && lrs_getsolution(P2, Q2, output, col)) {
-      if (lrs_nashoutput(Q2, output, gg, 2L)) {
-        (*numequilib)++;
-        break;
+  if (lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
+  {
+    do {
+      prune = lrs_checkbound(P2, Q2);
+      col = 0;
+      if (!prune && lrs_getsolution(P2, Q2, output, col)) {
+        if (lrs_nashoutput(Q2, output, gg, 2L)) {
+          (*numequilib)++;
+          break;
+        }
       }
-    }
-  } while (lrs_getnextbasis(&P2, Q2, prune));
+    } while (lrs_getnextbasis(&P2, Q2, prune));
+  }
 
-sayonara:
   lrs_free_dic(P2, Q2);
   return 0;
 }
