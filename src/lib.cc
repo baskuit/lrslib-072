@@ -88,7 +88,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   FirstTime = TRUE;
 
-  Q1 = lrs_alloc_dat("LRS globals");
+  Q1 = lrs_alloc_dat();
 
   Q1->n = g->rows + 2;
   Q1->m = g->rows + g->cols + 1;
@@ -99,7 +99,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
   output1 = lrs_alloc_mp_vector(Q1->n + Q1->m);
 
-  Q2 = lrs_alloc_dat("LRS globals");
+  Q2 = lrs_alloc_dat();
 
   Q2->n = g->cols + 2;
   Q2->m = g->rows + g->cols + 1;
@@ -299,7 +299,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   /* Check to see if necessary to resize */
-  if (Q->inputd > (*D_p)->d)
+  if (Q->n - 1 > (*D_p)->d)
     *D_p = resize((*D_p), Q);
 
   return TRUE;

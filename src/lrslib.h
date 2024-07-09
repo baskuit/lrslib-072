@@ -70,7 +70,6 @@
 /*  + = remains invariant   * = indices may be permuted ? = swapped by pivot  */
 /*                                                                            */
 /*  m = number of input rows   n= number of input columns                     */
-/*  input dimension inputd = n-1 (H-rep) or n (V-rep)                         */
 /*  lastdv = inputd-nredundcol  (each redundant column removes a dec. var)    */
 /*  working dimension d=lastdv-nlinearity (an input linearity removes a slack)
  */
@@ -123,12 +122,10 @@ struct lrs_dat /* global problem data   */
   long *minratio;      /* used for lexicographic ratio test            */
   long *temparray;     /* for sorting indices, dimensioned to d        */
   long *isave, *jsave; /* arrays for estimator, malloc'ed at start     */
-  long inputd;         /* input dimension: n-1 for H-rep, n for V-rep  */
 
   long m;         /* number of rows in input file                 */
   long n;         /* number of columns in input file              */
   long lastdv;    /* index of last dec. variable after preproc    */
-                  /* given by inputd-nredundcol                   */
   long count[10]; /* count[0]=rays(facets)[1]=vertices(linearities)*/
                   /*  [2]=cobases [3]=pivots [4]=integer vertices  */
                   /*  [5-7]=mplrs R [8]=max vertex/facet depth     */
@@ -140,11 +137,6 @@ struct lrs_dat /* global problem data   */
   long long maxdepth; /* max depth to search to in treee              */
   long long mindepth; /* do not backtrack above mindepth              */
 
-  /* Variables for saving/restoring cobasis,  db */
-
-  long id;    /* numbered sequentially */
-  char *name; /* passed by user */
-
   /* Variables for cacheing dictionaries, db */
   lrs_dic *Qhead, *Qtail, *olddic;
 };
@@ -154,7 +146,7 @@ struct lrs_dat /* global problem data   */
 /*******************************/
 
 lrs_dat *
-lrs_alloc_dat(const char *name); /* allocate for lrs_dat structure "name" */
+lrs_alloc_dat(); /* allocate for lrs_dat structure "name" */
 lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
 

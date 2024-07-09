@@ -107,7 +107,7 @@ long lrs_init() /* returns TRUE if successful, else FALSE */
 /***********************************/
 /* allocate and initialize lrs_dat */
 /***********************************/
-lrs_dat *lrs_alloc_dat(const char *name) {
+lrs_dat *lrs_alloc_dat() {
   lrs_dat *Q;
   long i;
 
@@ -120,14 +120,10 @@ lrs_dat *lrs_alloc_dat(const char *name) {
     return Q; /* failure to allocate */
 
   lrs_global_list[lrs_global_count] = Q;
-  Q->id = lrs_global_count;
   lrs_global_count++;
-  Q->name = (char *)CALLOC((unsigned)strlen(name) + 1, sizeof(char));
-  strcpy(Q->name, name);
 
   Q->m = 0L;
   Q->n = 0L;
-  Q->inputd = 0L;
   Q->nlinearity = 0L;
   Q->nredundcol = 0L;
   for (i = 0; i < 10; i++) {
@@ -311,7 +307,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 
   /* Check to see if necessary to resize */
   /* bug fix 2018.6.7 new value of d required below */
-  if (Q->inputd > D->d)
+  if (Q->n - 1 > D->d)
     *D_p = resize(D, Q);
   return TRUE;
 }
@@ -884,8 +880,6 @@ long removecobasicindex(lrs_dic *P, lrs_dat *Q, long k)
 } /* end of removecobasicindex */
 
 lrs_dic *resize(lrs_dic *P, lrs_dat *Q)
-/* resize the dictionary after some columns are deleted, ie. inputd>d */
-/* a new lrs_dic record is created with reduced size, and items copied over */
 {
   lrs_dic *P1; /* to hold new dictionary in case of resizing */
 
@@ -1555,7 +1549,7 @@ long linextractcols(lrs_dic *P, lrs_dat *Q)
 
   m = P->m;
   n = Q->n;
-  d = Q->inputd;
+  d = n - 1;
 
   for (k = 0; k < n - 1; k++) /* go through input order for vars to remain */
   {
@@ -1706,7 +1700,7 @@ lrs_dic *lrs_getdic(lrs_dat *Q)
 
   m = Q->m;
 
-  p = new_lrs_dic(m, Q->inputd, Q->m);
+  p = new_lrs_dic(m, Q->n - 1, Q->m);
   if (!p)
     return NULL;
 
@@ -1821,8 +1815,6 @@ void lrs_free_dat(lrs_dat *Q) {
   free(Q->redineq);
   free(Q->temparray);
 
-  free(Q->name);
-
   /*2020.8.1 DA: lrs_global_list is not a stack but a list, so have to delete Q
    */
 
@@ -1869,10 +1861,8 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   long i, j;
   long m, d, m_A;
 
-  Q->inputd = Q->n - 1;
-
   m = Q->m;
-  d = Q->inputd;
+  d = Q->n - 1;
   m_A = m; /* number of rows in A */
 
   p = new_lrs_dic(m, d, m_A);
