@@ -264,13 +264,13 @@ extern __int128 MAXDm, MAXDl,
 #ifndef B128
 typedef long long lrs_mp[1]; /* type lrs_mp holds one long integer */
 typedef long long *lrs_mp_t;
-typedef long long **lrs_mp_vector;
-typedef long long ***lrs_mp_matrix;
+typedef long long *lrs_mp_vector;
+typedef long long **lrs_mp_matrix;
 #else
 typedef __int128 lrs_mp[1]; /* type lrs_mp holds one 128-bit integer */
 typedef __int128 *lrs_mp_t;
-typedef __int128 **lrs_mp_vector;
-typedef __int128 ***lrs_mp_matrix;
+typedef __int128 *lrs_mp_vector;
+typedef __int128 **lrs_mp_matrix;
 #endif
 
 /*********************/

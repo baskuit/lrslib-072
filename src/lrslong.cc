@@ -142,45 +142,6 @@ long mptoi(lrs_mp a) /* convert lrs_mp to long */
   return (*a);
 }
 
-/* return char * representation of a in base 10.
- * use out if non-NULL, otherwise allocate and return.
- */
-char *mpgetstr10(char *out, lrs_mp a) {
-  char *buf = NULL;
-#ifndef B128
-  int len = 0;
-  len = snprintf(buf, 0, "%lld", *a);
-  if (out != NULL)
-    buf = out;
-  else
-    buf = static_cast<char *>(malloc(sizeof(char) * (len + 1)));
-  sprintf(buf, "%lld", *a);
-  return buf;
-#else
-  __int128 tmp = abs128(*a);
-  int i, j = 0;
-  int t[41];
-  if (out != NULL)
-    buf = out;
-  else
-    buf = static_cast<char *>(calloc(43, sizeof(char)));
-  if (*a >= LLONG_MIN && *a <= LLONG_MAX) {
-    sprintf(buf, "%lld", (long long)*a);
-    return buf;
-  }
-  for (i = 0; tmp > 0; i++) {
-    t[i] = tmp % 10;
-    tmp = tmp / 10;
-  }
-  i--;
-  if (*a < 0)
-    buf[j++] = '-';
-  while (i >= 0)
-    buf[j++] = '0' + t[i--];
-  return buf;
-#endif
-}
-
 void rattodouble(lrs_mp a, lrs_mp b, double *x) /* convert lrs_mp rati
                                                    onal to double */
 
@@ -196,6 +157,13 @@ void rattodouble(lrs_mp a, lrs_mp b, double *x) /* convert lrs_mp rati
 /*     Memory allocation functions                             */
 /*                                                             */
 /***************************************************************/
+
+#ifdef B128
+#define MPSIZE 16
+#else
+#define MPSIZE 8
+#endif
+
 lrs_mp_t lrs_alloc_mp_t()
 /* dynamic allocation of lrs_mp number */
 {
@@ -207,22 +175,13 @@ lrs_mp_t lrs_alloc_mp_t()
 lrs_mp_vector lrs_alloc_mp_vector(long n)
 /* allocate lrs_mp_vector for n+1 lrs_mp numbers */
 {
-  lrs_mp_vector p;
-  long i;
-
-  p = (lrs_mp_t *)CALLOC((n + 1), sizeof(lrs_mp_t));
-  for (i = 0; i <= n; i++)
-    p[i] = (lrs_mp_t)CALLOC(1, sizeof(lrs_mp));
-
+  lrs_mp_vector p = (lrs_mp_t)CALLOC((n + 1), MPSIZE);
   return p;
 }
 
 void lrs_clear_mp_vector(lrs_mp_vector p, long n)
 /* free space allocated to p */
 {
-  long i;
-  for (i = 0; i <= n; i++)
-    free(p[i]);
   free(p);
   p = NULL;
 }
@@ -239,13 +198,9 @@ lrs_mp_matrix lrs_alloc_mp_matrix(long m, long n)
   row_width = (n + 1) * mp_width;
 
   araw = (lrs_mp_t)calloc((m + 1) * row_width, sizeof(lrs_mp));
-  a = (lrs_mp_t **)calloc((m + 1), sizeof(lrs_mp_vector));
-
+  a = (lrs_mp_t *)calloc((m + 1), sizeof(lrs_mp_vector));
   for (i = 0; i < m + 1; i++) {
-    a[i] = (lrs_mp_t *)calloc((n + 1), sizeof(lrs_mp_t));
-
-    for (j = 0; j < n + 1; j++)
-      a[i][j] = (araw + i * row_width + j * mp_width);
+    a[i] = (lrs_mp_t )calloc((n + 1), MPSIZE);
   }
   return a;
 }
@@ -254,14 +209,8 @@ void lrs_clear_mp_matrix(lrs_mp_matrix p, long m, long n)
 /* free space allocated to lrs_mp_matrix p */
 {
   long i;
-
-  /* p[0][0] is araw, the actual matrix storage address */
-
-  free(p[0][0]);
-
   for (i = 0; i < m + 1; i++)
     free(p[i]);
-  /* 2015.9.9 memory leak fix */
   free(p);
   p = NULL;
 }
@@ -323,18 +272,18 @@ void reducearray(lrs_mp_vector p, long n)
   lrs_mp Temp;
   long i = 0L;
 
-  while ((i < n) && zero(p[i]))
+  while ((i < n) && zero(p + i))
     i++;
   if (i == n)
     return;
 
-  copy(divisor, p[i]);
+  copy(divisor, p + i);
   storesign(divisor, POS);
   i++;
 
   while (i < n) {
-    if (!zero(p[i])) {
-      copy(Temp, p[i]);
+    if (!zero(p + i)) {
+      copy(Temp, p + i);
       storesign(Temp, POS);
       gcd(divisor, Temp);
     }
@@ -343,8 +292,8 @@ void reducearray(lrs_mp_vector p, long n)
 
   /* reduce by divisor */
   for (i = 0; i < n; i++)
-    if (!zero(p[i]))
-      reduceint(p[i], divisor);
+    if (!zero(p + i))
+      reduceint(p + i, divisor);
 } /* end of reducearray */
 
 void getfactorial(lrs_mp factorial, long k) /* compute k factorial

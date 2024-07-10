@@ -165,7 +165,7 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
   linearity = Q2->linearity;
   nlinearity = 0;
   for (i = Q1->lastdv + 1; i <= P1->m; i++) {
-    if (!zero(P1->A[P1->Row[i]][0])) {
+    if (!zero(P1->A[P1->Row[i]] + 0)) {
       j = Q1->inequality[P1->B[i] - Q1->lastdv];
       if (Q1->nlinearity == 0 || j < Q1->linearity[0])
         linearity[nlinearity++] = j;
@@ -236,7 +236,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   for (j = 0; j <= d; j++)
-    itomp(ZERO, A[0][j]);
+    itomp(ZERO, A[0] + j);
 
   if (!getabasis2((*D_p), Q, P2orig, inequality, linindex)) {
     return FALSE;
@@ -279,11 +279,11 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   for (j = 1; j <= d; j++) {
-    copy(A[0][j], (*D_p)->det);
-    storesign(A[0][j], NEG);
+    copy(A[0] + j, (*D_p)->det);
+    storesign(A[0] + j, NEG);
   }
 
-  itomp(ZERO, A[0][0]); /* zero optimum objective value */
+  itomp(ZERO, A[0] + 0); /* zero optimum objective value */
 
 
   /* reindex basis to 0..m if necessary */
@@ -337,7 +337,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
     for (i = 1; i <= m; i++) {
       if (linindex[B[i]]) { /* pivot out unwanted linearities */
         k = 0;
-        while (k < d && (linindex[C[k]] || zero(A[Row[i]][Col[k]])))
+        while (k < d && (linindex[C[k]] || zero(A[Row[i]] + Col[k])))
           k++;
 
         if (k < d) {
@@ -350,7 +350,7 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
         } else {
           /* this is not necessarily an error, eg. two identical rows/cols in
            * payoff matrix */
-          if (!zero(A[Row[i]][0])) { /* error condition */
+          if (!zero(A[Row[i]] + 0)) { /* error condition */
             return (FALSE);
           }
         }
@@ -371,14 +371,14 @@ long getabasis2(lrs_dic *P, lrs_dat *Q, lrs_dic *P2orig, long order[],
       }
       if (i <= m) { /* try to do a pivot */
         k = 0;
-        while (C[k] <= d && zero(A[Row[i]][Col[k]]))
+        while (C[k] <= d && zero(A[Row[i]] + Col[k]))
           k++;
 
         if (C[k] <= d) {
           pivot(P, Q, i, k);
           update(P, Q, &i, &k);
         } else if (j < nlinearity) { /* cannot pivot linearity to cobasis */
-          if (zero(A[Row[i]][0])) {
+          if (zero(A[Row[i]] + 0)) {
             linearity[j] = 0;
           } else {
             return FALSE;
@@ -450,23 +450,23 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg,
   long origin = TRUE;
 
   for (i = 1; i < Q->n; i++)
-    if (!zero(output[i]))
+    if (!zero(output + i))
       origin = FALSE;
 
   if (origin)
     return FALSE;
 
-  const float den = static_cast<float>(mptoi(output[0]));
+  const float den = static_cast<float>(mptoi(output + 0));
   // printf("den conversion: %ld = %f\n", mptoi(output[0]), den);
 
   if (player == 1) {
     for (i = 1; i < Q->n; i++) {
-      gg->row_strategy[i - 1] = mptoi(output[i]) / den;
+      gg->row_strategy[i - 1] = mptoi(output + i) / den;
     }
   } else {
-    gg->value = mptoi(output[Q->n - 1]) / den;
+    gg->value = mptoi(output + (Q->n - 1)) / den;
     for (i = 1; i < Q->n; i++) {
-      gg->col_strategy[i - 1] = mptoi(output[i]) / den;
+      gg->col_strategy[i - 1] = mptoi(output + i) / den;
     }
   }
   return TRUE;
@@ -560,28 +560,28 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
 
   oD = lrs_alloc_mp_vector(d);
   itomp(ONE, mpone);
-  itomp(ONE, oD[0]);
+  itomp(ONE, oD + 0);
 
   i = row;
-  itomp(ONE, Lcm[i]);         /* Lcm of denominators */
-  itomp(ZERO, Gcd[i]);        /* Gcd of numerators */
+  itomp(ONE, Lcm + i);         /* Lcm of denominators */
+  itomp(ZERO, Gcd + i);        /* Gcd of numerators */
   for (j = 0; j <= d; j++)
   {
-    itomp(num[j], A[i][j]);
-    itomp(ONE, oD[j]);
-    if (!one(oD[j]))
-      lcm(Lcm[i], oD[j]); /* update lcm of denominators */
-    copy(Temp, A[i][j]);
-    gcd(Gcd[i], Temp); /* update gcd of numerators   */
+    itomp(num[j], A[i] + j);
+    itomp(ONE, oD + j);
+    if (!one(oD + j))
+      lcm(Lcm + i, oD + j); /* update lcm of denominators */
+    copy(Temp, A[i] + j);
+    gcd(Gcd + i, Temp); /* update gcd of numerators   */
   }
 
-  storesign(Gcd[i], POS);
-  storesign(Lcm[i], POS);
-  if (mp_greater(Gcd[i], mpone) || mp_greater(Lcm[i], mpone))
+  storesign(Gcd + i, POS);
+  storesign(Lcm + i, POS);
+  if (mp_greater(Gcd + i, mpone) || mp_greater(Lcm + i, mpone))
     for (j = 0; j <= d; j++) {
-      exactdivint(A[i][j], Gcd[i], Temp); /*reduce numerators by Gcd  */
-      mulint(Lcm[i], Temp, Temp);         /*remove denominators */
-      exactdivint(Temp, oD[j], A[i][j]);  /*reduce by former denominator */
+      exactdivint(A[i] + j, Gcd + i, Temp); /*reduce numerators by Gcd  */
+      mulint(Lcm + i, Temp, Temp);         /*remove denominators */
+      exactdivint(Temp, oD + j, A[i] + j);  /*reduce by former denominator */
     }
 
   if (ineq == EQ) /* input is linearity */

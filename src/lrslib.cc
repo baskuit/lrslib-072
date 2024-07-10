@@ -72,13 +72,13 @@ long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col)
 
   /*  check for rays: negative in row 0 , positive if lponly */
 
-  else if (!negative(A[0][col]))
+  else if (!negative(A[0] + col))
     return FALSE;
 
   /*  and non-negative for all basic non decision variables */
 
   j = Q->lastdv + 1;
-  while (j <= P->m && !negative(A[Row[j]][col]))
+  while (j <= P->m && !negative(A[Row[j]] + col))
     j++;
 
   if (j <= P->m)
@@ -205,7 +205,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   }
 
   for (j = 0; j <= d; j++)
-    itomp(ZERO, A[0][j]);
+    itomp(ZERO, A[0] + (j));
 
   /* Now we pivot to standard form, and then find a primal feasible basis */
   /* Note these steps MUST be done, even if restarting, in order to get */
@@ -274,11 +274,11 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   /* Now solve LP if objective function was given */
 
   for (j = 1; j <= d; j++) {
-    copy(A[0][j], D->det);
-    storesign(A[0][j], NEG);
+    copy(A[0] + (j), D->det);
+    storesign(A[0] + (j), NEG);
   }
 
-  itomp(ZERO, A[0][0]); /* zero optimum objective value */
+  itomp(ZERO, A[0] + (0)); /* zero optimum objective value */
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */
@@ -397,24 +397,24 @@ long lrs_getvertex(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output)
 
   i = 1;
   ired = 0;
-  copy(output[0], P->det);
+  copy(output + (0), P->det);
 
   for (ind = 1; ind < Q->n; ind++) /* extract solution */
 
     if ((ired < Q->nredundcol) && (redundcol[ired] == ind))
     /* column was deleted as redundant */
     {
-      itomp(ZERO, output[ind]);
+      itomp(ZERO, output + (ind));
       ired++;
     } else
     /* column not deleted as redundant */
     {
-      getnextoutput(P, Q, i, ZERO, output[ind]);
+      getnextoutput(P, Q, i, ZERO, output + ind);
       i++;
     }
 
   reducearray(output, Q->n);
-  if (lexflag && one(output[0]))
+  if (lexflag && one(output + 0))
     ++Q->count[4]; /* integer vertex */
 
   return TRUE;
@@ -443,21 +443,21 @@ long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long redcol,
   for (ind = 0; ind < n; ind++) /* print solution */
   {
     if (ind == 0) /* must have a ray, set first column to zero */
-      itomp(ZERO, output[0]);
+      itomp(ZERO, output + (0));
 
     else if ((ired < Q->nredundcol) && (redundcol[ired] == ind))
     /* column was deleted as redundant */
     {
       if (redcol == ind) /* true for linearity on this cobasic index */
         /* we print reduced determinant instead of zero */
-        copy(output[ind], P->det);
+        copy(output + ind, P->det);
       else
-        itomp(ZERO, output[ind]);
+        itomp(ZERO, output + ind);
       ired++;
     } else
     /* column not deleted as redundant */
     {
-      getnextoutput(P, Q, i, col, output[ind]);
+      getnextoutput(P, Q, i, col, output + ind);
       i++;
     }
   }
@@ -475,7 +475,7 @@ void getnextoutput(lrs_dic *P, lrs_dat *Q, long i, long col, lrs_mp out)
 
   row = Row[i];
 
-  copy(out, A[row][col]);
+  copy(out, A[row] + col);
 
 } /* end of getnextoutput */
 
@@ -500,7 +500,7 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
   long d = P->d;
 
   col = Col[s];
-  if (!negative(A[0][col])) {
+  if (!negative(A[0] + col)) {
     Q->minratio[P->m] = 0; /* 2011.7.14 */
     return (FALSE);
   }
@@ -521,10 +521,10 @@ long reverse(lrs_dic *P, lrs_dat *Q, long *r, long s)
   for (i = 0; i < d && C[i] < B[*r]; i++)
     if (i != s) {
       j = Col[i];
-      if (positive(A[0][j]) ||
-          negative(A[row][j])) /*or else sign test fails trivially */
-        if ((!negative(A[0][j]) && !positive(A[row][j])) ||
-            comprod(A[0][j], A[row][col], A[0][col], A[row][j]) ==
+      if (positive(A[0] + j) ||
+          negative(A[row] + j)) /*or else sign test fails trivially */
+        if ((!negative(A[0] + j) && !positive(A[row] + j)) ||
+            comprod(A[0] + (j), A[row] + (col), A[0] + (col), A[row] + (j)) ==
                 -1) {            /*+ve cost found */
           Q->minratio[P->m] = 0; /* 2011.7.14 */
 
@@ -550,7 +550,7 @@ long selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
   j = 0;
 
   /*find positive cost coef */
-  while ((j < d) && (!positive(A[0][Col[j]])))
+  while ((j < d) && (!positive(A[0] + Col[j])))
     j++;
 
   if (j < d) /* pivot column found! */
@@ -599,7 +599,7 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
   s = Col[cob];
 
   /* Ars=A[r][s]    */
-  copy(Ars, A[r][s]);
+  copy(Ars, A[r] + (s));
   storesign(P->det, sign(Ars)); /*adjust determinant to new sign */
 
   for (i = 0; i <= m_A; i++)
@@ -609,36 +609,36 @@ void pivot(lrs_dic *P, lrs_dat *Q, long bas, long cob)
           /*          A[i][j]=(A[i][j]*Ars-A[i][s]*A[r][j])/P->det; */
 
 #ifdef LRSLONG
-          qpiv(A[i][j], Ars, A[i][s], A[r][j], P->det);
+          qpiv(A[i] + (j), Ars, A[i] + (s), A[r] + (j), P->det);
 #else
-          mulint(A[i][j], Ars, Nt);
-          mulint(A[i][s], A[r][j], Ns);
+          mulint(A[i] + (j), Ars, Nt);
+          mulint(A[i] + (s), A[r] + (j), Ns);
           decint(Nt, Ns);
-          exactdivint(Nt, P->det, A[i][j]);
+          exactdivint(Nt, P->det, A[i] + (j));
 #endif
         } /* end if j ....  */
 
   if (sign(Ars) == POS) {
     for (j = 0; j <= d; j++) /* no need to change sign if Ars neg */
       /*   A[r][j]=-A[r][j];              */
-      if (!zero(A[r][j]))
-        changesign(A[r][j]);
+      if (!zero(A[r] + j))
+        changesign(A[r] + j);
   } /* watch out for above "if" when removing this "}" ! */
   else
     for (i = 0; i <= m_A; i++)
-      if (!zero(A[i][s]))
-        changesign(A[i][s]);
+      if (!zero(A[i] + s))
+        changesign(A[i] + s);
 
   /*  A[r][s]=P->det;                  */
 
-  copy(A[r][s], P->det); /* restore old determinant */
+  copy(A[r] + (s), P->det); /* restore old determinant */
   copy(P->det, Ars);
   storesign(P->det, POS); /* always keep positive determinant */
 
   /* set the new rescaled objective function value */
 
-  mulint(P->det, Q->Lcm[0], P->objden);
-  mulint(Q->Gcd[0], A[0][0], P->objnum);
+  mulint(P->det, Q->Lcm + (0), P->objden);
+  mulint(Q->Gcd + (0), A[0] + (0), P->objnum);
 
   changesign(P->objnum);
 
@@ -674,11 +674,11 @@ long primalfeasible(lrs_dic *P, lrs_dat *Q)
 
   while (primalinfeasible) {
     i = lastdv + 1;
-    while (i <= m && !negative(A[Row[i]][0]))
+    while (i <= m && !negative(A[Row[i]] + (0)))
       i++;
     if (i <= m) {
       j = 0; /*find a positive entry for in row */
-      while (j < d && !positive(A[Row[i]][Col[j]]))
+      while (j < d && !positive(A[Row[i]] + Col[j]))
         j++;
       if (j >= d)
         return (FALSE); /* no positive entry */
@@ -742,7 +742,7 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
     }
     if (i <= m) { /* try to do a pivot */
       k = 0l;
-      while (C[k] <= d && zero(A[Row[i]][Col[k]])) {
+      while (C[k] <= d && zero(A[Row[i]] + Col[k])) {
         k++;
       }
       if (C[k] <= d) {
@@ -750,7 +750,7 @@ long getabasis(lrs_dic *P, lrs_dat *Q, long order[])
         pivot(P, Q, i, k);
         update(P, Q, &i, &k);
       } else if (j < nlinearity) { /* cannot pivot linearity to cobasis */
-        if (zero(A[Row[i]][0])) {
+        if (zero(A[Row[i]] + 0)) {
           linearity[j] = 0l;
         } else {
           return FALSE;
@@ -834,7 +834,7 @@ long removecobasicindex(lrs_dic *P, lrs_dat *Q, long k)
   if (deloc != d) {
     /* copy col d to deloc */
     for (i = 0; i <= m; i++)
-      copy(A[i][deloc], A[i][d]);
+      copy(A[i] + deloc, A[i] + d);
 
     /* reassign location for moved column */
     j = 0;
@@ -881,7 +881,7 @@ lrs_dic *resize(lrs_dic *P, lrs_dat *Q)
   }
   for (i = 0; i <= m_A; i++) {
     for (j = 0; j <= d; j++)
-      copy(P1->A[i][j], P->A[i][j]);
+      copy(P1->A[i] + j, P->A[i] + j);
   }
 
   for (j = 0; j <= d; j++) {
@@ -931,9 +931,9 @@ long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
   for (j = lastdv + 1; j <= m; j++) {
     /* search rows with negative coefficient in dictionary */
     /*  minratio contains indices of min ratio cols        */
-    if (negative(A[Row[j]][col])) {
+    if (negative(A[Row[j]] + col)) {
       minratio[degencount++] = j;
-      if (zero(A[Row[j]][0]))
+      if (zero(A[Row[j]] + 0))
         minratio[P->m] = 0; /*2011.7.14 degenerate pivot flag */
     }
   } /* end of for loop */
@@ -973,14 +973,14 @@ long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
         if (firstime)
           firstime = FALSE; /*force new min ratio on first time */
         else {
-          if (positive(Nmin) || negative(A[i][ratiocol])) {
-            if (negative(Nmin) || positive(A[i][ratiocol]))
-              comp = comprod(Nmin, A[i][col], A[i][ratiocol], Dmin);
+          if (positive(Nmin) || negative(A[i] + ratiocol)) {
+            if (negative(Nmin) || positive(A[i] + ratiocol))
+              comp = comprod(Nmin, A[i] + col, A[i] + ratiocol, Dmin);
             else
               comp = -1;
           }
 
-          else if (zero(Nmin) && zero(A[i][ratiocol]))
+          else if (zero(Nmin) && zero(A[i] + ratiocol))
             comp = 0;
 
           if (ratiocol == ZERO)
@@ -988,8 +988,8 @@ long lrs_ratio(lrs_dic *P, lrs_dat *Q, long col) /*find lex min. ratio */
         }
         if (comp == 1) { /*new minimum ratio */
           nstart = j;
-          copy(Nmin, A[i][ratiocol]);
-          copy(Dmin, A[i][col]);
+          copy(Nmin, A[i] + ratiocol);
+          copy(Dmin, A[i] + col);
           ndegencount = 1;
         } else if (comp == 0) /* repeated minimum */
           minratio[nstart + ndegencount++] = minratio[j];
@@ -1022,16 +1022,16 @@ long lexmin(lrs_dic *P, lrs_dat *Q, long col)
 
   for (i = Q->lastdv + 1; i <= m; i++) {
     r = Row[i];
-    if (zero(A[r][col])) /* necessary for lexmin to fail */
+    if (zero(A[r] + col)) /* necessary for lexmin to fail */
       for (j = 0; j < d; j++) {
         s = Col[j];
         if (B[i] > C[j]) /* possible pivot to reduce basis */
         {
-          if (zero(A[r][0])) /* no need for ratio test, any pivot feasible */
+          if (zero(A[r] + 0)) /* no need for ratio test, any pivot feasible */
           {
-            if (!zero(A[r][s]))
+            if (!zero(A[r] + s))
               return (FALSE);
-          } else if (negative(A[r][s]) && ismin(P, Q, r, s)) {
+          } else if (negative(A[r] + s) && ismin(P, Q, r, s)) {
             return (FALSE);
           }
         } /* end of if B[i] ... */
@@ -1049,8 +1049,8 @@ long ismin(lrs_dic *P, lrs_dat *Q, long r, long s)
   long m_A = P->m_A;
 
   for (i = 1; i <= m_A; i++)
-    if ((i != r) && negative(A[i][s]) &&
-        comprod(A[i][0], A[r][s], A[i][s], A[r][0])) {
+    if ((i != r) && negative(A[i] + s) &&
+        comprod(A[i] + 0, A[r] + s, A[i] + s, A[r] + 0)) {
       return (FALSE);
     }
 
@@ -1162,8 +1162,8 @@ long checkredund(lrs_dic *P, lrs_dat *Q)
     r = Row[i];
     s = Col[j];
 
-    mulint(A[0][s], A[r][0], Ns);
-    mulint(A[0][0], A[r][s], Nt);
+    mulint(A[0] + s, A[r] + 0, Ns);
+    mulint(A[0] + 0, A[r] + s, Nt);
 
     if (mp_greater(Ns, Nt)) {
       lrs_clear_mp(Ns);
@@ -1182,7 +1182,7 @@ long checkredund(lrs_dic *P, lrs_dat *Q)
 
   /* 2020.6.8 check for strict redundancy and return -1 if so */
 
-  if (negative(P->A[0][0]))
+  if (negative(P->A[0] + (0)))
     return -1;
   else
     return 1;
@@ -1220,7 +1220,7 @@ long checkcobasic(lrs_dic *P, lrs_dat *Q, long index)
   s = Col[j];
   i = Q->lastdv + 1;
 
-  while ((i <= m) && (zero(A[Row[i]][s]) || !zero(A[Row[i]][0])))
+  while ((i <= m) && (zero(A[Row[i]] + s) || !zero(A[Row[i]] + 0)))
     i++;
 
   if (i > m) {
@@ -1273,9 +1273,9 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
   /* copy row i to cost row, and set it to zero */
 
   for (j = 0; j <= d; j++) {
-    copy(A[0][j], A[i][j]);
-    changesign(A[0][j]);
-    itomp(ZERO, A[i][j]);
+    copy(A[0] + j, A[i] + j);
+    changesign(A[0] + j);
+    itomp(ZERO, A[i] + j);
   }
   if (zeroonly)
     return 1;
@@ -1289,8 +1289,8 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
   /* non-redundant, copy back and change sign */
 
   for (j = 0; j <= d; j++) {
-    copy(A[i][j], A[0][j]);
-    changesign(A[i][j]);
+    copy(A[i] + j, A[0] + j);
+    changesign(A[i] + j);
   }
 
   return 0;
@@ -1336,7 +1336,7 @@ void copy_dict(lrs_dat *global, lrs_dic *dest, lrs_dic *src) {
 
   for (r = 0; r <= m_A; r++)
     for (s = 0; s <= d; s++)
-      copy(dest->A[r][s], src->A[r][s]);
+      copy(dest->A[r] + (s), src->A[r] + (s));
 
   dest->i = src->i;
   dest->j = src->j;
@@ -1605,7 +1605,7 @@ lrs_dic *lrs_alloc_dic(lrs_dat *Q)
   /*  initialize array to zero   */
   for (i = 0; i <= m_A; i++)
     for (j = 0; j <= d; j++)
-      itomp(ZERO, p->A[i][j]);
+      itomp(ZERO, p->A[i] + j);
 
   if (Q->nlinearity == ZERO) /* linearity may already be allocated */
     Q->linearity = (long int *)CALLOC((m + d + 1), sizeof(long));
@@ -1659,8 +1659,8 @@ void lrs_set_row(lrs_dic *P, lrs_dat *Q, long row, long num[], long den[],
   Den = lrs_alloc_mp_vector(d + 1);
 
   for (j = 0; j <= d; j++) {
-    itomp(num[j], Num[j]);
-    itomp(den[j], Den[j]);
+    itomp(num[j], Num + (j));
+    itomp(den[j], Den + (j));
   }
 
   lrs_set_row_mp(P, Q, row, Num, Den, ineq);
@@ -1694,28 +1694,28 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
 
   oD = lrs_alloc_mp_vector(d);
   itomp(ONE, mpone);
-  itomp(ONE, oD[0]);
+  itomp(ONE, oD + (0));
 
   i = row;
-  itomp(ONE, Lcm[i]);         /* Lcm of denominators */
-  itomp(ZERO, Gcd[i]);        /* Gcd of numerators */
+  itomp(ONE, Lcm + (i));         /* Lcm of denominators */
+  itomp(ZERO, Gcd + (i));        /* Gcd of numerators */
   for (j = 0; j <= d; j++)
   {
-    copy(A[i][j], num[j]);
-    copy(oD[j], den[j]);
-    if (!one(oD[j]))
-      lcm(Lcm[i], oD[j]); /* update lcm of denominators */
-    copy(Temp, A[i][j]);
-    gcd(Gcd[i], Temp); /* update gcd of numerators   */
+    copy(A[i] + (j), num + (j));
+    copy(oD + (j), den + (j));
+    if (!one(oD + (j)))
+      lcm(Lcm + (i), oD + (j)); /* update lcm of denominators */
+    copy(Temp, A[i] + (j));
+    gcd(Gcd + (i), Temp); /* update gcd of numerators   */
   }
 
-  storesign(Gcd[i], POS);
-  storesign(Lcm[i], POS);
-  if (mp_greater(Gcd[i], mpone) || mp_greater(Lcm[i], mpone))
+  storesign(Gcd + (i), POS);
+  storesign(Lcm + (i), POS);
+  if (mp_greater(Gcd + (i), mpone) || mp_greater(Lcm + (i), mpone))
     for (j = 0; j <= d; j++) {
-      exactdivint(A[i][j], Gcd[i], Temp); /*reduce numerators by Gcd  */
-      mulint(Lcm[i], Temp, Temp);         /*remove denominators */
-      exactdivint(Temp, oD[j], A[i][j]);  /*reduce by former denominator */
+      exactdivint(A[i] + (j), Gcd + (i), Temp); /*reduce numerators by Gcd  */
+      mulint(Lcm + (i), Temp, Temp);         /*remove denominators */
+      exactdivint(Temp, oD + (j), A[i] + (j));  /*reduce by former denominator */
     }
 
   if (ineq == EQ) /* input is linearity */
@@ -1753,9 +1753,9 @@ long dan_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
   itomp(0, coeff);
   /*find positive cost coef */
   while (k < d) {
-    if (mp_greater(A[0][Col[k]], coeff)) {
+    if (mp_greater(A[0] + Col[k], coeff)) {
       j = k;
-      copy(coeff, A[0][Col[j]]);
+      copy(coeff, A[0] + Col[j]);
     }
     k++;
   }
@@ -1806,7 +1806,7 @@ long ran_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
   }
 
   /*find first positive cost coef according to perm */
-  while (k < d && !positive(A[0][Col[perm[k]]]))
+  while (k < d && !positive(A[0] + Col[perm[k]]))
     k++;
 
   if (k < d) /* pivot column found! */
