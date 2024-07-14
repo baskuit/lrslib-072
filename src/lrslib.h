@@ -99,19 +99,19 @@ struct lrs_dic /* dynamic dictionary data */
 
 struct lrs_dat /* global problem data   */
 {
-  lrs_mp_vector Gcd;    /* Gcd of each row of numerators               */
-  lrs_mp_vector Lcm;    /* Lcm for each row of input denominators      */
+  lrs_mp_vector Gcd; /* Gcd of each row of numerators               */
+  lrs_mp_vector Lcm; /* Lcm for each row of input denominators      */
 
   lrs_mp Nvolume; /* volume numerator                             */
   lrs_mp Dvolume; /* volume denominator                           */
 
   /* initially holds order used to find starting  */
   /* basis, default: m,m-1,...,2,1                */
-  long *redundcol;     /* holds columns which are redundant            */
-  long *inequality;    /* indices of inequalities corr. to cobasic ind */
-  long *linearity;     /* holds cobasic indices of input linearities   */
-  long *minratio;      /* used for lexicographic ratio test            */
-  long *temparray;     /* for sorting indices, dimensioned to d        */
+  long *redundcol;  /* holds columns which are redundant            */
+  long *inequality; /* indices of inequalities corr. to cobasic ind */
+  long *linearity;  /* holds cobasic indices of input linearities   */
+  long *minratio;   /* used for lexicographic ratio test            */
+  long *temparray;  /* for sorting indices, dimensioned to d        */
 
   long m;         /* number of rows in input file                 */
   long n;         /* number of columns in input file              */
@@ -131,8 +131,7 @@ struct lrs_dat /* global problem data   */
 /* functions  for external use */
 /*******************************/
 
-lrs_dat *
-lrs_alloc_dat(); /* allocate for lrs_dat structure "name" */
+lrs_dat *lrs_alloc_dat(); /* allocate for lrs_dat structure "name" */
 lrs_dic *
 lrs_alloc_dic(lrs_dat *Q); /* allocate for lrs_dic structure corr. to Q   */
 
@@ -141,8 +140,9 @@ long lrs_getfirstbasis(
     long no_output); /* gets first basis, FALSE if none,P may get changed if
                         lin. space Lin found  no_output is TRUE supresses output
                         headers P may get changed if lin. space Lin found    */
-long lrs_getnextbasis(lrs_dic **dict_p, lrs_dat *Q); /* gets next lrs tree basis, FALSE if none
-                                      backtrack if prune is TRUE */
+long lrs_getnextbasis(lrs_dic **dict_p,
+                      lrs_dat *Q); /* gets next lrs tree basis, FALSE if none
+                    backtrack if prune is TRUE */
 long lrs_getsolution(lrs_dic *P, lrs_dat *Q, lrs_mp_vector output, long col);
 long lrs_getray(lrs_dic *P, lrs_dat *Q, long col, long comment,
                 lrs_mp_vector output);

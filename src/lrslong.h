@@ -305,8 +305,8 @@ void lrs_clear_mp_matrix(lrs_mp_matrix a, long m, long n);
 /* Core library functions - depend on mp implementation  */
 /******************************************************* */
 
-long compare(lrs_mp a, lrs_mp b);     /* a ? b and returns -1,0,1 for <,=,> */
-void gcd(lrs_mp u, lrs_mp v); /* returns u=gcd(u,v) destroying v         */
+long compare(lrs_mp a, lrs_mp b); /* a ? b and returns -1,0,1 for <,=,> */
+void gcd(lrs_mp u, lrs_mp v);     /* returns u=gcd(u,v) destroying v         */
 void mptodouble(lrs_mp a, double *x); /* convert lrs_mp to double */
 long mptoi(lrs_mp a);                 /* convert lrs_mp to long integer */
 char *mpgetstr10(char *, lrs_mp);     /* convert lrs_mp to string */

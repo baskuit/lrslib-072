@@ -200,7 +200,7 @@ lrs_mp_matrix lrs_alloc_mp_matrix(long m, long n)
   araw = (lrs_mp_t)calloc((m + 1) * row_width, sizeof(lrs_mp));
   a = (lrs_mp_t *)calloc((m + 1), sizeof(lrs_mp_vector));
   for (i = 0; i < m + 1; i++) {
-    a[i] = (lrs_mp_t )calloc((n + 1), MPSIZE);
+    a[i] = (lrs_mp_t)calloc((n + 1), MPSIZE);
   }
   return a;
 }

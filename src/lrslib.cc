@@ -215,8 +215,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
   if (!getabasis(D, Q, inequality))
     return FALSE;
   /* bug fix 2009.12.2 */
-  nlinearity =
-      Q->nlinearity; /*may have been reset if some lins are redundant*/
+  nlinearity = Q->nlinearity; /*may have been reset if some lins are redundant*/
 
   /* 2020.2.2 */
   /* extract option asked to remove all linearities and output the reduced A
@@ -254,7 +253,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
     for (i = 0; i < nredundcol; i++) {
 
       lrs_getray(D, Q, Col[0], D->C[0] + i,
-                  (*Lin)[i]); /* adjust index for deletions */
+                 (*Lin)[i]); /* adjust index for deletions */
 
       if (!removecobasicindex(D, Q, 0L)) {
         lrs_clear_mp_matrix(*Lin, nredundcol, Qn);
@@ -305,8 +304,7 @@ long lrs_getfirstbasis(lrs_dic **D_p, lrs_dat *Q, lrs_mp_matrix *Lin,
 /* getnextbasis in reverse search order  */
 /*****************************************/
 
-long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q)
-{
+long lrs_getnextbasis(lrs_dic **D_p, lrs_dat *Q) {
   /* assign local variables to structures */
   long i = 0L, j = 0L;
   long m = D->m;
@@ -848,8 +846,7 @@ long removecobasicindex(lrs_dic *P, lrs_dat *Q, long k)
   return TRUE;
 } /* end of removecobasicindex */
 
-lrs_dic *resize(lrs_dic *P, lrs_dat *Q)
-{
+lrs_dic *resize(lrs_dic *P, lrs_dat *Q) {
   lrs_dic *P1; /* to hold new dictionary in case of resizing */
 
   long i, j;
@@ -1250,8 +1247,7 @@ long checkindex(lrs_dic *P, lrs_dat *Q, long index)
   long m = P->m;
   long zeroonly = 0;
 
-  if (index < 0)
-  {
+  if (index < 0) {
     zeroonly = 1;
     index = -index;
   }
@@ -1697,10 +1693,9 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
   itomp(ONE, oD + (0));
 
   i = row;
-  itomp(ONE, Lcm + (i));         /* Lcm of denominators */
-  itomp(ZERO, Gcd + (i));        /* Gcd of numerators */
-  for (j = 0; j <= d; j++)
-  {
+  itomp(ONE, Lcm + (i));  /* Lcm of denominators */
+  itomp(ZERO, Gcd + (i)); /* Gcd of numerators */
+  for (j = 0; j <= d; j++) {
     copy(A[i] + (j), num + (j));
     copy(oD + (j), den + (j));
     if (!one(oD + (j)))
@@ -1714,8 +1709,8 @@ void lrs_set_row_mp(lrs_dic *P, lrs_dat *Q, long row, lrs_mp_vector num,
   if (mp_greater(Gcd + (i), mpone) || mp_greater(Lcm + (i), mpone))
     for (j = 0; j <= d; j++) {
       exactdivint(A[i] + (j), Gcd + (i), Temp); /*reduce numerators by Gcd  */
-      mulint(Lcm + (i), Temp, Temp);         /*remove denominators */
-      exactdivint(Temp, oD + (j), A[i] + (j));  /*reduce by former denominator */
+      mulint(Lcm + (i), Temp, Temp);            /*remove denominators */
+      exactdivint(Temp, oD + (j), A[i] + (j)); /*reduce by former denominator */
     }
 
   if (ineq == EQ) /* input is linearity */

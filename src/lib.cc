@@ -56,18 +56,39 @@ static long FirstTime; /* set this to true for every new game to be solved */
 
 void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
-  // if (input.rows == 1) {
-  //   output.row_strategy[0] = 1;
-  //   if (input.cols == 1) {
-  //     output.col_strategy[0] = 1;
-  //   }
-
-  //   return;
-  // }
-  // if (input.cols == 1) {
-  //   output.col_strategy[0] = 1;
-  //   return;
-  // }
+  if (g->rows == 1) {
+    gg->row_strategy[0] = 1;
+    if (g->cols == 1) {
+      gg->col_strategy[0] = 1;
+      gg->value = (float)g->data[0] / g->den;
+    } else {
+      int min = g->den;
+      int best_col = 0;
+      for (int col = 0; col < g->cols; ++col) {
+        if (g->data[col] < min) {
+          min = g->data[col];
+          best_col = col;
+        }
+      }
+      gg->col_strategy[best_col] = 1;
+      gg->value = (float)g->data[best_col] / g->den;
+    }
+    return;
+  }
+  if (g->cols == 1) {
+    gg->col_strategy[0] = 1;
+    int max = 0;
+    int best_row = 0;
+    for (int row = 0; row < g->rows; ++row) {
+      if (g->data[row] > max) {
+        max = g->data[row];
+        best_row = row;
+      }
+    }
+    gg->row_strategy[best_row] = 1;
+    gg->value = (float)g->data[best_row] / g->den;
+    return;
+  }
 
   lrs_init();
 
@@ -180,8 +201,7 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
 
   Q2->nlinearity = nlinearity;
 
-  if (lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex))
-  {
+  if (lrs_getfirstbasis2(&P2, Q2, P2orig, &Lin, TRUE, linindex)) {
     do {
       col = 0;
       if (lrs_getsolution(P2, Q2, output, col)) {
@@ -263,8 +283,7 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
 
     for (i = 0; i < nredundcol; i++) {
       lrs_getray((*D_p), Q, Col[0], (*D_p)->C[0] + i,
-                  (*Lin)[i]); /* adjust index for deletions */
-    
+                 (*Lin)[i]); /* adjust index for deletions */
 
       if (!removecobasicindex((*D_p), Q, 0L)) {
         lrs_clear_mp_matrix(*Lin, nredundcol, Qn);
@@ -284,7 +303,6 @@ long lrs_getfirstbasis2(lrs_dic **D_p, lrs_dat *Q, lrs_dic *P2orig,
   }
 
   itomp(ZERO, A[0] + 0); /* zero optimum objective value */
-
 
   /* reindex basis to 0..m if necessary */
   /* we use the fact that cobases are sorted by index value */
@@ -460,12 +478,12 @@ long lrs_nashoutput(lrs_dat *Q, lrs_mp_vector output, FloatOneSumOutput *gg,
   // printf("den conversion: %ld = %f\n", mptoi(output[0]), den);
 
   if (player == 1) {
-    for (i = 1; i < Q->n; i++) {
+    for (i = 1; i < Q->n - 1; i++) {
       gg->row_strategy[i - 1] = mptoi(output + i) / den;
     }
   } else {
     gg->value = mptoi(output + (Q->n - 1)) / den;
-    for (i = 1; i < Q->n; i++) {
+    for (i = 1; i < Q->n - 1; i++) {
       gg->col_strategy[i - 1] = mptoi(output + i) / den;
     }
   }
@@ -563,10 +581,9 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
   itomp(ONE, oD + 0);
 
   i = row;
-  itomp(ONE, Lcm + i);         /* Lcm of denominators */
-  itomp(ZERO, Gcd + i);        /* Gcd of numerators */
-  for (j = 0; j <= d; j++)
-  {
+  itomp(ONE, Lcm + i);  /* Lcm of denominators */
+  itomp(ZERO, Gcd + i); /* Gcd of numerators */
+  for (j = 0; j <= d; j++) {
     itomp(num[j], A[i] + j);
     itomp(ONE, oD + j);
     if (!one(oD + j))
@@ -580,7 +597,7 @@ void lrs_set_row_constraint(lrs_dic *P, lrs_dat *Q, long row, long num[],
   if (mp_greater(Gcd + i, mpone) || mp_greater(Lcm + i, mpone))
     for (j = 0; j <= d; j++) {
       exactdivint(A[i] + j, Gcd + i, Temp); /*reduce numerators by Gcd  */
-      mulint(Lcm + i, Temp, Temp);         /*remove denominators */
+      mulint(Lcm + i, Temp, Temp);          /*remove denominators */
       exactdivint(Temp, oD + j, A[i] + j);  /*reduce by former denominator */
     }
 
