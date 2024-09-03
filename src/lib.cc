@@ -124,7 +124,7 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
       nash2_main(P1, Q1, P2orig, Q2, &numequilib, output2, gg, linindex);
       if (numequilib > oldnum) {
         lrs_nashoutput(Q1, output1, gg, 1L);
-        break;
+        // break;
       }
     }
   } while (lrs_getnextbasis(&P1, Q1));
@@ -187,7 +187,7 @@ long nash2_main(lrs_dic *P1, lrs_dat *Q1, lrs_dic *P2orig, lrs_dat *Q2,
       if (lrs_getsolution(P2, Q2, output, col)) {
         if (lrs_nashoutput(Q2, output, gg, 2L)) {
           (*numequilib)++;
-          break;
+          // break;
         }
       }
     } while (lrs_getnextbasis(&P2, Q2));
