@@ -33,16 +33,16 @@
 
 #include "lrslib.h"
 
-static unsigned long dict_count, dict_limit, cache_tries, cache_misses;
+static __thread unsigned long dict_count, dict_limit, cache_tries, cache_misses;
 
 /* Variables and functions global to this file only */
 
-static long lrs_checkpoint_seconds = 0;
+static __thread long lrs_checkpoint_seconds = 0;
 
-static long lrs_global_count = 0; /* Track how many lrs_dat records are
+static __thread long lrs_global_count = 0; /* Track how many lrs_dat records are
                                      allocated */
 
-static lrs_dat *lrs_global_list[MAX_LRS_GLOBALS + 1];
+static __thread lrs_dat *lrs_global_list[MAX_LRS_GLOBALS + 1];
 
 static lrs_dic *new_lrs_dic(long m, long d, long m_A);
 

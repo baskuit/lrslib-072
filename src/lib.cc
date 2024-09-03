@@ -52,7 +52,7 @@ void FillNonnegativityRows(lrs_dic *P, lrs_dat *Q, int firstRow, int lastRow,
 //========================================================================
 // Standard solver. Modified version of main() from lrsNash
 //========================================================================
-static long FirstTime; /* set this to true for every new game to be solved */
+static __thread long FirstTime; /* set this to true for every new game to be solved */
 
 void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
 
