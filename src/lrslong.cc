@@ -12,8 +12,8 @@
 // must be last or include errors
 #include "lrslong.h"
 
-long lrs_digits;        /* max permitted no. of digits   */
-long lrs_record_digits; /* this is the biggest acheived so far.     */
+__thread long lrs_digits;        /* max permitted no. of digits   */
+__thread long lrs_record_digits; /* this is the biggest acheived so far.     */
 
 #ifdef B128
 __int128 MAXDm, MAXDl, MAXDa;
