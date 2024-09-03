@@ -1826,10 +1826,14 @@ long ran_selectpivot(lrs_dic *P, lrs_dat *Q, long *r, long *s)
   return (FALSE);
 } /* end of ran_selectpivot        */
 
-void lrs_overflow(int parm) { lrs_exit(parm); }
+void lrs_overflow(int parm) {
+  printf("lrs_overflow called");
+  lrs_exit(parm); 
+  }
 
 void lrs_exit(int i) {
   // fflush(stdout);
   // exit(i);
+  printf("lrsexit called (maybe overflow)");
   throw std::exception();
 }

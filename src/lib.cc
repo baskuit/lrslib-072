@@ -113,8 +113,10 @@ void solve_fast(const FastInput *g, FloatOneSumOutput *gg) {
   linindex = static_cast<long *>(
       calloc((P2orig->m + P2orig->d + 2), sizeof(long))); /* for next time */
 
-  if (!lrs_getfirstbasis(&P1, Q1, &Lin, TRUE))
+  if (!lrs_getfirstbasis(&P1, Q1, &Lin, TRUE)) {
+    printf("lrs_getfirstbasis failed\n");
     throw std::exception();
+  }
 
   col = Q1->nredundcol;
 
